@@ -1,0 +1,14 @@
+{
+  "experiment_id": "early_development_baseline",
+  "seed": 1,
+  "population": 1,
+  "duration": 168.0,
+  "model_version": "0.1.0",
+  "data_version": "0.1.0",
+  "parameters": {},
+  "interventions": [],
+  "metrics_config": {
+    "sample_interval": 1.0
+  },
+  "notes": "Stage 3 baseline: the CURRENT minimal model (default doubling_time_mean=10.8h) run to 168h from a single zygote, asynchronous cleavage, no mortality/senescence in the window. Recorded metrics: time_to_2/4/8_cell (milestones) and cell_count_at_92/116/144/168h (series). Compared against S-7 stage-reach times and S-6 Hardy blastocyst counts in the calibration report."
+}

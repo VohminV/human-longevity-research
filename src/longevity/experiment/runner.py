@@ -16,9 +16,16 @@ ENGINE_VERSION = "population-engine/v0"
 RESULT_FORMAT_VERSION = "1.0"
 
 
-def run_experiment(config: ExperimentConfig, out_path: str | None = None) -> dict[str, Any]:
+def run_experiment(
+    config: ExperimentConfig, out_path: str | None = None, record_milestones: bool = False
+) -> dict[str, Any]:
     """Run a configured experiment and return (and optionally persist) a result
-    record whose schema follows docs/EXPERIMENTS.md."""
+    record whose schema follows docs/EXPERIMENTS.md.
+
+    `record_milestones=True` additionally surfaces the engine's division-event
+    milestone log under result["metrics"]["milestones"], which calibration
+    metrics (time_to_2_cell, ...) are derived from.
+    """
     wall_start = time.perf_counter()
 
     rng = Rng(config.seed)
@@ -29,6 +36,7 @@ def run_experiment(config: ExperimentConfig, out_path: str | None = None) -> dic
         interventions=[],
         model_version=config.model_version,
         experiment_id=config.experiment_id,
+        record_milestones=record_milestones,
     )
 
     series: list[dict[str, Any]] = []
@@ -37,7 +45,9 @@ def run_experiment(config: ExperimentConfig, out_path: str | None = None) -> dic
         t = 0.0
         while t <= config.duration:
             engine.run_until(t)
-            series.append(population_metrics(engine))
+            entry = population_metrics(engine)
+            entry["sample_time"] = t
+            series.append(entry)
             t += interval
 
     engine.run_until(config.duration)
@@ -52,6 +62,7 @@ def run_experiment(config: ExperimentConfig, out_path: str | None = None) -> dic
             "format": RESULT_FORMAT_VERSION,
             "series": series,
             "final": final_metrics,
+            "milestones": engine.milestones if record_milestones else [],
         },
         "summary": experiment_summary(final_metrics),
         "runtime": {

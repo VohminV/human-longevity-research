@@ -26,6 +26,7 @@ class PopulationEngine:
         interventions: list[dict[str, Any]] | None = None,
         model_version: str = "",
         experiment_id: str = "",
+        record_milestones: bool = False,
     ):
         self.experiment_id = experiment_id
         self.model_version = model_version
@@ -42,6 +43,9 @@ class PopulationEngine:
         }
         self.events: list[tuple[float, int, int]] = []
         self._event_seq = 0
+        self._record_milestones = record_milestones
+        self.milestones: list[dict[str, Any]] = []
+        self._living = population
         self._seed_population(population)
 
     @property
@@ -55,6 +59,17 @@ class PopulationEngine:
     @property
     def feature_mortality_enabled(self) -> bool:
         return self.parameters.get("mortality") is not None
+
+    @property
+    def milestones_enabled(self) -> bool:
+        """Whether division-event milestones are being recorded.
+
+        Milestones capture the exact sim_time of every handled division with a
+        snapshot of the living count, which is what precise `time_to_N_cell`
+        calibration metrics are computed from. Off by default so ordinary runs
+        and checkpoints are not burdened with an event log.
+        """
+        return self._record_milestones
 
     def _allocate_id(self) -> int:
         cell_id = self.next_id
@@ -102,6 +117,7 @@ class PopulationEngine:
             if rate > 0.0 and self.rng.random() < rate:
                 del self.population[cell.id]
                 self.counters["died"] += 1
+                self._living -= 1
                 return
 
         id_a = self._allocate_id()
@@ -125,6 +141,7 @@ class PopulationEngine:
         self.population[id_b] = daughter_b
         self.counters["divisions"] += 1
         self.counters["born"] += 2
+        self._living += 1
 
         for daughter in (daughter_a, daughter_b):
             if self._born_senescent(daughter):
@@ -133,6 +150,20 @@ class PopulationEngine:
                 continue
             daughter.division_time = time + self._draw_doubling_time()
             self._schedule(daughter)
+
+        if self._record_milestones:
+            self.milestones.append(
+                {
+                    "sim_time": time,
+                    "live_count": self.living_count(),
+                    "born_count": self.counters["born"],
+                    "dead_count": self.counters["died"],
+                }
+            )
+
+    def living_count(self) -> int:
+        """Number of living (normal + senescent) cells right now (O(1))."""
+        return self._living
 
     def _born_senescent(self, cell: Cell) -> bool:
         if self.feature_telomere_enabled and cell.telomere_length <= 0.0:
@@ -201,6 +232,7 @@ class PopulationEngine:
             "parameters": self.parameters,
             "counters": dict(self.counters),
             "population": [to_dict(c) for c in self.population.values()],
+            "milestones": list(self.milestones),
         }
 
     @classmethod
@@ -215,6 +247,10 @@ class PopulationEngine:
         engine.next_id = data["next_id"]
         engine.population = {c.id: c for c in (from_dict(d) for d in data["population"])}
         engine.counters = dict(data["counters"])
+        engine._living = sum(1 for c in engine.population.values() if c.is_living)
+        milestones = data.get("milestones", [])
+        engine.milestones = [dict(m) for m in milestones]
+        engine._record_milestones = bool(milestones)
         engine.events = []
         engine._event_seq = 0
         for cell in sorted(engine.population.values(), key=lambda c: c.id):

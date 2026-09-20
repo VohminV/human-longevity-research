@@ -1,0 +1,14 @@
+{
+  "experiment_id": "blastocyst_calibration",
+  "seed": 1,
+  "population": 1,
+  "duration": 168.0,
+  "model_version": "0.1.0",
+  "data_version": "0.1.0",
+  "parameters": {},
+  "interventions": [],
+  "metrics_config": {
+    "sample_interval": 1.0
+  },
+  "notes": "Stage 3 blastocyst calibration: same minimal model run as early_development_baseline, interpreted specifically against Hardy 1989 (S-6) whole-blastocyst nuclear counts at day 5/6/7 (120/144/168h). The reference counts are observations with scatter, not hard targets; the comparison reports mean/sd, absolute/relative error and within-range verdict per point. TE/ICM allocation is NOT compared because the model has no lineage/TE-ICM concept."
+}
