@@ -45,6 +45,9 @@ class PopulationEngine:
         self._event_seq = 0
         self._record_milestones = record_milestones
         self.milestones: list[dict[str, Any]] = []
+        cell_cycle = self.parameters.get("cell_cycle")
+        if cell_cycle is not None and population != 1:
+            raise ValueError("cell_cycle phases assume a single developing embryo; population must be 1")
         self._living = population
         self._seed_population(population)
 
@@ -59,6 +62,10 @@ class PopulationEngine:
     @property
     def feature_mortality_enabled(self) -> bool:
         return self.parameters.get("mortality") is not None
+
+    @property
+    def feature_cell_cycle_enabled(self) -> bool:
+        return self.parameters.get("cell_cycle") is not None
 
     @property
     def milestones_enabled(self) -> bool:
@@ -76,10 +83,51 @@ class PopulationEngine:
         self.next_id += 1
         return cell_id
 
+    def _phase_for_count(self, count: int) -> dict[str, Any] | None:
+        """The cell-cycle phase governing a cell that divides while `count`
+        cells are living, or None for the constant-cycle (baseline) model.
+
+        Phases are ordered by strictly increasing `threshold`; the phase whose
+        threshold is the largest value <= `count` applies (the first phase,
+        threshold 0, always matches). The count is the living population at the
+        time the doubling time is drawn -- i.e. a developmental-state proxy
+        (a model for the nucleo-cytoplasmic ratio, NOT spatial compaction).
+        """
+        cell_cycle = self.parameters.get("cell_cycle")
+        if cell_cycle is None:
+            return None
+        phase = cell_cycle["phases"][0]
+        for candidate in cell_cycle["phases"]:
+            if candidate["threshold"] <= count:
+                phase = candidate
+            else:
+                break
+        return phase
+
     def _draw_doubling_time(self) -> float:
+        phase = self._phase_for_count(self.living_count())
+        if phase is not None:
+            mean = float(phase["mean"])
+            sd = float(phase.get("sd", self.parameters["doubling_time_sd"]))
+            return max(0.0, self.rng.gauss(mean, sd))
         mean = self.parameters["doubling_time_mean"]
         sd = self.parameters["doubling_time_sd"]
         return max(0.0, self.rng.gauss(mean, sd))
+
+    def _division_death_rate(self) -> float:
+        """Per-division death chance for the cell about to divide.
+
+        Combines the global `mortality.rate` with the current phase's
+        `death_per_division` as independent risks. With no `cell_cycle` this
+        reduces exactly to the baseline global mortality.
+        """
+        mortality = self.parameters.get("mortality")
+        global_rate = float(mortality.get("rate", 0.0)) if mortality is not None else 0.0
+        phase = self._phase_for_count(self.living_count())
+        if phase is None:
+            return global_rate
+        phase_rate = float(phase.get("death_per_division", 0.0))
+        return 1.0 - (1.0 - global_rate) * (1.0 - phase_rate)
 
     def _schedule(self, cell: Cell) -> None:
         if cell.is_normal and cell.division_time is not None:
@@ -111,14 +159,12 @@ class PopulationEngine:
 
     def _handle_division(self, cell: Cell, time: float) -> None:
         self.sim_time = time
-        mortality = self.parameters.get("mortality")
-        if mortality is not None:
-            rate = float(mortality.get("rate", 0.0))
-            if rate > 0.0 and self.rng.random() < rate:
-                del self.population[cell.id]
-                self.counters["died"] += 1
-                self._living -= 1
-                return
+        death_rate = self._division_death_rate()
+        if death_rate > 0.0 and self.rng.random() < death_rate:
+            del self.population[cell.id]
+            self.counters["died"] += 1
+            self._living -= 1
+            return
 
         id_a = self._allocate_id()
         id_b = self._allocate_id()

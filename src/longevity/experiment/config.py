@@ -37,6 +37,8 @@ class ExperimentConfig:
         if not isinstance(self.parameters, dict):
             raise ValueError("parameters must be a dict")
         validate_parameters(self.parameters)
+        if self.parameters.get("cell_cycle") is not None and self.population != 1:
+            raise ValueError("cell_cycle phases assume a single developing embryo; population must be 1")
         for intervention in self.interventions:
             if not isinstance(intervention, dict) or "parameter" not in intervention or "value" not in intervention:
                 raise ValueError(f"intervention must be {{'parameter', 'value'}}: {intervention!r}")
