@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.sln
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environments / secrets
+.env
+.env.*
+!.env.example
+
+# Model files / large generated data (do not commit)
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.h5
+*.npz
+
+# Simulation artifacts
+experiments/output/
+checkpoints/
+*.log
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
