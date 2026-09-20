@@ -1,6 +1,6 @@
 import pytest
 
-from longevity.biology.params import DNA_DAMAGE_KEYS, MORTALITY_KEYS, TELOMERE_KEYS, TOP_LEVEL_KEYS
+from longevity.biology.params import DNA_DAMAGE_KEYS, MORTALITY_KEYS, PHASE_KEYS, TELOMERE_KEYS, TOP_LEVEL_KEYS
 from longevity.calibration.compare import ModelValue, compare_metric, compare_reference_targets, distribute
 from longevity.calibration.multirun import extract_calibration_metrics, run_multiseed_calibration
 from longevity.calibration.reference import (
@@ -95,11 +95,28 @@ def test_parameter_status_covers_all_model_parameters():
     for entry in PARAMETER_STATUS:
         parts = entry.path.split(".")
         assert parts[0] in TOP_LEVEL_KEYS
-        assert len(parts) in (1, 2)
-        if len(parts) == 2:
-            assert parts[1] in group_keys[parts[0]]
+        if parts[0] in group_keys:
+            assert len(parts) == 2 and parts[1] in group_keys[parts[0]]
+        elif parts[0] == "cell_cycle":
+            assert len(parts) == 4
+            assert parts[1] == "phases"
+            assert parts[2].isdigit()
+            assert parts[3] in PHASE_KEYS
+        else:
+            assert len(parts) == 1
         missing.discard(entry.path)
     assert not missing
+
+
+def test_parameter_status_covers_all_cell_cycle_phases():
+    phase_status = {e.path for e in PARAMETER_STATUS if e.path.startswith("cell_cycle.")}
+    assert phase_status == {
+        f"cell_cycle.phases.{i}.{key}"
+        for i in range(3)
+        for key in PHASE_KEYS
+    }
+    statuses = {e.path.split(".")[-1] for e in PARAMETER_STATUS if e.path.startswith("cell_cycle.")}
+    assert statuses == set(PHASE_KEYS)
 
 
 def test_parameter_status_uses_required_taxonomy():
