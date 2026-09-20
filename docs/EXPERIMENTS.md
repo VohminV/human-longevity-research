@@ -68,6 +68,12 @@ healthspan, lifespan
 
 Запись в JSON — через `out_path` (родительский каталог создаётся автоматически).
 
+`run_experiment(..., record_milestones=True)` дополнительно кладёт под
+`metrics.milestones` журнал событий деления
+`[{sim_time, live_count, born_count, dead_count}, ...]` — из него выводятся
+точные времена достижения стадий (2/4/8 клеток). На основе milestones построен
+калибровочный отчётный слой (`longevity.calibration`), см. `docs/CALIBRATION.md`.
+
 ## 5. Сравнение (baseline vs intervention)
 
 Минимальная схема:

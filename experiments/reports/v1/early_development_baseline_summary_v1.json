@@ -1,0 +1,603 @@
+{
+  "experiment_id": "early_development_baseline",
+  "model_version": "0.1.0",
+  "data_version": "0.1.0",
+  "calibration_dataset": "preimplantation/v1",
+  "parameters": {
+    "doubling_time_mean": 10.8,
+    "doubling_time_sd": 1.2
+  },
+  "parameter_status": [
+    {
+      "parameter": "doubling_time_mean",
+      "status": "inf",
+      "value": 10.8,
+      "rationale": "Per-division doubling time 10-12 h cited for cleavage-stage human embryos (S-8). Default 10.8 h. This describes the per-division draw, NOT the net population doubling of the whole preimplantation window; the two differ because cleavage is asynchronous and, in the real embryo, the cell cycle lengthens late (blastocyst).",
+      "source": "S-8"
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "status": "assumption",
+      "value": 1.2,
+      "rationale": "Scatter of per-division cycle length is not directly measured; 1.2 h is a modelling choice.",
+      "source": ""
+    },
+    {
+      "parameter": "mortality.rate",
+      "status": "assumption",
+      "value": 0.0,
+      "rationale": "Cell death at blastocyst stages is real (Hardy 1989 reports a few % per embryo) but is not constrained by a measured rate; default 0.0 keeps the baseline honest.",
+      "source": "S-6"
+    },
+    {
+      "parameter": "telomere.length_start",
+      "status": "unknown",
+      "value": 100.0,
+      "rationale": "Telomere mechanics are irrelevant within the 0-168 h calibration window (no divisions shorten a zygote to senescence).",
+      "source": ""
+    },
+    {
+      "parameter": "telomere.loss_per_division",
+      "status": "unknown",
+      "value": 5.0,
+      "rationale": "Same as telomere.length_start: out of calibration scope.",
+      "source": ""
+    },
+    {
+      "parameter": "dna_damage.accrual_per_division",
+      "status": "unknown",
+      "value": 0.2,
+      "rationale": "DNA-damage burden is out of calibration scope for the 0-168 h window.",
+      "source": ""
+    },
+    {
+      "parameter": "dna_damage.threshold",
+      "status": "unknown",
+      "value": 5.0,
+      "rationale": "Out of calibration scope.",
+      "source": ""
+    },
+    {
+      "parameter": "dna_damage.repair_per_division",
+      "status": "unknown",
+      "value": 0.0,
+      "rationale": "Out of calibration scope.",
+      "source": ""
+    }
+  ],
+  "population": 1,
+  "duration_hours": 168.0,
+  "sample_interval_hours": 1.0,
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ],
+  "n_seeds": 20,
+  "per_seed_metrics": {
+    "1": {
+      "time_to_2_cell": 12.345821703786555,
+      "time_to_4_cell": 24.885156434226282,
+      "time_to_8_cell": 35.722757854424344,
+      "cell_count_at_92h": 247,
+      "cell_count_at_116h": 1095,
+      "cell_count_at_120h": 1454,
+      "cell_count_at_144h": 6995,
+      "cell_count_at_168h": 32250
+    },
+    "2": {
+      "time_to_2_cell": 13.605800083411083,
+      "time_to_4_cell": 24.87963162888848,
+      "time_to_8_cell": 35.41255368933173,
+      "cell_count_at_92h": 260,
+      "cell_count_at_116h": 1174,
+      "cell_count_at_120h": 1568,
+      "cell_count_at_144h": 7403,
+      "cell_count_at_168h": 34229
+    },
+    "3": {
+      "time_to_2_cell": 10.913649645944766,
+      "time_to_4_cell": 23.213678903245025,
+      "time_to_8_cell": 36.29334923740274,
+      "cell_count_at_92h": 277,
+      "cell_count_at_116h": 1237,
+      "cell_count_at_120h": 1693,
+      "cell_count_at_144h": 7877,
+      "cell_count_at_168h": 36419
+    },
+    "4": {
+      "time_to_2_cell": 10.849027133751726,
+      "time_to_4_cell": 22.206865637919094,
+      "time_to_8_cell": 34.88134270895495,
+      "cell_count_at_92h": 254,
+      "cell_count_at_116h": 1145,
+      "cell_count_at_120h": 1559,
+      "cell_count_at_144h": 7331,
+      "cell_count_at_168h": 33645
+    },
+    "5": {
+      "time_to_2_cell": 9.385389898523195,
+      "time_to_4_cell": 20.98875259578636,
+      "time_to_8_cell": 33.10991851137559,
+      "cell_count_at_92h": 313,
+      "cell_count_at_116h": 1516,
+      "cell_count_at_120h": 1930,
+      "cell_count_at_144h": 9009,
+      "cell_count_at_168h": 42701
+    },
+    "6": {
+      "time_to_2_cell": 11.399610711762973,
+      "time_to_4_cell": 21.269127098989923,
+      "time_to_8_cell": 32.62183895253451,
+      "cell_count_at_92h": 272,
+      "cell_count_at_116h": 1279,
+      "cell_count_at_120h": 1754,
+      "cell_count_at_144h": 8118,
+      "cell_count_at_168h": 37606
+    },
+    "7": {
+      "time_to_2_cell": 10.49294365386288,
+      "time_to_4_cell": 21.906661468882696,
+      "time_to_8_cell": 34.04096232606628,
+      "cell_count_at_92h": 273,
+      "cell_count_at_116h": 1258,
+      "cell_count_at_120h": 1663,
+      "cell_count_at_144h": 7810,
+      "cell_count_at_168h": 36440
+    },
+    "8": {
+      "time_to_2_cell": 11.248098203548786,
+      "time_to_4_cell": 25.087792749222515,
+      "time_to_8_cell": 36.71038918399577,
+      "cell_count_at_92h": 211,
+      "cell_count_at_116h": 984,
+      "cell_count_at_120h": 1262,
+      "cell_count_at_144h": 5972,
+      "cell_count_at_168h": 28010
+    },
+    "9": {
+      "time_to_2_cell": 9.671091739165815,
+      "time_to_4_cell": 22.023264572644337,
+      "time_to_8_cell": 33.37989538676181,
+      "cell_count_at_92h": 264,
+      "cell_count_at_116h": 1216,
+      "cell_count_at_120h": 1688,
+      "cell_count_at_144h": 7778,
+      "cell_count_at_168h": 35799
+    },
+    "10": {
+      "time_to_2_cell": 9.655539590323997,
+      "time_to_4_cell": 19.904626602117574,
+      "time_to_8_cell": 31.402502192565166,
+      "cell_count_at_92h": 312,
+      "cell_count_at_116h": 1517,
+      "cell_count_at_120h": 1947,
+      "cell_count_at_144h": 9025,
+      "cell_count_at_168h": 42774
+    },
+    "11": {
+      "time_to_2_cell": 9.331112789143242,
+      "time_to_4_cell": 21.32511234234837,
+      "time_to_8_cell": 32.698726865047355,
+      "cell_count_at_92h": 274,
+      "cell_count_at_116h": 1251,
+      "cell_count_at_120h": 1692,
+      "cell_count_at_144h": 7867,
+      "cell_count_at_168h": 36462
+    },
+    "12": {
+      "time_to_2_cell": 9.065774772464117,
+      "time_to_4_cell": 20.145246560330996,
+      "time_to_8_cell": 31.492276620452046,
+      "cell_count_at_92h": 261,
+      "cell_count_at_116h": 1253,
+      "cell_count_at_120h": 1743,
+      "cell_count_at_144h": 7965,
+      "cell_count_at_168h": 36828
+    },
+    "13": {
+      "time_to_2_cell": 10.696777216536567,
+      "time_to_4_cell": 23.318488176026754,
+      "time_to_8_cell": 34.91739891843991,
+      "cell_count_at_92h": 258,
+      "cell_count_at_116h": 1216,
+      "cell_count_at_120h": 1575,
+      "cell_count_at_144h": 7433,
+      "cell_count_at_168h": 34830
+    },
+    "14": {
+      "time_to_2_cell": 12.263375923344293,
+      "time_to_4_cell": 24.225658673453534,
+      "time_to_8_cell": 35.93993468698149,
+      "cell_count_at_92h": 264,
+      "cell_count_at_116h": 1206,
+      "cell_count_at_120h": 1498,
+      "cell_count_at_144h": 7208,
+      "cell_count_at_168h": 34186
+    },
+    "15": {
+      "time_to_2_cell": 10.979381727378966,
+      "time_to_4_cell": 21.73957161450638,
+      "time_to_8_cell": 33.858576857653354,
+      "cell_count_at_92h": 278,
+      "cell_count_at_116h": 1253,
+      "cell_count_at_120h": 1718,
+      "cell_count_at_144h": 7914,
+      "cell_count_at_168h": 36581
+    },
+    "16": {
+      "time_to_2_cell": 9.914537254215068,
+      "time_to_4_cell": 21.76426451929396,
+      "time_to_8_cell": 33.51030676124126,
+      "cell_count_at_92h": 270,
+      "cell_count_at_116h": 1264,
+      "cell_count_at_120h": 1751,
+      "cell_count_at_144h": 7970,
+      "cell_count_at_168h": 36964
+    },
+    "17": {
+      "time_to_2_cell": 8.645135147114209,
+      "time_to_4_cell": 20.40711729588648,
+      "time_to_8_cell": 30.90072266233662,
+      "cell_count_at_92h": 297,
+      "cell_count_at_116h": 1497,
+      "cell_count_at_120h": 1965,
+      "cell_count_at_144h": 8876,
+      "cell_count_at_168h": 42203
+    },
+    "18": {
+      "time_to_2_cell": 11.539245858442785,
+      "time_to_4_cell": 23.94318804470136,
+      "time_to_8_cell": 34.83539876862825,
+      "cell_count_at_92h": 254,
+      "cell_count_at_116h": 1173,
+      "cell_count_at_120h": 1572,
+      "cell_count_at_144h": 7356,
+      "cell_count_at_168h": 34009
+    },
+    "19": {
+      "time_to_2_cell": 9.870044591197829,
+      "time_to_4_cell": 19.24551008674726,
+      "time_to_8_cell": 32.56915188397208,
+      "cell_count_at_92h": 310,
+      "cell_count_at_116h": 1489,
+      "cell_count_at_120h": 1904,
+      "cell_count_at_144h": 8924,
+      "cell_count_at_168h": 42171
+    },
+    "20": {
+      "time_to_2_cell": 12.315301827472542,
+      "time_to_4_cell": 23.384668766283575,
+      "time_to_8_cell": 36.1971574578549,
+      "cell_count_at_92h": 239,
+      "cell_count_at_116h": 1172,
+      "cell_count_at_120h": 1489,
+      "cell_count_at_144h": 6935,
+      "cell_count_at_168h": 32913
+    }
+  },
+  "modelled": {
+    "cell_count_at_116h": {
+      "mean": 1259.75,
+      "sd": 139.1772,
+      "n_seeds": 20,
+      "values": [
+        1095,
+        1174,
+        1237,
+        1145,
+        1516,
+        1279,
+        1258,
+        984,
+        1216,
+        1517,
+        1251,
+        1253,
+        1216,
+        1206,
+        1253,
+        1264,
+        1497,
+        1173,
+        1489,
+        1172
+      ]
+    },
+    "cell_count_at_120h": {
+      "mean": 1671.25,
+      "sd": 176.8522,
+      "n_seeds": 20,
+      "values": [
+        1454,
+        1568,
+        1693,
+        1559,
+        1930,
+        1754,
+        1663,
+        1262,
+        1688,
+        1947,
+        1692,
+        1743,
+        1575,
+        1498,
+        1718,
+        1751,
+        1965,
+        1572,
+        1904,
+        1489
+      ]
+    },
+    "cell_count_at_144h": {
+      "mean": 7788.3,
+      "sd": 753.6465,
+      "n_seeds": 20,
+      "values": [
+        6995,
+        7403,
+        7877,
+        7331,
+        9009,
+        8118,
+        7810,
+        5972,
+        7778,
+        9025,
+        7867,
+        7965,
+        7433,
+        7208,
+        7914,
+        7970,
+        8876,
+        7356,
+        8924,
+        6935
+      ]
+    },
+    "cell_count_at_168h": {
+      "mean": 36351.0,
+      "sd": 3706.6009,
+      "n_seeds": 20,
+      "values": [
+        32250,
+        34229,
+        36419,
+        33645,
+        42701,
+        37606,
+        36440,
+        28010,
+        35799,
+        42774,
+        36462,
+        36828,
+        34830,
+        34186,
+        36581,
+        36964,
+        42203,
+        34009,
+        42171,
+        32913
+      ]
+    },
+    "cell_count_at_92h": {
+      "mean": 269.4,
+      "sd": 24.4508,
+      "n_seeds": 20,
+      "values": [
+        247,
+        260,
+        277,
+        254,
+        313,
+        272,
+        273,
+        211,
+        264,
+        312,
+        274,
+        261,
+        258,
+        264,
+        278,
+        270,
+        297,
+        254,
+        310,
+        239
+      ]
+    },
+    "time_to_2_cell": {
+      "mean": 10.7094,
+      "sd": 1.2617,
+      "n_seeds": 20,
+      "values": [
+        12.3458,
+        13.6058,
+        10.9136,
+        10.849,
+        9.3854,
+        11.3996,
+        10.4929,
+        11.2481,
+        9.6711,
+        9.6555,
+        9.3311,
+        9.0658,
+        10.6968,
+        12.2634,
+        10.9794,
+        9.9145,
+        8.6451,
+        11.5392,
+        9.87,
+        12.3153
+      ]
+    },
+    "time_to_4_cell": {
+      "mean": 22.2932,
+      "sd": 1.7093,
+      "n_seeds": 20,
+      "values": [
+        24.8852,
+        24.8796,
+        23.2137,
+        22.2069,
+        20.9888,
+        21.2691,
+        21.9067,
+        25.0878,
+        22.0233,
+        19.9046,
+        21.3251,
+        20.1452,
+        23.3185,
+        24.2257,
+        21.7396,
+        21.7643,
+        20.4071,
+        23.9432,
+        19.2455,
+        23.3847
+      ]
+    },
+    "time_to_8_cell": {
+      "mean": 34.0248,
+      "sd": 1.7056,
+      "n_seeds": 20,
+      "values": [
+        35.7228,
+        35.4126,
+        36.2933,
+        34.8813,
+        33.1099,
+        32.6218,
+        34.041,
+        36.7104,
+        33.3799,
+        31.4025,
+        32.6987,
+        31.4923,
+        34.9174,
+        35.9399,
+        33.8586,
+        33.5103,
+        30.9007,
+        34.8354,
+        32.5692,
+        36.1972
+      ]
+    }
+  },
+  "comparisons": [
+    {
+      "key": "time_to_2_cell",
+      "label": "2-cell stage reached",
+      "observed_mean": 27.0,
+      "observed_sd": null,
+      "observed_range": [
+        26.0,
+        28.0
+      ],
+      "modelled_mean": 10.7094,
+      "modelled_sd": 1.2617,
+      "absolute_error": -16.2906,
+      "relative_error": -0.6034,
+      "within_observed": false,
+      "n_seeds": 20
+    },
+    {
+      "key": "time_to_4_cell",
+      "label": "4-cell stage reached",
+      "observed_mean": 44.0,
+      "observed_sd": null,
+      "observed_range": [
+        43.0,
+        45.0
+      ],
+      "modelled_mean": 22.2932,
+      "modelled_sd": 1.7093,
+      "absolute_error": -21.7068,
+      "relative_error": -0.4933,
+      "within_observed": false,
+      "n_seeds": 20
+    },
+    {
+      "key": "time_to_8_cell",
+      "label": "8-cell stage reached",
+      "observed_mean": 68.0,
+      "observed_sd": null,
+      "observed_range": [
+        67.0,
+        69.0
+      ],
+      "modelled_mean": 34.0248,
+      "modelled_sd": 1.7056,
+      "absolute_error": -33.9752,
+      "relative_error": -0.4996,
+      "within_observed": false,
+      "n_seeds": 20
+    },
+    {
+      "key": "cell_count_at_120h",
+      "label": "blastocyst cell count, day 5",
+      "observed_mean": 58.3,
+      "observed_sd": 8.1,
+      "observed_range": null,
+      "modelled_mean": 1671.25,
+      "modelled_sd": 176.8522,
+      "absolute_error": 1612.95,
+      "relative_error": 27.6664,
+      "within_observed": false,
+      "n_seeds": 20
+    },
+    {
+      "key": "cell_count_at_144h",
+      "label": "blastocyst cell count, day 6",
+      "observed_mean": 84.4,
+      "observed_sd": 5.7,
+      "observed_range": null,
+      "modelled_mean": 7788.3,
+      "modelled_sd": 753.6465,
+      "absolute_error": 7703.9,
+      "relative_error": 91.2784,
+      "within_observed": false,
+      "n_seeds": 20
+    },
+    {
+      "key": "cell_count_at_168h",
+      "label": "blastocyst cell count, day 7",
+      "observed_mean": 125.5,
+      "observed_sd": 19.0,
+      "observed_range": null,
+      "modelled_mean": 36351.0,
+      "modelled_sd": 3706.6009,
+      "absolute_error": 36225.5,
+      "relative_error": 288.6494,
+      "within_observed": false,
+      "n_seeds": 20
+    }
+  ]
+}

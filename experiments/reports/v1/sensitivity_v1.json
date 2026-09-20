@@ -1,0 +1,322 @@
+{
+  "tag": "v1",
+  "seeds": [
+    1,
+    2,
+    3
+  ],
+  "rows": [
+    {
+      "parameter": "doubling_time_mean",
+      "value": 8.0,
+      "metric": "time_to_8_cell",
+      "mean": 27.4096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 8.0,
+      "metric": "cell_count_at_116h",
+      "mean": 16737.3333,
+      "sd": 1191.985,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 8.0,
+      "metric": "cell_count_at_168h",
+      "mean": 1572266.0,
+      "sd": 116567.3729,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 10.8,
+      "metric": "time_to_8_cell",
+      "mean": 35.8096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 10.8,
+      "metric": "cell_count_at_116h",
+      "mean": 1168.6667,
+      "sd": 58.0938,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 10.8,
+      "metric": "cell_count_at_168h",
+      "mean": 34299.3333,
+      "sd": 1702.7136,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 13.0,
+      "metric": "time_to_8_cell",
+      "mean": 42.4096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 13.0,
+      "metric": "cell_count_at_116h",
+      "mean": 324.0,
+      "sd": 27.0924,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 13.0,
+      "metric": "cell_count_at_168h",
+      "mean": 5357.3333,
+      "sd": 293.2591,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 16.0,
+      "metric": "time_to_8_cell",
+      "mean": 51.4096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 16.0,
+      "metric": "cell_count_at_116h",
+      "mean": 121.3333,
+      "sd": 4.0277,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 16.0,
+      "metric": "cell_count_at_168h",
+      "mean": 1034.3333,
+      "sd": 16.5395,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 20.0,
+      "metric": "time_to_8_cell",
+      "mean": 63.4096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 20.0,
+      "metric": "cell_count_at_116h",
+      "mean": 33.3333,
+      "sd": 1.2472,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_mean",
+      "value": 20.0,
+      "metric": "cell_count_at_168h",
+      "mean": 256.0,
+      "sd": 0.0,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 0.0,
+      "metric": "time_to_8_cell",
+      "mean": 32.4,
+      "sd": 0.0,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 0.0,
+      "metric": "cell_count_at_116h",
+      "mean": 1024.0,
+      "sd": 0.0,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 0.0,
+      "metric": "cell_count_at_168h",
+      "mean": 32768.0,
+      "sd": 0.0,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 1.2,
+      "metric": "time_to_8_cell",
+      "mean": 35.8096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 1.2,
+      "metric": "cell_count_at_116h",
+      "mean": 1168.6667,
+      "sd": 58.0938,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 1.2,
+      "metric": "cell_count_at_168h",
+      "mean": 34299.3333,
+      "sd": 1702.7136,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 2.5,
+      "metric": "time_to_8_cell",
+      "mean": 39.4506,
+      "sd": 0.6906,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 2.5,
+      "metric": "cell_count_at_116h",
+      "mean": 1272.0,
+      "sd": 155.1924,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 2.5,
+      "metric": "cell_count_at_168h",
+      "mean": 38005.6667,
+      "sd": 4744.5509,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 5.0,
+      "metric": "time_to_8_cell",
+      "mean": 40.9306,
+      "sd": 2.5189,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 5.0,
+      "metric": "cell_count_at_116h",
+      "mean": 1715.0,
+      "sd": 477.0919,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "value": 5.0,
+      "metric": "cell_count_at_168h",
+      "mean": 63127.6667,
+      "sd": 17661.7284,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.0,
+      "metric": "time_to_8_cell",
+      "mean": 35.8096,
+      "sd": 0.3648,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.0,
+      "metric": "cell_count_at_116h",
+      "mean": 1168.6667,
+      "sd": 58.0938,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.0,
+      "metric": "cell_count_at_168h",
+      "mean": 34299.3333,
+      "sd": 1702.7136,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.01,
+      "metric": "time_to_8_cell",
+      "mean": 36.2,
+      "sd": 1.4408,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.01,
+      "metric": "cell_count_at_116h",
+      "mean": 1014.6667,
+      "sd": 63.0837,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.01,
+      "metric": "cell_count_at_168h",
+      "mean": 28059.0,
+      "sd": 1801.0514,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.05,
+      "metric": "time_to_8_cell",
+      "mean": 41.6384,
+      "sd": 5.2386,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.05,
+      "metric": "cell_count_at_116h",
+      "mean": 621.3333,
+      "sd": 154.07,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.05,
+      "metric": "cell_count_at_168h",
+      "mean": 13901.3333,
+      "sd": 3422.4987,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.1,
+      "metric": "time_to_8_cell",
+      "mean": 76.8657,
+      "sd": 0.0,
+      "n_seeds": 1
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.1,
+      "metric": "cell_count_at_116h",
+      "mean": 17.0,
+      "sd": 24.0416,
+      "n_seeds": 3
+    },
+    {
+      "parameter": "mortality.rate",
+      "value": 0.1,
+      "metric": "cell_count_at_168h",
+      "mean": 310.6667,
+      "sd": 439.349,
+      "n_seeds": 3
+    }
+  ]
+}
