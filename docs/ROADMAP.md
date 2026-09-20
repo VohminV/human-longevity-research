@@ -37,6 +37,24 @@
 Новое в кодовой базе: `longevity.calibration` (reference, stages, compare,
 multirun, sensitivity), milestones в engine, драйвер `experiments/run_calibration.py`.
 
+## Этап 3.5 — Клеточный цикл и динамика раннего развития (готов ✅)
+
+- [x] опциональная группа `cell_cycle.phases` (стадия-зависимые mean/sd и
+      death_per_division; пороги по числу живых клеток; opt-in, обратно совместима)
+- [x] верификация Этапа 3: модель A = поведение v0.1.0 (v1 воспроизводима)
+- [x] проверка H1/H2: частичное закрытие MODEL MISMATCH — времена 2/4 клеток
+      воспроизведены, 8-клеточная с остатком −9%; численности д.5–7 требуют
+      дополнительного позднего тормоза (модель C: д.7 в окне)
+- [x] референс-реестр `cell_cycle.phases.*` (obs/inf/assumption), источники S-19/S-20
+- [x] свипы по 5 ручкам фаз; отчёт-этап `docs/DEVELOPMENTAL_DYNAMICS.md`
+- [ ] [Этап 6] фаза «мижду 2 и 8» (mean ≈ 24 ч) как отдельная фаза; вторичное
+      удлинение 45–47 ч/деление после морулы; судьбы TE/ICM и кавитация
+
+Новое: `cell_cycle` в `params.py`/engine/`config.py`, quantile-отчёты
+(median/p05/p95) в `calibration`, драйвер `experiments/run_stage4.py`,
+конфиги `experiments/configs/stage4_*.json`, тесты
+`tests/test_developmental_dynamics.py`. Версия модели → 0.2.0.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

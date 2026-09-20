@@ -152,6 +152,8 @@ correctness → reproducibility → testability → clarity
 | Единицы времени симуляции — часы (hours) | принято |
 | Теломерная динамика и DNA damage — отдельные опции, выключены по умолчанию (пустой dict = включить с defaults) | принято |
 | Сенесценция в этапе 2 — детерминированная (порог по теломерам / DNA damage) | принято |
+| `cell_cycle` — опциональная группа стадия-зависимого цикла (пороги по числу клеток), opt-in, обратно совместима с v0.1.0 | принято |
+| `population` обязан быть `1` при активированной `cell_cycle` (один эмбрион) | принято |
 
 ## 9. Эксперимент (концепт)
 
@@ -169,3 +171,25 @@ Experiment(
 Результат сохраняет: seed, configuration, model version, source dataset version,
 parameters, interventions, metrics, simulation duration, result summary.
 Подробнее — `docs/EXPERIMENTS.md`.
+
+## 10. Параметрическая группа `cell_cycle` (v0.2.0)
+
+Опциональная группа верхнего уровня в `parameters` (валидация —
+`longevity.biology.params`):
+
+```
+cell_cycle:
+  phases: [ { threshold, mean, sd?, death_per_division? }, ... ]
+```
+
+- Фаза активна при `threshold <= число живых клеток` (пороги строго
+  возрастающие, первый = 0). Цикл деления в активной фазе — `max(0, gauss(mean, sd))`.
+- `sd` по умолчанию = `doubling_time_sd`; `death_per_division` по умолчанию = 0.0
+  и комбинируется с глобальным `mortality.rate` как независимый риск.
+- Без группы движок ведёт себя как v0.1.0 (долевое `doubling_time_mean/sd`).
+- `apply_interventions` адресует фазы через индексы списка
+  (`cell_cycle.phases.2.mean`); список фаз нельзя создать «с нуля» интервенцией.
+- Семантика запуска: `cell_cycle` ⇒ единичный эмбрион ⇒ `population == 1`
+  (ошибка в движке и в `ExperimentConfig`).
+
+Детали и валидационные правила — `docs/DEVELOPMENTAL_DYNAMICS.md` §2.
