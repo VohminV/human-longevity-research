@@ -1,0 +1,1 @@
+"""ANALYSIS LAYER: metrics and summary computed from engine state."""
