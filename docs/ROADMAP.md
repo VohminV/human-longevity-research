@@ -3,35 +3,25 @@
 Цели и порядок работ. Этапы следуют принципу
 **наука → модель → симулятор → эксперименты → проверка гипотез**.
 
-## Этап 1 — Научная и архитектурная основа (текущий)
+## Этап 1 — Научная и архитектурная основа (готов ✅)
 
-Выполнить:
+Выход: зафиксированные научные точки, допущения, архитектура и каталог источников.
+Коммит: `07651e6 docs: establish research foundation (stage 1)`.
 
-- [x] аудит репозитория (пустой; создана структура)
-- [x] первичное исследование cell-count данных (источники, прямые подсчёты)
-- [x] базовая структура `docs/`
-- [x] `README.md`
-- [x] `docs/RESEARCH.md`, `docs/BIOLOGY.md`, `docs/CELL_COUNT.md`,
-      `docs/CELLULAR_AGING.md`, `docs/LONGEVITY.md`, `docs/IMMORTALITY.md`
-- [x] `docs/ASSUMPTIONS.md`, `docs/LIMITATIONS.md`
-- [x] `docs/ARCHITECTURE.md`, `docs/EXPERIMENTS.md`
-- [x] `docs/ROADMAP.md`, `docs/DATA_SOURCES.md`
-- [x] `pyproject.toml`, `.gitignore`
-- [ ] минимальный тестовый каркас (в SESSE progress)
-- [ ] первый коммит после проверки (`git status`, `git diff`)
+## Этап 2 — Минимальная модель клетки (reference) (готов ✅)
 
-Выход этапа: зафиксированные научные точки, допущения, архитектура и каталог источников.
-
-## Этап 2 — Минимальная модель клетки (reference)
-
-- [ ] модели: `Cell`, клеточный цикл, деление, смерть, lineage
-- [ ] детерминированность по seed; уникальные id; parent/generation/lineage
-- [ ] инварианты и тесты (детерминизм, уникальность id, parent-child, поколение,
+- [x] модели: `Cell`, клеточный цикл, деление, смерть, lineage
+- [x] детерминированность по seed; уникальные id; parent/generation/lineage
+- [x] инварианты и тесты (детерминизм, уникальность id, parent-child, поколение,
       lineage, деление, смерть, сенесценция)
-- [ ] теломерная динамика (базовая) и DNA damage (базовое) как отдельные опции
-      >=0 параметров
-- [ ] checkpoint/restore (RNG сериализуется)
-- [ ] `Experiment`-конфигурация и запись результатов (JSON)
+- [x] теломерная динамика (базовая) и DNA damage (базовое) как отдельные опции
+      >=0 параметров (по умолчанию выключены); mortality — отдельная опция
+- [x] checkpoint/restore (RNG сериализуется, restore после JSON-roundtrip
+      идентичен непрерывному запуску)
+- [x] `Experiment`-конфигурация и запись результатов (JSON)
+
+Модули: `longevity.biology` (cell, params), `longevity.sim` (rng, engine),
+`longevity.experiment` (config, runner), `longevity.analysis` (metrics).
 
 ## Этап 3 — Динамика раннего развития
 

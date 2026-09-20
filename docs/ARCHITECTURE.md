@@ -56,15 +56,15 @@ src/longevity/
   __init__.py
   version.py
   data/           # отдельный слой данных (позже)
-  biology/        # клетка, цикл, деление, смерть, lineage
-  sim/            # движок, RNG, события, checkpoint
-  experiment/     # конфигурация, intervention, протокол
-  analysis/       # метрики, summary
+  biology/        # cell.py (Cell, статусы, lineage), params.py (параметры, интервенции)
+  sim/            # rng.py (инъекцируемый RNG), engine.py (PopulationEngine, checkpoint)
+  experiment/     # config.py (ExperimentConfig), runner.py (run_experiment -> JSON)
+  analysis/       # metrics.py (population_metrics, experiment_summary)
 tests/
   ...
 ```
 
-Точный состав меняется на этапе 2 (см. `docs/ROADMAP.md`). Сейчас — только скелет.
+Состав на этапе 2 зафиксирован (см. `docs/ROADMAP.md`).
 
 ## 3. Модель клетки (концептуальная спецификация)
 
@@ -103,21 +103,24 @@ environmental_state
 
 ## 5. Checkpoint / restore
 
-Формат (позже):
+Формат реализован в `longevity.sim.engine.PopulationEngine.to_checkpoint_dict`
+(+ `from_checkpoint`). Первый уровень зафиксирован:
 
 ```
 checkpoint = {
   "model_version": "0.1.0",
-  "experiment_id": "exp-...",
-  "seed": 42,
   "sim_time": ...,
-  "rng_state": ...,         # сериализованное состояние RNG
-  "population": [...],      # сериализованные клетки
+  "next_id": ...,
+  "rng_state": [...],         # сериализованное состояние RNG (state_to_json)
+  "population": {...},        # id -> клетка (cell.to_dict); lineage -> list
+  "counters": {...},
   "parameters": {...},
-  "interventions": [...],
-  "metrics": {...},
 }
 ```
+
+Формат JSON-safe: `to_checkpoint_dict` + `json.dumps` + `json.loads` +
+`from_checkpoint` даёт симуляцию, идентичную непрерывному запуску (тест
+`test_restore_after_json_roundtrip`).
 
 ## 6. Производительность
 
@@ -146,6 +149,9 @@ correctness → reproducibility → testability → clarity
 | Reference-реализация, оптимизация позже | принято |
 | Эксперименты хранят полный контекст (seed, версии, параметры) | принято |
 | GUI/визуализация — вне ядра | принято |
+| Единицы времени симуляции — часы (hours) | принято |
+| Теломерная динамика и DNA damage — отдельные опции, выключены по умолчанию (пустой dict = включить с defaults) | принято |
+| Сенесценция в этапе 2 — детерминированная (порог по теломерам / DNA damage) | принято |
 
 ## 9. Эксперимент (концепт)
 

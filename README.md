@@ -95,24 +95,35 @@ tests/         — тесты ключевых инвариантов
 
 ## Статус проекта
 
-**Этап 1 — научная и архитектурная основа.** Реализуется сейчас:
+**Этап 1 — научная и архитектурная основа** — завершён `07651e6`.
 
-- [ ] аудит репозитория
-- [x] исследование cell-count данных (первичный обзор источников)
-- [ ] документация (`docs/`)
-- [ ] базовая конфигурация (`pyproject.toml`, `.gitignore`)
-- [ ] минимальный тестовый каркас
+**Этап 2 — минимальная модель клетки (reference)** — реализован:
+
+- [x] `Cell`, статусы (normal / senescent / apoptotic / dead), lineage, деление, смерть
+- [x] детерминизм по seed; уникальные id; parent/generation/lineage (инварианты + тесты)
+- [x] теломерная динамика и DNA damage — отдельные опции (выключены по умолчанию),
+      mortality — отдельная опция
+- [x] checkpoint/restore (RNG сериализуется, restore идентичен непрерывному запуску)
+- [x] `ExperimentConfig` и запись результатов в JSON (`experiments/output/`)
 
 Полный план — в `docs/ROADMAP.md`.
 
 ## Как начать
 
-Текущий этап не требует исполнения симулятора. Для проверки тестового каркаса после
-установки окружения:
-
 ```bash
 python -m pip install -e ".[dev]"
 python -m pytest
+```
+
+Быстрый запуск минимального эксперимента:
+
+```bash
+python -c "import sys; sys.path.insert(0, 'src');
+from longevity.experiment.config import ExperimentConfig;
+from longevity.experiment.runner import run_experiment;
+run_experiment(ExperimentConfig(experiment_id='demo', seed=42, population=1,
+duration=168.0, model_version='0.1.0', data_version='0.0.1'),
+out_path='experiments/output/demo.json')"
 ```
 
 <!--

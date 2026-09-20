@@ -48,17 +48,25 @@ healthspan, lifespan
 
 ## 4. Результат (файл результата)
 
+Формат реализован в `longevity.experiment.runner.run_experiment`
+(`RESULT_FORMAT_VERSION = "1.0"`, `ENGINE_VERSION = "population-engine/v0"`):
+
 ```
 {
   "experiment_id": ...,
-  "config": {seed, population, duration, model_version, data_version,
-             parameters, interventions, metrics_config},
-  "metrics": {по интервалам времени},
-  "summary": {lifespan, healthspan, деградация метрик, ...},
-  "runtime": {время исполнения, версия движка},
-  "rng_summary": {подтверждение seed},
+  "config": {experiment_id, seed, population, duration, model_version,
+             data_version, parameters, effective_parameters, interventions,
+             metrics_config, notes},
+  "metrics": {series: [{sim_time, population, normal, senescent, dead, depth, ...}],
+              final: {...}},
+  "summary": {final_population, final_normal, final_senescent, total_deaths,
+              total_divisions, max_lineage_depth, population_senescent_fraction},
+  "runtime": {engine, run_duration_s, platform, timestamp_utc, model_version},
+  "rng_summary": {rng_seed_confirmed, ...},
 }
 ```
+
+Запись в JSON — через `out_path` (родительский каталог создаётся автоматически).
 
 ## 5. Сравнение (baseline vs intervention)
 
@@ -87,7 +95,8 @@ healthspan, lifespan
 
 ## 8. Открытые вопросы перед реализацией
 
-1. Единицы времени и «поколения» (steps vs real time vs поколения).
+1. **Единицы времени — РЕШЕНО: часы (hours).** `duration` и все параметры времени
+   (например, `doubling_time_mean`) — в часах. Поколения выводятся из lineage.
 2. Что считать порогом «деградации» для healthspan (задание по умолчанию).
 3. Стандартный минимальный набор интервенций (клонирование параметров).
 4. Достаточно ли одной метрики-индикатора для ранней фазы (недостаточно — см. §3).
