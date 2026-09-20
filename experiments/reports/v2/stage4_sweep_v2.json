@@ -1,0 +1,924 @@
+{
+  "tag": "v2",
+  "base_model": "stage4_model_b",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "rows": [
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 14.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 14.0,
+      "metric": "time_to_4_cell",
+      "mean": 43.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 14.0,
+      "metric": "time_to_8_cell",
+      "mean": 58.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 14.0,
+      "metric": "cell_count_at_120h",
+      "mean": 51.0,
+      "sd": 2.9155,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 14.0,
+      "metric": "cell_count_at_144h",
+      "mean": 99.25,
+      "sd": 4.1458,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 14.0,
+      "metric": "cell_count_at_168h",
+      "mean": 197.75,
+      "sd": 11.1215,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 17.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 17.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 17.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 17.0,
+      "metric": "cell_count_at_120h",
+      "mean": 34.25,
+      "sd": 1.299,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 17.0,
+      "metric": "cell_count_at_144h",
+      "mean": 72.5,
+      "sd": 2.8723,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 17.0,
+      "metric": "cell_count_at_168h",
+      "mean": 147.25,
+      "sd": 9.8075,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 20.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 20.0,
+      "metric": "time_to_4_cell",
+      "mean": 49.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 20.0,
+      "metric": "time_to_8_cell",
+      "mean": 70.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 20.0,
+      "metric": "cell_count_at_120h",
+      "mean": 32.0,
+      "sd": 0.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 20.0,
+      "metric": "cell_count_at_144h",
+      "mean": 63.25,
+      "sd": 1.6394,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 20.0,
+      "metric": "cell_count_at_168h",
+      "mean": 124.75,
+      "sd": 6.6097,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 24.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 24.0,
+      "metric": "time_to_4_cell",
+      "mean": 53.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 24.0,
+      "metric": "time_to_8_cell",
+      "mean": 78.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 24.0,
+      "metric": "cell_count_at_120h",
+      "mean": 18.5,
+      "sd": 2.2913,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 24.0,
+      "metric": "cell_count_at_144h",
+      "mean": 41.0,
+      "sd": 5.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "value": 24.0,
+      "metric": "cell_count_at_168h",
+      "mean": 83.75,
+      "sd": 8.2576,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 17.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 17.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 17.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 17.0,
+      "metric": "cell_count_at_120h",
+      "mean": 66.25,
+      "sd": 2.586,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 17.0,
+      "metric": "cell_count_at_144h",
+      "mean": 178.5,
+      "sd": 18.7417,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 17.0,
+      "metric": "cell_count_at_168h",
+      "mean": 479.75,
+      "sd": 41.6135,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 24.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 24.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 24.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 24.0,
+      "metric": "cell_count_at_120h",
+      "mean": 34.25,
+      "sd": 1.299,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 24.0,
+      "metric": "cell_count_at_144h",
+      "mean": 72.5,
+      "sd": 2.8723,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 24.0,
+      "metric": "cell_count_at_168h",
+      "mean": 147.25,
+      "sd": 9.8075,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 32.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 32.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 32.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 32.0,
+      "metric": "cell_count_at_120h",
+      "mean": 28.0,
+      "sd": 0.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 32.0,
+      "metric": "cell_count_at_144h",
+      "mean": 48.5,
+      "sd": 3.6401,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 32.0,
+      "metric": "cell_count_at_168h",
+      "mean": 72.5,
+      "sd": 2.8723,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 40.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 40.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 40.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 40.0,
+      "metric": "cell_count_at_120h",
+      "mean": 24.0,
+      "sd": 2.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 40.0,
+      "metric": "cell_count_at_144h",
+      "mean": 31.0,
+      "sd": 0.7071,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "value": 40.0,
+      "metric": "cell_count_at_168h",
+      "mean": 56.0,
+      "sd": 0.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 8.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 8.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 8.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 8.0,
+      "metric": "cell_count_at_120h",
+      "mean": 34.25,
+      "sd": 1.299,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 8.0,
+      "metric": "cell_count_at_144h",
+      "mean": 72.5,
+      "sd": 2.8723,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 8.0,
+      "metric": "cell_count_at_168h",
+      "mean": 147.25,
+      "sd": 9.8075,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 16.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 16.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 16.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 16.0,
+      "metric": "cell_count_at_120h",
+      "mean": 49.0,
+      "sd": 3.2404,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 16.0,
+      "metric": "cell_count_at_144h",
+      "mean": 96.75,
+      "sd": 4.8153,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 16.0,
+      "metric": "cell_count_at_168h",
+      "mean": 193.0,
+      "sd": 11.225,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 32.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 32.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 32.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 32.0,
+      "metric": "cell_count_at_120h",
+      "mean": 62.25,
+      "sd": 0.433,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 32.0,
+      "metric": "cell_count_at_144h",
+      "mean": 124.5,
+      "sd": 2.5981,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "value": 32.0,
+      "metric": "cell_count_at_168h",
+      "mean": 242.5,
+      "sd": 4.3875,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 0.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 0.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 0.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 0.0,
+      "metric": "cell_count_at_120h",
+      "mean": 32.0,
+      "sd": 0.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 0.0,
+      "metric": "cell_count_at_144h",
+      "mean": 64.0,
+      "sd": 0.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 0.0,
+      "metric": "cell_count_at_168h",
+      "mean": 128.0,
+      "sd": 0.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 3.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 3.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 3.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 3.0,
+      "metric": "cell_count_at_120h",
+      "mean": 34.25,
+      "sd": 1.299,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 3.0,
+      "metric": "cell_count_at_144h",
+      "mean": 72.5,
+      "sd": 2.8723,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 3.0,
+      "metric": "cell_count_at_168h",
+      "mean": 147.25,
+      "sd": 9.8075,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 6.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 6.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 6.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 6.0,
+      "metric": "cell_count_at_120h",
+      "mean": 41.75,
+      "sd": 5.3092,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 6.0,
+      "metric": "cell_count_at_144h",
+      "mean": 85.0,
+      "sd": 10.5119,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 6.0,
+      "metric": "cell_count_at_168h",
+      "mean": 168.0,
+      "sd": 21.0,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 12.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 12.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 12.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 12.0,
+      "metric": "cell_count_at_120h",
+      "mean": 52.75,
+      "sd": 11.8189,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 12.0,
+      "metric": "cell_count_at_144h",
+      "mean": 109.0,
+      "sd": 26.7769,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "value": 12.0,
+      "metric": "cell_count_at_168h",
+      "mean": 233.0,
+      "sd": 59.6867,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.0,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.0,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.0,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.0,
+      "metric": "cell_count_at_120h",
+      "mean": 34.25,
+      "sd": 1.299,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.0,
+      "metric": "cell_count_at_144h",
+      "mean": 72.5,
+      "sd": 2.8723,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.0,
+      "metric": "cell_count_at_168h",
+      "mean": 147.25,
+      "sd": 9.8075,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.05,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.05,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.05,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.05,
+      "metric": "cell_count_at_120h",
+      "mean": 29.75,
+      "sd": 6.139,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.05,
+      "metric": "cell_count_at_144h",
+      "mean": 56.75,
+      "sd": 12.1732,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.05,
+      "metric": "cell_count_at_168h",
+      "mean": 107.25,
+      "sd": 24.8131,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.1,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.1,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.1,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.1,
+      "metric": "cell_count_at_120h",
+      "mean": 27.5,
+      "sd": 5.5,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.1,
+      "metric": "cell_count_at_144h",
+      "mean": 47.0,
+      "sd": 7.4498,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.1,
+      "metric": "cell_count_at_168h",
+      "mean": 85.5,
+      "sd": 12.2168,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.2,
+      "metric": "time_to_2_cell",
+      "mean": 27.881,
+      "sd": 1.8971,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.2,
+      "metric": "time_to_4_cell",
+      "mean": 46.2157,
+      "sd": 1.8596,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.2,
+      "metric": "time_to_8_cell",
+      "mean": 64.4421,
+      "sd": 0.7639,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.2,
+      "metric": "cell_count_at_120h",
+      "mean": 22.75,
+      "sd": 2.8614,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.2,
+      "metric": "cell_count_at_144h",
+      "mean": 35.5,
+      "sd": 8.6168,
+      "n_seeds": 4
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "value": 0.2,
+      "metric": "cell_count_at_168h",
+      "mean": 56.75,
+      "sd": 12.2958,
+      "n_seeds": 4
+    }
+  ]
+}

@@ -1,0 +1,651 @@
+{
+  "experiment_id": "stage4_model_b_fast",
+  "model_version": "0.2.0",
+  "data_version": "0.1.0",
+  "calibration_dataset": "preimplantation/v1",
+  "parameters": {
+    "doubling_time_mean": 10.8,
+    "doubling_time_sd": 1.2,
+    "cell_cycle": {
+      "phases": [
+        {
+          "threshold": 0,
+          "mean": 26.0,
+          "sd": 2.0,
+          "death_per_division": 0.0
+        },
+        {
+          "threshold": 2,
+          "mean": 17.0,
+          "sd": 1.5,
+          "death_per_division": 0.0
+        },
+        {
+          "threshold": 8,
+          "mean": 17.0,
+          "sd": 1.5,
+          "death_per_division": 0.0
+        }
+      ]
+    }
+  },
+  "parameter_status": [
+    {
+      "parameter": "doubling_time_mean",
+      "status": "inf",
+      "value": 10.8,
+      "rationale": "Per-division doubling time 10-12 h cited for cleavage-stage human embryos (S-8). Default 10.8 h. This describes the per-division draw, NOT the net population doubling of the whole preimplantation window; the two differ because cleavage is asynchronous and, in the real embryo, the cell cycle lengthens late (blastocyst).",
+      "source": "S-8"
+    },
+    {
+      "parameter": "doubling_time_sd",
+      "status": "assumption",
+      "value": 1.2,
+      "rationale": "Scatter of per-division cycle length is not directly measured; 1.2 h is a modelling choice.",
+      "source": ""
+    },
+    {
+      "parameter": "mortality.rate",
+      "status": "assumption",
+      "value": 0.0,
+      "rationale": "Cell death at blastocyst stages is real (Hardy 1989 reports a few % per embryo) but is not constrained by a measured rate; default 0.0 keeps the baseline honest.",
+      "source": "S-6"
+    },
+    {
+      "parameter": "telomere.length_start",
+      "status": "unknown",
+      "value": 100.0,
+      "rationale": "Telomere mechanics are irrelevant within the 0-168 h calibration window (no divisions shorten a zygote to senescence).",
+      "source": ""
+    },
+    {
+      "parameter": "telomere.loss_per_division",
+      "status": "unknown",
+      "value": 5.0,
+      "rationale": "Same as telomere.length_start: out of calibration scope.",
+      "source": ""
+    },
+    {
+      "parameter": "dna_damage.accrual_per_division",
+      "status": "unknown",
+      "value": 0.2,
+      "rationale": "DNA-damage burden is out of calibration scope for the 0-168 h window.",
+      "source": ""
+    },
+    {
+      "parameter": "dna_damage.threshold",
+      "status": "unknown",
+      "value": 5.0,
+      "rationale": "Out of calibration scope.",
+      "source": ""
+    },
+    {
+      "parameter": "dna_damage.repair_per_division",
+      "status": "unknown",
+      "value": 0.0,
+      "rationale": "Out of calibration scope.",
+      "source": ""
+    },
+    {
+      "parameter": "cell_cycle.phases.0.threshold",
+      "status": "assumption",
+      "value": 0.0,
+      "rationale": "Structural phase boundary: phase 0 governs the first division(s) of the zygote (living count >= 1). A phase threshold is the living cell count selecting the phase, a modelling convention over an observable quantity.",
+      "source": ""
+    },
+    {
+      "parameter": "cell_cycle.phases.0.mean",
+      "status": "obs",
+      "value": 26.0,
+      "rationale": "Duration of the first division (zygote -> 2-cell): Istanbul consensus places 2-cell at 26-28 h post-insemination (S-7), so the first cycle is ~24-28 h. Mean 26 h sits inside the consensus range.",
+      "source": "S-7"
+    },
+    {
+      "parameter": "cell_cycle.phases.0.sd",
+      "status": "assumption",
+      "value": 2.0,
+      "rationale": "Cycle-length scatter of the first division not directly measured; 2.0 h keeps 26 +/- a plausible spread inside the 24-28 h window.",
+      "source": ""
+    },
+    {
+      "parameter": "cell_cycle.phases.0.death_per_division",
+      "status": "assumption",
+      "value": 0.0,
+      "rationale": "Default 0; Model C raises the post-8-cell phase death (documented blastocyst phenomenon, rate unconstrained, S-6).",
+      "source": "S-6"
+    },
+    {
+      "parameter": "cell_cycle.phases.1.threshold",
+      "status": "assumption",
+      "value": 2.0,
+      "rationale": "Cleavage phase starts once the embryo has 2 cells (count >= 2). Boundary choice; compatible with EGA timing literature (bulk transcription only after the reductive cleavage series, S-19).",
+      "source": "S-19"
+    },
+    {
+      "parameter": "cell_cycle.phases.1.mean",
+      "status": "inf",
+      "value": 17.0,
+      "rationale": "Cleavage-stage cycle length inferred from the Istanbul timing segment: 2-cell at ~27 h, 4-cell at ~44 h (S-7) gives ~17 h per cleavage division. By contrast the S-8 time-lapse per-division figure of 10-12 h, measured over short windows, cannot reproduce the observed stage-reach times and is documented as a discrepancy rather than used.",
+      "source": "S-7"
+    },
+    {
+      "parameter": "cell_cycle.phases.1.sd",
+      "status": "assumption",
+      "value": 1.5,
+      "rationale": "Scatter of cleavage-cycle length not directly measured; 1.5 h is a modelling choice.",
+      "source": ""
+    },
+    {
+      "parameter": "cell_cycle.phases.1.death_per_division",
+      "status": "assumption",
+      "value": 0.0,
+      "rationale": "Cleavage-stage cell death is minimal in the reference window; kept 0.",
+      "source": ""
+    },
+    {
+      "parameter": "cell_cycle.phases.2.threshold",
+      "status": "inf",
+      "value": 8.0,
+      "rationale": "Post-EGA phase begins at the 8-cell count: major human ZGA is completed by the 8-cell stage (S-19, S-20), after which cleavage lengthens. Boundary taken as count >= 8.",
+      "source": "S-19"
+    },
+    {
+      "parameter": "cell_cycle.phases.2.mean",
+      "status": "inf",
+      "value": 24.0,
+      "rationale": "Post-EGA cycle length inferred as intermediate (~24 h): the S-7 blastocyst reach (~116 h) and Hardy growth from day 5 to day 7 (58 -> 84 -> 126 cells; S-6) imply effective per-division times of ~18-24 h deep into blastulation. 45-47 h would be needed to match the day 5-7 net growth alone, which overshoots the early counts; the U-shaped deceleration that no single lengthened phase can fit is a Stage 4 finding (see CALIBRATION.md), not a hidden parameter.",
+      "source": "S-7"
+    },
+    {
+      "parameter": "cell_cycle.phases.2.sd",
+      "status": "assumption",
+      "value": 3.0,
+      "rationale": "Scatter of post-EGA cycle length not directly measured; 3.0 h is a modelling choice.",
+      "source": ""
+    },
+    {
+      "parameter": "cell_cycle.phases.2.death_per_division",
+      "status": "assumption",
+      "value": 0.0,
+      "rationale": "Per-division death rate at blastulation is a documented phenomenon (Hardy 1989), but its value is not constrained by a measurement -- default 0. Model C sets it to 0.05 as a stated assumption to test whether death alone (without cycle tuning) reconciles the late counts; the sweep sweeps 0.0-0.20.",
+      "source": "S-6"
+    }
+  ],
+  "population": 1,
+  "duration_hours": 168.0,
+  "sample_interval_hours": 1.0,
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ],
+  "n_seeds": 20,
+  "per_seed_metrics": {
+    "1": {
+      "time_to_2_cell": 28.576369506310925,
+      "time_to_4_cell": 47.75053791936058,
+      "time_to_8_cell": 64.79753969460816,
+      "cell_count_at_120h": 64,
+      "cell_count_at_144h": 143,
+      "cell_count_at_168h": 460
+    },
+    "2": {
+      "time_to_2_cell": 30.676333472351804,
+      "time_to_4_cell": 48.26862290419855,
+      "time_to_8_cell": 64.93477547975262,
+      "cell_count_at_120h": 65,
+      "cell_count_at_144h": 152,
+      "cell_count_at_168h": 466
+    },
+    "3": {
+      "time_to_2_cell": 26.18941607657461,
+      "time_to_4_cell": 45.06445264819993,
+      "time_to_8_cell": 64.91404056589707,
+      "cell_count_at_120h": 66,
+      "cell_count_at_144h": 173,
+      "cell_count_at_168h": 510
+    },
+    "4": {
+      "time_to_2_cell": 26.08171188958621,
+      "time_to_4_cell": 43.77901001979542,
+      "time_to_8_cell": 63.122106358590244,
+      "cell_count_at_120h": 64,
+      "cell_count_at_144h": 158,
+      "cell_count_at_168h": 487
+    },
+    "5": {
+      "time_to_2_cell": 23.64231649753866,
+      "time_to_4_cell": 41.64651986911761,
+      "time_to_8_cell": 60.29797726360415,
+      "cell_count_at_120h": 71,
+      "cell_count_at_144h": 226,
+      "cell_count_at_168h": 522
+    },
+    "6": {
+      "time_to_2_cell": 26.99935118627162,
+      "time_to_4_cell": 42.83624667030531,
+      "time_to_8_cell": 60.527136487236035,
+      "cell_count_at_120h": 64,
+      "cell_count_at_144h": 180,
+      "cell_count_at_168h": 507
+    },
+    "7": {
+      "time_to_2_cell": 25.488239423104798,
+      "time_to_4_cell": 43.255386691879565,
+      "time_to_8_cell": 61.92326276335905,
+      "cell_count_at_120h": 65,
+      "cell_count_at_144h": 184,
+      "cell_count_at_168h": 499
+    },
+    "8": {
+      "time_to_2_cell": 26.746830339247975,
+      "time_to_4_cell": 47.54644852134014,
+      "time_to_8_cell": 65.57469406480672,
+      "cell_count_at_120h": 60,
+      "cell_count_at_144h": 132,
+      "cell_count_at_168h": 405
+    },
+    "9": {
+      "time_to_2_cell": 24.118486231943024,
+      "time_to_4_cell": 43.05870227379117,
+      "time_to_8_cell": 60.754490791438016,
+      "cell_count_at_120h": 64,
+      "cell_count_at_144h": 189,
+      "cell_count_at_168h": 504
+    },
+    "10": {
+      "time_to_2_cell": 24.092565983873325,
+      "time_to_4_cell": 40.403924748615296,
+      "time_to_8_cell": 58.27626923667479,
+      "cell_count_at_120h": 71,
+      "cell_count_at_144h": 219,
+      "cell_count_at_168h": 532
+    },
+    "11": {
+      "time_to_2_cell": 23.55185464857207,
+      "time_to_4_cell": 42.044354090078485,
+      "time_to_8_cell": 59.761372243452215,
+      "cell_count_at_120h": 65,
+      "cell_count_at_144h": 187,
+      "cell_count_at_168h": 507
+    },
+    "12": {
+      "time_to_2_cell": 23.109624620773527,
+      "time_to_4_cell": 40.45896435560712,
+      "time_to_8_cell": 58.142751930758436,
+      "cell_count_at_120h": 64,
+      "cell_count_at_144h": 201,
+      "cell_count_at_168h": 509
+    },
+    "13": {
+      "time_to_2_cell": 25.827962027560943,
+      "time_to_4_cell": 45.10510072692367,
+      "time_to_8_cell": 63.103739154940115,
+      "cell_count_at_120h": 66,
+      "cell_count_at_144h": 167,
+      "cell_count_at_168h": 475
+    },
+    "14": {
+      "time_to_2_cell": 28.43895987224049,
+      "time_to_4_cell": 46.89181330987704,
+      "time_to_8_cell": 65.03465832678697,
+      "cell_count_at_120h": 67,
+      "cell_count_at_144h": 164,
+      "cell_count_at_168h": 443
+    },
+    "15": {
+      "time_to_2_cell": 26.29896954563161,
+      "time_to_4_cell": 43.249206904540884,
+      "time_to_8_cell": 61.8979634584746,
+      "cell_count_at_120h": 65,
+      "cell_count_at_144h": 179,
+      "cell_count_at_168h": 503
+    },
+    "16": {
+      "time_to_2_cell": 24.52422875702511,
+      "time_to_4_cell": 42.836387838373724,
+      "time_to_8_cell": 61.018940640807855,
+      "cell_count_at_120h": 66,
+      "cell_count_at_144h": 190,
+      "cell_count_at_168h": 514
+    },
+    "17": {
+      "time_to_2_cell": 22.40855857852368,
+      "time_to_4_cell": 40.611036264489016,
+      "time_to_8_cell": 57.22804297255169,
+      "cell_count_at_120h": 70,
+      "cell_count_at_144h": 231,
+      "cell_count_at_168h": 538
+    },
+    "18": {
+      "time_to_2_cell": 27.232076430737973,
+      "time_to_4_cell": 46.23700416356118,
+      "time_to_8_cell": 63.35226756846979,
+      "cell_count_at_120h": 64,
+      "cell_count_at_144h": 162,
+      "cell_count_at_168h": 469
+    },
+    "19": {
+      "time_to_2_cell": 24.45007431866305,
+      "time_to_4_cell": 39.669406188099835,
+      "time_to_8_cell": 59.82395843463087,
+      "cell_count_at_120h": 71,
+      "cell_count_at_144h": 214,
+      "cell_count_at_168h": 530
+    },
+    "20": {
+      "time_to_2_cell": 28.525503045787566,
+      "time_to_4_cell": 45.86221171930136,
+      "time_to_8_cell": 65.37782258376551,
+      "cell_count_at_120h": 60,
+      "cell_count_at_144h": 166,
+      "cell_count_at_168h": 425
+    }
+  },
+  "modelled": {
+    "cell_count_at_120h": {
+      "mean": 65.6,
+      "sd": 3.0725,
+      "median": 65,
+      "p05": 60,
+      "p95": 71,
+      "n_seeds": 20,
+      "values": [
+        64,
+        65,
+        66,
+        64,
+        71,
+        64,
+        65,
+        60,
+        64,
+        71,
+        65,
+        64,
+        66,
+        67,
+        65,
+        66,
+        70,
+        64,
+        71,
+        60
+      ]
+    },
+    "cell_count_at_144h": {
+      "mean": 180.85,
+      "sd": 26.4599,
+      "median": 179,
+      "p05": 132,
+      "p95": 226,
+      "n_seeds": 20,
+      "values": [
+        143,
+        152,
+        173,
+        158,
+        226,
+        180,
+        184,
+        132,
+        189,
+        219,
+        187,
+        201,
+        167,
+        164,
+        179,
+        190,
+        231,
+        162,
+        214,
+        166
+      ]
+    },
+    "cell_count_at_168h": {
+      "mean": 490.25,
+      "sd": 35.2574,
+      "median": 503,
+      "p05": 405,
+      "p95": 532,
+      "n_seeds": 20,
+      "values": [
+        460,
+        466,
+        510,
+        487,
+        522,
+        507,
+        499,
+        405,
+        504,
+        532,
+        507,
+        509,
+        475,
+        443,
+        503,
+        514,
+        538,
+        469,
+        530,
+        425
+      ]
+    },
+    "time_to_2_cell": {
+      "mean": 25.849,
+      "sd": 2.1028,
+      "median": 25.828,
+      "p05": 22.4086,
+      "p95": 28.5764,
+      "n_seeds": 20,
+      "values": [
+        28.5764,
+        30.6763,
+        26.1894,
+        26.0817,
+        23.6423,
+        26.9994,
+        25.4882,
+        26.7468,
+        24.1185,
+        24.0926,
+        23.5519,
+        23.1096,
+        25.828,
+        28.439,
+        26.299,
+        24.5242,
+        22.4086,
+        27.2321,
+        24.4501,
+        28.5255
+      ]
+    },
+    "time_to_4_cell": {
+      "mean": 43.8288,
+      "sd": 2.5817,
+      "median": 43.2492,
+      "p05": 39.6694,
+      "p95": 47.7505,
+      "n_seeds": 20,
+      "values": [
+        47.7505,
+        48.2686,
+        45.0645,
+        43.779,
+        41.6465,
+        42.8362,
+        43.2554,
+        47.5464,
+        43.0587,
+        40.4039,
+        42.0444,
+        40.459,
+        45.1051,
+        46.8918,
+        43.2492,
+        42.8364,
+        40.611,
+        46.237,
+        39.6694,
+        45.8622
+      ]
+    },
+    "time_to_8_cell": {
+      "mean": 61.9932,
+      "sd": 2.5641,
+      "median": 61.898,
+      "p05": 57.228,
+      "p95": 65.3778,
+      "n_seeds": 20,
+      "values": [
+        64.7975,
+        64.9348,
+        64.914,
+        63.1221,
+        60.298,
+        60.5271,
+        61.9233,
+        65.5747,
+        60.7545,
+        58.2763,
+        59.7614,
+        58.1428,
+        63.1037,
+        65.0347,
+        61.898,
+        61.0189,
+        57.228,
+        63.3523,
+        59.824,
+        65.3778
+      ]
+    }
+  },
+  "comparisons": [
+    {
+      "key": "time_to_2_cell",
+      "label": "2-cell stage reached",
+      "observed_mean": 27.0,
+      "observed_sd": null,
+      "observed_range": [
+        26.0,
+        28.0
+      ],
+      "modelled_mean": 25.849,
+      "modelled_sd": 2.1028,
+      "absolute_error": -1.151,
+      "relative_error": -0.0426,
+      "within_observed": false,
+      "n_seeds": 20,
+      "modelled_median": 25.828,
+      "modelled_p05": 22.4086,
+      "modelled_p95": 28.5764
+    },
+    {
+      "key": "time_to_4_cell",
+      "label": "4-cell stage reached",
+      "observed_mean": 44.0,
+      "observed_sd": null,
+      "observed_range": [
+        43.0,
+        45.0
+      ],
+      "modelled_mean": 43.8288,
+      "modelled_sd": 2.5817,
+      "absolute_error": -0.1712,
+      "relative_error": -0.0039,
+      "within_observed": true,
+      "n_seeds": 20,
+      "modelled_median": 43.2492,
+      "modelled_p05": 39.6694,
+      "modelled_p95": 47.7505
+    },
+    {
+      "key": "time_to_8_cell",
+      "label": "8-cell stage reached",
+      "observed_mean": 68.0,
+      "observed_sd": null,
+      "observed_range": [
+        67.0,
+        69.0
+      ],
+      "modelled_mean": 61.9932,
+      "modelled_sd": 2.5641,
+      "absolute_error": -6.0068,
+      "relative_error": -0.0883,
+      "within_observed": false,
+      "n_seeds": 20,
+      "modelled_median": 61.898,
+      "modelled_p05": 57.228,
+      "modelled_p95": 65.3778
+    },
+    {
+      "key": "cell_count_at_120h",
+      "label": "blastocyst cell count, day 5",
+      "observed_mean": 58.3,
+      "observed_sd": 8.1,
+      "observed_range": null,
+      "modelled_mean": 65.6,
+      "modelled_sd": 3.0725,
+      "absolute_error": 7.3,
+      "relative_error": 0.1252,
+      "within_observed": true,
+      "n_seeds": 20,
+      "modelled_median": 65,
+      "modelled_p05": 60,
+      "modelled_p95": 71
+    },
+    {
+      "key": "cell_count_at_144h",
+      "label": "blastocyst cell count, day 6",
+      "observed_mean": 84.4,
+      "observed_sd": 5.7,
+      "observed_range": null,
+      "modelled_mean": 180.85,
+      "modelled_sd": 26.4599,
+      "absolute_error": 96.45,
+      "relative_error": 1.1428,
+      "within_observed": false,
+      "n_seeds": 20,
+      "modelled_median": 179,
+      "modelled_p05": 132,
+      "modelled_p95": 226
+    },
+    {
+      "key": "cell_count_at_168h",
+      "label": "blastocyst cell count, day 7",
+      "observed_mean": 125.5,
+      "observed_sd": 19.0,
+      "observed_range": null,
+      "modelled_mean": 490.25,
+      "modelled_sd": 35.2574,
+      "absolute_error": 364.75,
+      "relative_error": 2.9064,
+      "within_observed": false,
+      "n_seeds": 20,
+      "modelled_median": 503,
+      "modelled_p05": 405,
+      "modelled_p95": 532
+    }
+  ]
+}

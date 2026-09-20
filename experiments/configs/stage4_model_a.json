@@ -1,0 +1,14 @@
+{
+  "experiment_id": "stage4_model_a",
+  "seed": 1,
+  "population": 1,
+  "duration": 168.0,
+  "model_version": "0.2.0",
+  "data_version": "0.1.0",
+  "parameters": {},
+  "interventions": [],
+  "metrics_config": {
+    "sample_interval": 1.0
+  },
+  "notes": "Stage 4 Model A: the Stage 3 minimal baseline repeated unchanged for the A/B/C comparison. No cell-cycle structure and no death. Expected: exponential growth from mean 10.8 h/division lands in the thousands of cells by 168 h, while the 2/4/8-cell reach times are ~X2 slower than Istanbul consensus -- the structural failure Stage 4 addresses. Model A is the CONTROL arm of the comparison."
+}

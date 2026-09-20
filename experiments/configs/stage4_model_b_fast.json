@@ -1,0 +1,34 @@
+{
+  "experiment_id": "stage4_model_b_fast",
+  "seed": 1,
+  "population": 1,
+  "duration": 168.0,
+  "model_version": "0.2.0",
+  "data_version": "0.1.0",
+  "parameters": {
+    "cell_cycle": {
+      "phases": [
+        {
+          "threshold": 0,
+          "mean": 26.0,
+          "sd": 2.0
+        },
+        {
+          "threshold": 2,
+          "mean": 17.0,
+          "sd": 1.5
+        },
+        {
+          "threshold": 8,
+          "mean": 17.0,
+          "sd": 1.5
+        }
+      ]
+    }
+  },
+  "interventions": [],
+  "metrics_config": {
+    "sample_interval": 1.0
+  },
+  "notes": "Stage 4 Model B_fast: control for the post-EGA LENGTHENING hypothesis. Identical to Model B except phase 2 keeps the cleavage 17 h cycle (no lengthening). The contrast B_fast vs B isolates what the 17 -> 24 h post-EGA lengthening contributes to the blastocyst counts. Expected: B_fast grows to ~5-6x Model B's 168 h count, demonstrating the lengthening factor matters."
+}

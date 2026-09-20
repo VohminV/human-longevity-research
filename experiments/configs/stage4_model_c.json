@@ -1,0 +1,35 @@
+{
+  "experiment_id": "stage4_model_c",
+  "seed": 1,
+  "population": 1,
+  "duration": 168.0,
+  "model_version": "0.2.0",
+  "data_version": "0.1.0",
+  "parameters": {
+    "cell_cycle": {
+      "phases": [
+        {
+          "threshold": 0,
+          "mean": 26.0,
+          "sd": 2.0
+        },
+        {
+          "threshold": 2,
+          "mean": 17.0,
+          "sd": 1.5
+        },
+        {
+          "threshold": 8,
+          "mean": 24.0,
+          "sd": 3.0,
+          "death_per_division": 0.05
+        }
+      ]
+    }
+  },
+  "interventions": [],
+  "metrics_config": {
+    "sample_interval": 1.0
+  },
+  "notes": "Stage 4 Model C: Model B plus per-division cell death at the post-8-cell phase. Apoptosis is a documented blastocyst phenomenon (Hardy 1989, S-6) making cell death real at these stages, but its RATE is not measured -- 0.05/division is a stated assumption, not a fit. The A/B/C comparison tests whether death of the documented order, without any cycle tuning, helps reconcile the day 5-7 counts that B under/over-shoots. Sensitivity sweeps death 0.0-0.20."
+}

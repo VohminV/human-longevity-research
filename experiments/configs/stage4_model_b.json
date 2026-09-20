@@ -1,0 +1,34 @@
+{
+  "experiment_id": "stage4_model_b",
+  "seed": 1,
+  "population": 1,
+  "duration": 168.0,
+  "model_version": "0.2.0",
+  "data_version": "0.1.0",
+  "parameters": {
+    "cell_cycle": {
+      "phases": [
+        {
+          "threshold": 0,
+          "mean": 26.0,
+          "sd": 2.0
+        },
+        {
+          "threshold": 2,
+          "mean": 17.0,
+          "sd": 1.5
+        },
+        {
+          "threshold": 8,
+          "mean": 24.0,
+          "sd": 3.0
+        }
+      ]
+    }
+  },
+  "interventions": [],
+  "metrics_config": {
+    "sample_interval": 1.0
+  },
+  "notes": "Stage 4 Model B: stage-dependent cell-cycle program (count-based phases, a model for the nucleo-cytoplasmic ratio, NOT spatial compaction). Phase 0 (zygote) 26 h from Istanbul 2-cell reach 26-28 h (S-7); phase 1 (cleavage) 17 h inferred from the 27->44 h segment (S-7); phase 2 (post-EGA) 24 h inferred as intermediate reading of blastulation lengthening (S-6/S-7); all SDs are stated assumptions. Parameter statuses in reference.py. Predictions are expected, not tuned to the reference targets."
+}
