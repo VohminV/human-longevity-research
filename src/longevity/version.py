@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-MODEL_VERSION = "0.0.1"
+MODEL_VERSION = "0.1.0"
 DATA_VERSION = "0.0.1"
 
 

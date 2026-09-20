@@ -1,0 +1,1 @@
+"""Cell 상태 and lifecycle primitives (BIOLOGICAL MODEL LAYER)."""

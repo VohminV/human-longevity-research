@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "human-longevity-research"
-version = "0.0.1"
+version = "0.1.0"
 description = "Computational research platform for human development, aging, and longevity"
 readme = "README.md"
 requires-python = ">=3.10"
