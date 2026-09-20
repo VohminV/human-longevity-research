@@ -29,6 +29,13 @@ def test_version_info_contains_versions() -> None:
     assert DATA_VERSION in info
 
 
-def test_scaffold_only_placeholder() -> None:
-    # Этап 1 не реализует модель; пакет существует для организации будущего кода.
-    assert not hasattr(longevity, "Cell")
+def test_core_capabilities_importable():
+    from longevity.experiment.config import ExperimentConfig
+    from longevity.experiment.runner import run_experiment
+    from longevity.sim.engine import PopulationEngine
+    from longevity.sim.rng import Rng
+
+    assert ExperimentConfig is not None
+    assert run_experiment is not None
+    assert PopulationEngine is not None
+    assert Rng is not None
