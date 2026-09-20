@@ -7,6 +7,7 @@ range verdict. No simulation runs here.
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -19,6 +20,9 @@ class ModelValue:
     sd: float | None = None
     n_seeds: int = 1
     values: tuple[float, ...] = ()
+    median: float | None = None
+    p05: float | None = None
+    p95: float | None = None
 
 
 @dataclass(frozen=True)
@@ -34,6 +38,9 @@ class ComparisonResult:
     relative_error: float | None
     within_observed: bool
     n_seeds: int
+    modelled_median: float | None = None
+    modelled_p05: float | None = None
+    modelled_p95: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -74,6 +81,9 @@ def compare_metric(key: str, modelled: ModelValue) -> ComparisonResult:
         relative_error=round(rel_err, 4) if rel_err is not None else None,
         within_observed=inside,
         n_seeds=modelled.n_seeds,
+        modelled_median=round(modelled.median, 4) if modelled.median is not None else None,
+        modelled_p05=round(modelled.p05, 4) if modelled.p05 is not None else None,
+        modelled_p95=round(modelled.p95, 4) if modelled.p95 is not None else None,
     )
 
 
@@ -87,6 +97,18 @@ def compare_reference_targets(modelled_by_key: dict[str, ModelValue]) -> list[di
     return [c.to_dict() for c in comparisons]
 
 
+def _quantile(sorted_values: tuple[float, ...], q: float) -> float:
+    """Nearest-rank quantile of a sorted sample (0 < q < 1).
+
+    Deliberately simple and deterministic (no numpy): p05 is the smallest
+    value no more than 5% of the sample falls below, p95 the analogous top
+    value. With one seed all three collapse onto that seed's value.
+    """
+    if not sorted_values:
+        raise ValueError("_quantile() needs at least one value")
+    return sorted_values[max(0, math.ceil(q * len(sorted_values)) - 1)]
+
+
 def distribute(values: tuple[float, ...]) -> ModelValue:
     """Aggregate per-seed values into a ModelValue (mean / SD of the sample)."""
     n = len(values)
@@ -94,4 +116,13 @@ def distribute(values: tuple[float, ...]) -> ModelValue:
         raise ValueError("distribute() needs at least one value")
     mean = sum(values) / n
     sd = (sum((v - mean) ** 2 for v in values) / n) ** 0.5 if n > 1 else 0.0
-    return ModelValue(mean=mean, sd=sd, n_seeds=n, values=tuple(round(v, 4) for v in values))
+    sorted_values = tuple(sorted(values))
+    return ModelValue(
+        mean=mean,
+        sd=sd,
+        n_seeds=n,
+        values=tuple(round(v, 4) for v in values),
+        median=_quantile(sorted_values, 0.5),
+        p05=_quantile(sorted_values, 0.05),
+        p95=_quantile(sorted_values, 0.95),
+    )

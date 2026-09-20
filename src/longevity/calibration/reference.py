@@ -228,6 +228,123 @@ PARAMETER_STATUS: tuple[ParameterStatusEntry, ...] = (
         value=0.0,
         rationale="Out of calibration scope.",
     ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.0.threshold",
+        status=ParameterStatus.ASSUMPTION,
+        value=0.0,
+        rationale=(
+            "Structural phase boundary: phase 0 governs the first division(s) of "
+            "the zygote (living count >= 1). A phase threshold is the living cell "
+            "count selecting the phase, a modelling convention over an observable "
+            "quantity."
+        ),
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.0.mean",
+        status=ParameterStatus.OBSERVED,
+        value=26.0,
+        rationale=(
+            "Duration of the first division (zygote -> 2-cell): Istanbul "
+            "consensus places 2-cell at 26-28 h post-insemination (S-7), so the "
+            "first cycle is ~24-28 h. Mean 26 h sits inside the consensus range."
+        ),
+        source="S-7",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.0.sd",
+        status=ParameterStatus.ASSUMPTION,
+        value=2.0,
+        rationale="Cycle-length scatter of the first division not directly measured; 2.0 h keeps 26 +/- a plausible spread inside the 24-28 h window.",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.0.death_per_division",
+        status=ParameterStatus.ASSUMPTION,
+        value=0.0,
+        rationale="Default 0; Model C raises the post-8-cell phase death (documented blastocyst phenomenon, rate unconstrained, S-6).",
+        source="S-6",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.1.threshold",
+        status=ParameterStatus.ASSUMPTION,
+        value=2.0,
+        rationale=(
+            "Cleavage phase starts once the embryo has 2 cells (count >= 2). "
+            "Boundary choice; compatible with EGA timing literature (bulk "
+            "transcription only after the reductive cleavage series, S-19)."
+        ),
+        source="S-19",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.1.mean",
+        status=ParameterStatus.INFERRED,
+        value=17.0,
+        rationale=(
+            "Cleavage-stage cycle length inferred from the Istanbul timing "
+            "segment: 2-cell at ~27 h, 4-cell at ~44 h (S-7) gives ~17 h per "
+            "cleavage division. By contrast the S-8 time-lapse per-division "
+            "figure of 10-12 h, measured over short windows, cannot reproduce "
+            "the observed stage-reach times and is documented as a discrepancy "
+            "rather than used."
+        ),
+        source="S-7",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.1.sd",
+        status=ParameterStatus.ASSUMPTION,
+        value=1.5,
+        rationale="Scatter of cleavage-cycle length not directly measured; 1.5 h is a modelling choice.",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.1.death_per_division",
+        status=ParameterStatus.ASSUMPTION,
+        value=0.0,
+        rationale="Cleavage-stage cell death is minimal in the reference window; kept 0.",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.2.threshold",
+        status=ParameterStatus.INFERRED,
+        value=8.0,
+        rationale=(
+            "Post-EGA phase begins at the 8-cell count: major human ZGA is "
+            "completed by the 8-cell stage (S-19, S-20), after which cleavage "
+            "lengthens. Boundary taken as count >= 8."
+        ),
+        source="S-19",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.2.mean",
+        status=ParameterStatus.INFERRED,
+        value=24.0,
+        rationale=(
+            "Post-EGA cycle length inferred as intermediate (~24 h): the "
+            "S-7 blastocyst reach (~116 h) and Hardy growth from day 5 to day 7 "
+            "(58 -> 84 -> 126 cells; S-6) imply effective per-division times of "
+            "~18-24 h deep into blastulation. 45-47 h would be needed to match "
+            "the day 5-7 net growth alone, which overshoots the early counts; "
+            "the U-shaped deceleration that no single lengthened phase can fit "
+            "is a Stage 4 finding (see CALIBRATION.md), not a hidden parameter."
+        ),
+        source="S-7",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.2.sd",
+        status=ParameterStatus.ASSUMPTION,
+        value=3.0,
+        rationale="Scatter of post-EGA cycle length not directly measured; 3.0 h is a modelling choice.",
+    ),
+    ParameterStatusEntry(
+        path="cell_cycle.phases.2.death_per_division",
+        status=ParameterStatus.ASSUMPTION,
+        value=0.0,
+        rationale=(
+            "Per-division death rate at blastulation is a documented phenomenon "
+            "(Hardy 1989), but its value is not constrained by a measurement -- "
+            "default 0. Model C sets it to 0.05 as a stated assumption to test "
+            "whether death alone (without cycle tuning) reconciles the late "
+            "counts; the sweep sweeps 0.0-0.20."
+        ),
+        source="S-6",
+    ),
 )
 
 

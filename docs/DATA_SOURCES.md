@@ -52,6 +52,13 @@ PLoS One (PMC4831697), n=799 эмбрионов.
 | S-10 | Обзор «Early human development and stem cell-based human embryo models» (Cell Stem Cell, 2021; PMC7617107) | компактизация/морула при ~10 клетках; ранняя бластоциста ~20 клеток; поздняя бластоциста ~200 клеток к хетчингу (день 7) |
 | S-11 | Carnegie staging (UNSW Embryology, Carnegie collection) | стадии 1–23 с днями и морфологией |
 
+### 5a. Активация эмбрионального генома (ZGA/EGA) и удлинение клеточного цикла
+
+| # | Ссылка | Key данные |
+|---|---|---|
+| S-19 | Perry A.C.F. et al. «The initiation of mammalian embryonic transcription: to begin at the beginning». *Trends Cell Biol* 33(5):365–373, 2023 | ZGA у человека — не «внезапно на 8-клеточной стадии», а инициируется уже в 1-клеточном эмбрионе; полный геномный переход завершается к 8-клеточной стадии. «Bulk transcription» стартует после серии редуктивных делений, когда длительность клеточного цикла растёт — феноменологическая основа фазы «пост-8-клеточного удлинения цикла» (Model B/C, `cell_cycle.phases.2`) |
+| S-20 | Taubenschmid-Stowers J. et al. «8C-like cells capture the human zygotic genome activation program in vitro». *Cell Stem Cell* 29(4):602–615, 2022. PMID 35216671 | Подтверждение: мажорная ZGA человека на стадии 8 клеток; 8CLCs-программа транскриптомно повторяет 8-клеточный эмбрион (научное основание границы фаз `threshold: 2` и `threshold: 8` в `cell_cycle.phases`) |
+
 ## 6. Single-cell-RNA-seq ресурсы (vfov: захваченные клетки, не тотальные счёты)
 
 | # | Ссылка | PMID/DOI | Клеток (после QC) |

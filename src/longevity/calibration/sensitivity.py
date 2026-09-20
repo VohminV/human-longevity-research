@@ -52,7 +52,9 @@ def _run_seed_responses(
         counts[f"cell_count_at_{t}h"] = engine.living_count()
 
     time_to_8 = next((m["sim_time"] for m in engine.milestones if m["live_count"] >= 8), None)
-    return {**counts, "time_to_8_cell": time_to_8}
+    time_to_4 = next((m["sim_time"] for m in engine.milestones if m["live_count"] >= 4), None)
+    time_to_2 = next((m["sim_time"] for m in engine.milestones if m["live_count"] >= 2), None)
+    return {**counts, "time_to_2_cell": time_to_2, "time_to_4_cell": time_to_4, "time_to_8_cell": time_to_8}
 
 
 def run_sensitivity(
@@ -60,9 +62,16 @@ def run_sensitivity(
     seeds: tuple[int, ...] = (1, 2, 3),
     sweep_plan: dict[str, tuple[float, ...]] | None = None,
     count_times: tuple[int, ...] = (116, 168),
+    response_metrics: tuple[str, ...] = RESPONSE_METRICS,
 ) -> list[dict[str, Any]]:
     """Sweep each parameter one factor at a time and aggregate the response
-    metrics (mean/SD over `seeds`) per combination."""
+    metrics (mean/SD over `seeds`) per combination.
+
+    `response_metrics` selects which extracted responses to aggregate; a metric
+    absent from a per-seed result (e.g. a stage never reached) is skipped.
+    The default keeps the Stage 3 behaviour; Stage 4 passes the full
+    time_to_2/4/8 + 120/144/168h set alongside cell_cycle-phase sweeps.
+    """
     plan = sweep_plan if sweep_plan is not None else SWEEP_PLAN
     base_parameters = config.effective_parameters()
     rows: list[dict[str, Any]] = []
@@ -75,7 +84,7 @@ def run_sensitivity(
                 cfg = replace(config, seed=seed, parameters=parameters)
                 per_seed[str(seed)] = _run_seed_responses(cfg, seed, count_times)
 
-            for metric in RESPONSE_METRICS:
+            for metric in response_metrics:
                 values_by_seed = [row[metric] for row in per_seed.values() if row.get(metric) is not None]
                 if not values_by_seed:
                     continue

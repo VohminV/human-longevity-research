@@ -101,7 +101,15 @@ def run_multiseed_calibration(
         "n_seeds": len(seeds),
         "per_seed_metrics": per_seed,
         "modelled": {
-            k: {"mean": round(v.mean, 4), "sd": round(v.sd, 4), "n_seeds": v.n_seeds, "values": v.values}
+            k: {
+                "mean": round(v.mean, 4),
+                "sd": round(v.sd, 4),
+                "median": round(v.median, 4) if v.median is not None else None,
+                "p05": round(v.p05, 4) if v.p05 is not None else None,
+                "p95": round(v.p95, 4) if v.p95 is not None else None,
+                "n_seeds": v.n_seeds,
+                "values": v.values,
+            }
             for k, v in modelled_by_key.items()
         },
         "comparisons": compare_reference_targets({k: modelled_by_key[k] for k in comparison_keys}),
