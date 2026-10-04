@@ -55,6 +55,61 @@ multirun, sensitivity), milestones в engine, драйвер `experiments/run_ca
 конфиги `experiments/configs/stage4_*.json`, тесты
 `tests/test_developmental_dynamics.py`. Версия модели → 0.2.0.
 
+## Этап 3A — Модель ткани с политикой замены (готов ✅)
+
+- [x] компартментная модель одной абстрактной ткани (`TissueState`: stem /
+      functional / damaged / senescent / dead + ecm / vascular / immune /
+      cancer_risk / fibrosis) — `longevity.model.tissue`, версия модели `0.3.0`
+- [x] `ReplacementPolicy` (планирование, чистое) + `ReplacementPlan` отдельно
+      от исполнения (`TissueModel`) — `longevity.model.policy`
+- [x] детерминизм по seed (инжектируемый `Rng`, без глобального random);
+      checkpoint/restore с сериализацией RNG, restore после JSON-roundtrip
+      идентичен непрерывному запуску
+- [x] инварианты (пулы >= 0, качества/риски в [0, 1], кап замены, нет NaN/inf,
+      JSON-roundtrip) + тесты (`tests/test_tissue_model.py`,
+      `tests/test_replacement_policy.py`)
+- [x] три конфига (`tissue_baseline / tissue_senescent_replacement /
+      tissue_aggressive_replacement`), раннер `longevity.experiment.tissue_runner`,
+      метрики (`longevity.analysis.tissue_metrics`), doc `docs/TISSUE_MODEL.md`
+- [x] наблюдение (в рамках модели): умеренная замена устойчива; агрессивная
+      истощает стволовой пул и платит раком/фиброзом/иммунитетом/ECM
+
+Новое: `longevity.model` (tissue, policy), `longevity.analysis.tissue_metrics`,
+`longevity.experiment.tissue_runner`, конфиги `experiments/configs/tissue_*.json`.
+`Cell` и `PopulationEngine` не тронуты. Локальное омоложение ткани ≠
+rejuvenation организма; HYP-0 не затрагивается.
+
+## Этап 3B — Карта устойчивости замены, sweep fraction × frequency (готов ✅)
+
+- [x] `TissueSweepConfig` (валидация grid/seeds/thresholds/policy-template,
+      ≥3 seed на точку, канонический `config_hash`) —
+      `longevity.experiment.tissue_sweep` (+ CLI `python -m ...`)
+- [x] прогон сетки 7 × 5 через существующий `run_tissue_experiment` (динамика
+      Stage 3A не дублировалась и не менялась); baseline-рукав на каждый seed
+      для `*_vs_baseline`-дельт при том же seed
+- [x] operational viability-констрейнты, `time_to_first_viability_failure`,
+      `healthspan_tissue`, `survival_time` — `longevity.analysis.tissue_sweep`
+- [x] детерминированная классификация 6 режимов (baseline_like / sustainable /
+      risky_but_functional / stem_depleting / collapsing /
+      unstable_high_replacement), чистая функция, состояние не мутирует
+- [x] агрегация по сидам (mean/std/min/max/median/p25/p75/count, rates, счётчики
+      режимов), граница устойчивости по частоте, pareto-фронт польза/цены
+- [x] артефакты: `tissue_sweep_v0_{long,summary}.csv`,
+      `tissue_sweep_v0_{summary,boundary}.json` (guard от NaN/inf)
+- [x] наблюдение v0 (в рамках модели): широкое плато sustainable + угол
+      коллапса q=1/f≥0.1, который рвётся первым по `stem_depleted` при почти
+      нулевой сенесцентной нагрузке; граница `{1: 0.05, 5/10/25/50: 0.2*}` —
+      при q≥5 край открыт (нужны доли >0.2); risky/unstable в v0 не посещены
+- [x] тесты (`tests/test_tissue_sweep.py`, 37 шт.): детерминизм summary+boundary,
+      валидация, агрегация на синтетике, все 6 лейблов, boundary-края, схема и
+      round-trip артефактов, нетронутость глобального random, fraction-0.0 ==
+      baseline того же seed
+
+Новое: `longevity.analysis.tissue_sweep`, `longevity.experiment.tissue_sweep`,
+конфиг `experiments/configs/tissue_sweep_v0.json`, doc § Stage 3B в
+`docs/TISSUE_MODEL.md`. n=3 — описательный разброс, не значимость; HYP-0 не
+затрагивается.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

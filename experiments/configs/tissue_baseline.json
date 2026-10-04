@@ -1,0 +1,33 @@
+{
+  "experiment_id": "tissue_baseline",
+  "seed": 42,
+  "steps": 200,
+  "model_version": "0.3.0",
+  "data_version": "0.1.0",
+  "initial_state": {
+    "time": 0.0,
+    "stem_cells": 500.0,
+    "functional_cells": 8000.0,
+    "damaged_cells": 200.0,
+    "senescent_cells": 100.0,
+    "dead_cells": 0.0,
+    "ecm_quality": 0.9,
+    "vascular_quality": 0.9,
+    "immune_pressure": 0.1,
+    "cancer_risk": 0.0,
+    "fibrosis_index": 0.0
+  },
+  "tissue_parameters": {},
+  "policy": {
+    "name": "baseline-disabled",
+    "enabled": false,
+    "target": "none",
+    "source": "none",
+    "frequency": 5,
+    "max_replacement_fraction": 0.0,
+    "preserve_architecture": 1.0,
+    "immune_compatibility": 1.0,
+    "cancer_control": 1.0
+  },
+  "notes": "Stage 3A baseline: natural tissue degradation only, replacement disabled. Same seed/params as the intervention configs so deltas isolate the policy."
+}
