@@ -233,6 +233,49 @@ def assert_tissue_invariants(state: TissueState) -> None:
         raise AssertionError(f"tissue invariant violated: {violation}")
 
 
+@dataclass(frozen=True)
+class TissueStepContext:
+    """Per-step organ environment for one tissue (Stage 4A, operational).
+
+    Carried from the organ layer into :meth:`TissueModel.step`; ``None``
+    (the default everywhere) reproduces the exact Stage 3A dynamics. All
+    effects are multiplicative/additive gates documented as model
+    assumptions (see ``docs/ORGAN_MODEL.md``), not biological measurements:
+
+    - ``effective_vascular_support`` in [0, 1] scales niche-gated
+      regeneration (1 = full perfusion, 0 = no regeneration);
+    - ``effective_immune_support`` in [0, 1] scales senescent clearance
+      efficiency (1 = full surveillance, 0 = no clearance);
+    - ``systemic_damage_modifier`` >= 0 amplifies the damage flux
+      (0 = no systemic load).
+    """
+
+    effective_vascular_support: float = 1.0
+    effective_immune_support: float = 1.0
+    systemic_damage_modifier: float = 0.0
+
+    def __post_init__(self) -> None:
+        for name in ("effective_vascular_support", "effective_immune_support"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"context.{name} must be a number, got {value!r}")
+            numeric = float(value)
+            if not math.isfinite(numeric) or not 0.0 <= numeric <= 1.0:
+                raise ValueError(f"context.{name} must be in [0, 1], got {value!r}")
+        modifier = self.systemic_damage_modifier
+        if isinstance(modifier, bool) or not isinstance(modifier, (int, float)):
+            raise ValueError(f"context.systemic_damage_modifier must be a number, got {modifier!r}")
+        if not math.isfinite(float(modifier)) or float(modifier) < 0.0:
+            raise ValueError("context.systemic_damage_modifier must be finite and >= 0")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "effective_vascular_support": float(self.effective_vascular_support),
+            "effective_immune_support": float(self.effective_immune_support),
+            "systemic_damage_modifier": float(self.systemic_damage_modifier),
+        }
+
+
 def regeneration_capacity(state: TissueState, params: dict[str, Any]) -> float:
     """Niche-gated regeneration capacity in [0, 1].
 
@@ -293,21 +336,31 @@ class TissueModel:
         return max(0.0, min(1.0, value))
 
     # -- natural dynamics -------------------------------------------------
-    def _natural_dynamics(self) -> dict[str, float]:
-        """Advance pools by one natural step; returns produced-cell counts."""
+    def _natural_dynamics(self, context: TissueStepContext | None = None) -> dict[str, float]:
+        """Advance pools by one natural step; returns produced-cell counts.
+
+        ``context=None`` reproduces the exact Stage 3A dynamics. A Stage 4A
+        :class:`TissueStepContext` gates regeneration (vascular), clearance
+        (immune) and damage (systemic load) as documented on the context.
+        """
         p = self.parameters
         dt = float(p["dt"])
         s = self.state
+        vascular_support = 1.0 if context is None else float(context.effective_vascular_support)
+        immune_support = 1.0 if context is None else float(context.effective_immune_support)
+        damage_modifier = 0.0 if context is None else float(context.systemic_damage_modifier)
 
         living = s.functional_cells + s.damaged_cells + s.senescent_cells
         senescent_fraction = s.senescent_cells / living if living > 0.0 else 0.0
         functional_fraction = s.functional_cells / living if living > 0.0 else 0.0
 
         # 1. Damage: functional -> damaged, amplified by senescent (SASP).
+        # Stage 4A: systemic load from the organ layer amplifies damage.
         damage_flux = self._jitter(
             s.functional_cells
             * float(p["damage_rate"])
             * (1.0 + float(p["sasp_damage_amplification"]) * senescent_fraction)
+            * (1.0 + damage_modifier)
             * dt
         )
         damage_flux = min(damage_flux, s.functional_cells)
@@ -324,14 +377,16 @@ class TissueModel:
             damaged_death_flux *= scale
 
         # 3. Natural clearance: senescent -> dead (impaired when inflamed).
+        # Stage 4A: shared immune shortfall scales surveillance down.
         clearance_efficiency = 1.0 - float(p["immune_clearance_impairment"]) * s.immune_pressure
         clearance_flux = self._jitter(
-            s.senescent_cells * float(p["clearance_rate"]) * max(0.0, clearance_efficiency) * dt
+            s.senescent_cells * float(p["clearance_rate"]) * max(0.0, clearance_efficiency) * immune_support * dt
         )
         clearance_flux = min(clearance_flux, s.senescent_cells)
 
         # 4. Regeneration: stem -> functional, gated by niche capacity.
-        capacity = regeneration_capacity(s, p)
+        # Stage 4A: shared vascular shortfall throttles regeneration.
+        capacity = regeneration_capacity(s, p) * vascular_support
         differentiation_flux = self._jitter(
             s.stem_cells * float(p["differentiation_rate"]) * capacity * dt
         )
@@ -461,11 +516,15 @@ class TissueModel:
         assert_tissue_invariants(s)
         return feasible
 
-    def step(self, policy: Any | None = None) -> Any:
-        """Advance one step: natural dynamics, then one policy replacement."""
+    def step(self, policy: Any | None = None, context: TissueStepContext | None = None) -> Any:
+        """Advance one step: natural dynamics, then one policy replacement.
+
+        ``context`` is the optional Stage 4A organ environment; ``None``
+        reproduces Stage 3A behavior exactly.
+        """
         from longevity.model.policy import ReplacementPlan  # deferred: avoid import cycle
 
-        self._natural_dynamics()
+        self._natural_dynamics(context)
         if policy is None:
             return ReplacementPlan.empty()
         plan = policy.plan(self.state, self.parameters, self.step_count)
@@ -473,13 +532,22 @@ class TissueModel:
         assert_tissue_invariants(self.state)
         return plan
 
-    def run(self, steps: int, policy: Any | None = None) -> list[dict[str, Any]]:
-        """Run ``steps`` steps; returns the per-step state trajectory (t0 first)."""
+    def run(
+        self,
+        steps: int,
+        policy: Any | None = None,
+        context: TissueStepContext | None = None,
+    ) -> list[dict[str, Any]]:
+        """Run ``steps`` steps; returns the per-step state trajectory (t0 first).
+
+        A single ``context`` applies to every step; per-step contexts are
+        passed via repeated :meth:`step` calls (as the organ layer does).
+        """
         if steps < 0:
             raise ValueError("steps must be >= 0")
         trajectory = [self.state.to_dict()]
         for _ in range(steps):
-            self.step(policy)
+            self.step(policy, context)
             trajectory.append(self.state.to_dict())
         return trajectory
 

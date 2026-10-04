@@ -36,6 +36,49 @@ REGIME_LABELS = (
     "unstable_high_replacement",
 )
 
+# Stage 3C: failure-causality vocabulary (model-internal, operational).
+#
+# Canonical deterministic order for reporting simultaneous violations.
+# Mapping from ``evaluate_state`` violation names to failure causes:
+# every violation maps to exactly one cause; ``tissue_empty`` (living == 0)
+# collapses onto ``functional_collapse`` because an empty tissue has by
+# definition lost its functional compartment.
+FAILURE_CAUSE_ORDER = (
+    "stem_depletion",
+    "functional_collapse",
+    "senescence_blowout",
+    "cancer_risk",
+    "fibrosis",
+    "ecm_failure",
+    "vascular_failure",
+    "immune_failure",
+)
+
+PRIMARY_FAILURE_CAUSES = FAILURE_CAUSE_ORDER + ("multiple_simultaneous", "none")
+
+VIOLATION_TO_CAUSE: dict[str, str] = {
+    "stem_depleted": "stem_depletion",
+    "functional_below_threshold": "functional_collapse",
+    "tissue_empty": "functional_collapse",
+    "senescent_fraction_exceeded": "senescence_blowout",
+    "cancer_risk_exceeded": "cancer_risk",
+    "fibrosis_exceeded": "fibrosis",
+    "ecm_degraded": "ecm_failure",
+    "vascular_degraded": "vascular_failure",
+    "immune_pressure_exceeded": "immune_failure",
+}
+
+FIRST_TIME_FIELDS: dict[str, str] = {
+    "stem_depletion": "first_stem_depletion_time",
+    "functional_collapse": "first_functional_collapse_time",
+    "senescence_blowout": "first_senescence_blowout_time",
+    "cancer_risk": "first_cancer_threshold_time",
+    "fibrosis": "first_fibrosis_threshold_time",
+    "ecm_failure": "first_ecm_collapse_time",
+    "vascular_failure": "first_vascular_collapse_time",
+    "immune_failure": "first_immune_overload_time",
+}
+
 # Operational viability/boundary thresholds. These are ANALYSIS choices for
 # mapping model output to regime labels, not biological truths and not model
 # parameters: changing them re-labels the same trajectories without re-running
@@ -160,6 +203,58 @@ def trajectory_viability(
     }
 
 
+def failure_causality(
+    trajectory: list[dict[str, Any]],
+    initial: dict[str, Any],
+    thresholds: dict[str, float],
+) -> dict[str, Any]:
+    """First-violation causality over a trajectory (pure, non-mutating).
+
+    Scans rows in order (t0 first) with :func:`evaluate_state`, maps each
+    violation to a failure cause via ``VIOLATION_TO_CAUSE``, and records the
+    first time each cause appears. Causes sharing the earliest time are
+    reported in canonical ``FAILURE_CAUSE_ORDER`` order.
+
+    Returns ``first_*_time`` per cause (``None`` when never violated),
+    ``primary_failure_cause`` (earliest cause, ``"multiple_simultaneous"``
+    when >= 2 causes share the earliest time, ``"none"`` when nothing ever
+    breaks), and ``failure_cause_sequence`` (causes ever seen, ordered by
+    (first_time, canonical_index)).
+
+    Stage 3C addition: derived from the recorded trajectory only; no model
+    dynamics are duplicated or changed here.
+    """
+    if not trajectory:
+        raise ValueError("trajectory must be non-empty")
+    first_time: dict[str, float | None] = {cause: None for cause in FAILURE_CAUSE_ORDER}
+    for row in trajectory:
+        _, violations = evaluate_state(row, initial, thresholds)
+        seen_this_row: set[str] = set()
+        for violation in violations:
+            cause = VIOLATION_TO_CAUSE.get(violation)
+            if cause is None:
+                continue
+            seen_this_row.add(cause)
+        # Canonical order within a row keeps multi-cause rows deterministic.
+        for cause in FAILURE_CAUSE_ORDER:
+            if cause in seen_this_row and first_time[cause] is None:
+                first_time[cause] = float(row["time"])
+    ordered = sorted(
+        (cause for cause in FAILURE_CAUSE_ORDER if first_time[cause] is not None),
+        key=lambda c: (float(first_time[c]), FAILURE_CAUSE_ORDER.index(c)),  # type: ignore[arg-type]
+    )
+    if not ordered:
+        primary = "none"
+    elif len([c for c in ordered if float(first_time[c]) == float(first_time[ordered[0]])]) >= 2:  # type: ignore[arg-type]
+        primary = "multiple_simultaneous"
+    else:
+        primary = ordered[0]
+    result: dict[str, Any] = {"primary_failure_cause": primary, "failure_cause_sequence": list(ordered)}
+    for cause in FAILURE_CAUSE_ORDER:
+        result[FIRST_TIME_FIELDS[cause]] = first_time[cause]
+    return result
+
+
 def compute_seed_metrics(
     trajectory: list[dict[str, Any]],
     dt: float,
@@ -190,6 +285,7 @@ def compute_seed_metrics(
     living_final = float(final["functional_cells"]) + float(final["damaged_cells"]) + float(final["senescent_cells"])
 
     row = dict(base)
+    causality = failure_causality(trajectory, initial, thresholds)
     row.update(
         {
             "initial_functional_cells": float(initial["functional_cells"]),
@@ -203,6 +299,17 @@ def compute_seed_metrics(
             "time_to_first_viability_failure": viability["time_to_first_viability_failure"],
             "healthspan_tissue": viability["healthspan_tissue"],
             "survival_time": viability["time_to_first_viability_failure"],
+            # Stage 3C failure causality (additive; Stage 3B keys untouched).
+            "first_stem_depletion_time": causality["first_stem_depletion_time"],
+            "first_functional_collapse_time": causality["first_functional_collapse_time"],
+            "first_senescence_blowout_time": causality["first_senescence_blowout_time"],
+            "first_cancer_threshold_time": causality["first_cancer_threshold_time"],
+            "first_fibrosis_threshold_time": causality["first_fibrosis_threshold_time"],
+            "first_ecm_collapse_time": causality["first_ecm_collapse_time"],
+            "first_vascular_collapse_time": causality["first_vascular_collapse_time"],
+            "first_immune_overload_time": causality["first_immune_overload_time"],
+            "primary_failure_cause": causality["primary_failure_cause"],
+            "failure_cause_sequence": list(causality["failure_cause_sequence"]),
         }
     )
     return row
@@ -444,3 +551,302 @@ def pareto_frontier(points: list[dict[str, Any]]) -> list[dict[str, float]]:
             )
     frontier.sort(key=lambda p: (p["frequency"], p["max_replacement_fraction"]))
     return frontier
+
+
+# ---------------------------------------------------------------------------
+# Stage 3C: boundary closure, regime coverage, failure causes, control
+# comparison. All pure, deterministic, non-mutating. Descriptive statistics
+# over tiny seed samples (n=3 in v1) -- never statistical significance.
+# ---------------------------------------------------------------------------
+
+def _point_profile(point: dict[str, Any]) -> str:
+    profile = point.get("control_profile", "default")
+    return str(profile) if profile else "default"
+
+
+def _freq_key(frequency: Any) -> str:
+    value = float(frequency)
+    return str(int(value)) if value.is_integer() else str(value)
+
+
+def _is_sustainable_point(point: dict[str, Any], duration_time: float, rate_min: float, ttf_fraction_min: float) -> bool:
+    return (
+        float(point["sustainable_rate"]) >= rate_min
+        and float(point["mean_time_to_first_viability_failure"]) >= ttf_fraction_min * duration_time
+    )
+
+
+def compute_boundary_closure(
+    points: list[dict[str, Any]],
+    duration_time: float,
+    rate_min: float,
+    ttf_fraction_min: float,
+) -> dict[str, Any]:
+    """Closed/open stability boundary per (frequency, control profile).
+
+    For each pair: sorted fractions ascending; ``max_sustainable_fraction``
+    is the largest qualifying fraction (same rule as :func:`compute_boundary`);
+    ``first_unsustainable_fraction`` is the smallest fraction strictly above
+    it that does not qualify (``None`` when none exists above); ``boundary_open``
+    is True when the largest fraction in the grid still qualifies (transition
+    lies beyond the grid -- NOT evidence of unbounded stability). When no
+    fraction qualifies, ``max_sustainable_fraction`` is None and the first
+    unsustainable fraction is the grid minimum.
+    """
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for point in points:
+        key = (_freq_key(point["frequency"]), _point_profile(point))
+        grouped.setdefault(key, []).append(point)
+    boundary_by_frequency: dict[str, dict[str, Any]] = {}
+    open_boundaries: list[dict[str, str]] = []
+    closed_boundaries: list[dict[str, str]] = []
+    for (freq_key, profile) in sorted(grouped):
+        ordered = sorted(grouped[(freq_key, profile)], key=lambda p: float(p["max_replacement_fraction"]))
+        qualifying = [float(p["max_replacement_fraction"]) for p in ordered if _is_sustainable_point(p, duration_time, rate_min, ttf_fraction_min)]
+        max_sustainable = max(qualifying) if qualifying else None
+        if max_sustainable is None:
+            first_unsustainable: float | None = float(ordered[0]["max_replacement_fraction"]) if ordered else None
+        else:
+            above = [float(p["max_replacement_fraction"]) for p in ordered if float(p["max_replacement_fraction"]) > max_sustainable and not _is_sustainable_point(p, duration_time, rate_min, ttf_fraction_min)]
+            # Note: non-monotonic grids can have a sustainable point above a
+            # gap; "first unsustainable above max sustainable" is still the
+            # smallest non-qualifying fraction greater than the max qualifying.
+            first_unsustainable = min(above) if above else None
+        max_fraction_in_grid = max(float(p["max_replacement_fraction"]) for p in ordered) if ordered else None
+        if max_sustainable is not None and max_fraction_in_grid is not None and max_sustainable >= max_fraction_in_grid:
+            boundary_open = True
+        elif max_sustainable is not None and first_unsustainable is None:
+            boundary_open = True
+        else:
+            # No sustainable point, or an unsustainable point exists above the
+            # max sustainable one within the grid -> transition observed.
+            boundary_open = False if ordered else True
+            if not ordered:
+                boundary_open = True
+            elif max_sustainable is None:
+                # Grid starts unsustainable: boundary is below/at the edge,
+                # but the upper edge is still unsustainable -> closed (seen).
+                boundary_open = False
+        # Context at the max-sustainable point (None when absent).
+        context_rate: float | None = None
+        context_ttf: float | None = None
+        context_counts: dict[str, int] = {}
+        if max_sustainable is not None:
+            for p in ordered:
+                if float(p["max_replacement_fraction"]) == max_sustainable:
+                    context_rate = float(p["sustainable_rate"])
+                    context_ttf = float(p["mean_time_to_first_viability_failure"])
+                    context_counts = dict(p.get("regime_counts", {}))
+                    break
+        entry = {
+            "max_sustainable_fraction": max_sustainable,
+            "first_unsustainable_fraction": first_unsustainable,
+            "boundary_open": boundary_open,
+            "sustainable_rate": context_rate,
+            "mean_time_to_first_viability_failure": context_ttf,
+            "regime_counts": context_counts,
+        }
+        boundary_by_frequency.setdefault(freq_key, {})[profile] = entry
+        record = {"frequency": freq_key, "control_profile": profile}
+        (open_boundaries if boundary_open else closed_boundaries).append(record)
+    open_boundaries.sort(key=lambda r: (r["frequency"], r["control_profile"]))
+    closed_boundaries.sort(key=lambda r: (r["frequency"], r["control_profile"]))
+    return {
+        "boundary_by_frequency": boundary_by_frequency,
+        "open_boundaries": open_boundaries,
+        "closed_boundaries": closed_boundaries,
+    }
+
+
+def build_regime_coverage(points: list[dict[str, Any]]) -> dict[str, Any]:
+    """Which of the six regime labels were visited (pure).
+
+    Input points carry ``frequency``, ``max_replacement_fraction``,
+    optional ``control_profile``, ``aggregate`` (with ``regime_counts``), and
+    ``seeds`` (per-seed rows with ``regime_label``). Output per label:
+    run/point counts plus up to three example points. Labels with zero runs
+    are reported as ``regime_not_visited_in_current_grid`` via ``not_visited``.
+    """
+    per_label: dict[str, dict[str, Any]] = {}  # type: ignore[valid-type]
+    labels: dict[str, dict[str, Any]] = {}
+    for label in REGIME_LABELS:
+        labels[label] = {"run_count": 0, "n_points": 0, "examples": [], "by_control_profile": {}}
+    total_runs = 0
+    for point in sorted(points, key=lambda p: (_point_profile(p), float(p["frequency"]), float(p["max_replacement_fraction"]))):
+        seeds = point.get("seeds", {})
+        counts: dict[str, int] = {}
+        for row in seeds.values():
+            label = row.get("regime_label")
+            if label not in labels:
+                raise ValueError(f"unknown regime label {label!r}")
+            counts[label] = counts.get(label, 0) + 1
+        for label, count in counts.items():
+            entry = labels[label]
+            entry["run_count"] += count
+            entry["n_points"] += 1
+            total_runs += 0  # counted once below
+            profile = _point_profile(point)
+            by_profile = entry["by_control_profile"]
+            by_profile[profile] = by_profile.get(profile, 0) + count
+            if len(entry["examples"]) < 3:
+                entry["examples"].append(
+                    {
+                        "control_profile": profile,
+                        "frequency": int(point["frequency"]),
+                        "max_replacement_fraction": float(point["max_replacement_fraction"]),
+                        "seeds_with_label": count,
+                        "n_seeds": len(seeds),
+                    }
+                )
+    total_runs = sum(entry["run_count"] for entry in labels.values())
+    visited = sorted([label for label, entry in labels.items() if entry["run_count"] > 0])
+    not_visited = sorted([label for label, entry in labels.items() if entry["run_count"] == 0])
+    return {
+        "labels": labels,
+        "visited": visited,
+        "not_visited": not_visited,
+        "not_visited_marker": "regime_not_visited_in_current_grid" if not_visited else None,
+        "total_runs": total_runs,
+    }
+
+
+def summarize_failure_causes(seed_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Descriptive failure-cause aggregation over per-seed rows (pure).
+
+    Counts ``primary_failure_cause``, sequence occurrences, and mean first
+    times per cause. ``None`` first-times (never violated) are excluded from
+    means. Row ``control_profile`` defaults to ``"default"``.
+    """
+    cause_counts: dict[str, int] = {cause: 0 for cause in PRIMARY_FAILURE_CAUSES}
+    by_profile: dict[str, dict[str, int]] = {}
+    by_fraction: dict[str, dict[str, int]] = {}
+    sequence_counts: dict[str, int] = {}
+    time_sums: dict[str, float] = {cause: 0.0 for cause in FAILURE_CAUSE_ORDER}
+    time_counts: dict[str, int] = {cause: 0 for cause in FAILURE_CAUSE_ORDER}
+    for row in seed_rows:
+        primary = row.get("primary_failure_cause", "none")
+        if primary not in cause_counts:
+            raise ValueError(f"unknown primary failure cause {primary!r}")
+        cause_counts[primary] += 1
+        profile = str(row.get("control_profile", "default"))
+        by_profile.setdefault(profile, {cause: 0 for cause in PRIMARY_FAILURE_CAUSES})[primary] += 1
+        frac_key = str(float(row.get("max_replacement_fraction", 0.0)))
+        by_fraction.setdefault(frac_key, {cause: 0 for cause in PRIMARY_FAILURE_CAUSES})[primary] += 1
+        sequence = list(row.get("failure_cause_sequence", []))
+        for cause in sequence:
+            if cause not in FAILURE_CAUSE_ORDER:
+                raise ValueError(f"unknown failure cause in sequence {cause!r}")
+        sequence_counts[";".join(sequence) if sequence else "(empty)"] = sequence_counts.get(";".join(sequence) if sequence else "(empty)", 0) + 1
+        for cause in FAILURE_CAUSE_ORDER:
+            field = FIRST_TIME_FIELDS[cause]
+            value = row.get(field)
+            if value is not None:
+                numeric = float(value)
+                if not math.isfinite(numeric):
+                    raise ValueError(f"non-finite {field}={value!r}")
+                time_sums[cause] += numeric
+                time_counts[cause] += 1
+    mean_time_to_cause = {
+        cause: (time_sums[cause] / time_counts[cause] if time_counts[cause] else None)
+        for cause in FAILURE_CAUSE_ORDER
+    }
+    return {
+        "primary_cause_counts": cause_counts,
+        "by_control_profile": by_profile,
+        "by_fraction": by_fraction,
+        "sequence_counts": sequence_counts,
+        "mean_time_to_cause": mean_time_to_cause,
+        "time_counts": dict(time_counts),
+        "total_runs": len(seed_rows),
+    }
+
+
+def compare_control_profiles(
+    points: list[dict[str, Any]],
+    seed_rows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Strong-vs-weak descriptive comparison (pure).
+
+    ``points`` are per-point aggregates with optional ``control_profile``.
+    When ``seed_rows`` is given, failure-cause and healthspan sections use
+    per-seed values; otherwise point-aggregate means are used for healthspan
+    and failure causes come from regime counts only.
+    """
+    profiles = sorted({_point_profile(p) for p in points})
+    regime_mix: dict[str, dict[str, Any]] = {}
+    healthspan: dict[str, dict[str, float | int]] = {}
+    senescence_vs_cost: dict[str, dict[str, float | int]] = {}
+    for profile in profiles:
+        owned = [p for p in points if _point_profile(p) == profile]
+        label_totals: dict[str, int] = {label: 0 for label in REGIME_LABELS}
+        n_runs = 0
+        health_values: list[float] = []
+        ttf_values: list[float] = []
+        senred_values: list[float] = []
+        stemdepl_values: list[float] = []
+        cancer_values: list[float] = []
+        fibrosis_values: list[float] = []
+        for point in owned:
+            aggregate = point.get("aggregate", {})
+            counts = aggregate.get("regime_counts", {})
+            mapping = {
+                "sustainable": counts.get("sustainable_count", 0),
+                "risky_but_functional": counts.get("risky_count", 0),
+                "stem_depleting": counts.get("depleting_count", 0),
+                "collapsing": counts.get("collapsing_count", 0),
+                "unstable_high_replacement": counts.get("unstable_count", 0),
+                "baseline_like": counts.get("baseline_like_count", 0),
+            }
+            for label, count in mapping.items():
+                label_totals[label] += int(count)
+                n_runs += int(count)
+            metrics = aggregate.get("metrics", {})
+            for target, name in ((health_values, "healthspan_tissue"), (ttf_values, "time_to_first_viability_failure")):
+                series = metrics.get(name, {})
+                if isinstance(series, dict) and "mean" in series:
+                    target.append(float(series["mean"]))
+            for target, name in (
+                (senred_values, "senescence_reduction_vs_baseline"),
+                (stemdepl_values, "stem_depletion_delta_vs_baseline"),
+                (cancer_values, "max_cancer_risk"),
+                (fibrosis_values, "final_fibrosis_index"),
+            ):
+                series = metrics.get(name, {})
+                if isinstance(series, dict) and "mean" in series:
+                    target.append(float(series["mean"]))
+
+        def _mean(values: list[float]) -> float | None:
+            finite = [v for v in values if math.isfinite(v)]
+            return sum(finite) / len(finite) if finite else None
+
+        regime_mix[profile] = {
+            "counts": dict(label_totals),
+            "total_runs": n_runs,
+            "rates": {label: (count / n_runs if n_runs else 0.0) for label, count in label_totals.items()},
+        }
+        healthspan[profile] = {
+            "mean_healthspan_tissue": _mean(health_values),  # type: ignore[dict-item]
+            "mean_time_to_first_viability_failure": _mean(ttf_values),  # type: ignore[dict-item]
+            "n_points": len(owned),
+        }
+        senescence_vs_cost[profile] = {
+            "mean_senescence_reduction_vs_baseline": _mean(senred_values),  # type: ignore[dict-item]
+            "mean_stem_depletion_delta_vs_baseline": _mean(stemdepl_values),  # type: ignore[dict-item]
+            "mean_max_cancer_risk": _mean(cancer_values),  # type: ignore[dict-item]
+            "mean_final_fibrosis_index": _mean(fibrosis_values),  # type: ignore[dict-item]
+            "n_points": len(owned),
+        }
+    failure_causes: dict[str, Any] = {}
+    if seed_rows is not None:
+        summary = summarize_failure_causes(seed_rows)
+        failure_causes = summary["by_control_profile"]
+    else:
+        failure_causes = {profile: "seed_rows_not_provided" for profile in profiles}
+    return {
+        "profiles": profiles,
+        "regime_mix": regime_mix,
+        "healthspan": healthspan,
+        "senescence_vs_cost": senescence_vs_cost,
+        "failure_causes": failure_causes,
+        "note": "descriptive association over n=seeds per point, not statistical inference",
+    }

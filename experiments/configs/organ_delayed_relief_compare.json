@@ -1,0 +1,141 @@
+{
+  "experiment_id": "organ_delayed_relief_compare",
+  "seeds": [
+    42,
+    7
+  ],
+  "grid": {
+    "global_replacement_scale": [
+      1.0
+    ],
+    "shared_vascular_capacity": [
+      12.0
+    ],
+    "shared_immune_capacity": [
+      5.0,
+      8.0
+    ]
+  },
+  "coordination_modes": [
+    "independent_tissue_policies",
+    "resource_aware_scaling",
+    "demand_relief_priority",
+    "lookahead_priority",
+    "deferral_scheduler",
+    "hybrid_lookahead_deferral"
+  ],
+  "temporal_relief_model": "delayed_relief",
+  "base_organ_config": {
+    "organ_id": "organ_independent_replacement",
+    "model_version": "0.4.0",
+    "data_version": "0.1.0",
+    "seed": 42,
+    "steps": 200,
+    "dt": 1.0,
+    "tissues": [
+      {
+        "tissue_id": "parenchyma",
+        "role": "parenchyma",
+        "weight": 2.0,
+        "is_vital": true,
+        "required_function": 1.0,
+        "initial_state": {
+          "time": 0.0,
+          "stem_cells": 500.0,
+          "functional_cells": 8000.0,
+          "damaged_cells": 200.0,
+          "senescent_cells": 100.0,
+          "dead_cells": 0.0,
+          "ecm_quality": 0.9,
+          "vascular_quality": 0.9,
+          "immune_pressure": 0.1,
+          "cancer_risk": 0.0,
+          "fibrosis_index": 0.0
+        },
+        "tissue_parameters": {
+          "stochastic_jitter": 0.05
+        },
+        "policy": {
+          "name": "parenchyma-senescent-clearance",
+          "enabled": true,
+          "target": "senescent",
+          "source": "stem_pool",
+          "frequency": 5,
+          "max_replacement_fraction": 0.1,
+          "preserve_architecture": 0.9,
+          "immune_compatibility": 0.9,
+          "cancer_control": 0.9
+        },
+        "demand_coefficients": {}
+      },
+      {
+        "tissue_id": "stroma",
+        "role": "stroma",
+        "weight": 1.0,
+        "is_vital": true,
+        "required_function": 1.0,
+        "initial_state": {
+          "time": 0.0,
+          "stem_cells": 300.0,
+          "functional_cells": 4000.0,
+          "damaged_cells": 100.0,
+          "senescent_cells": 50.0,
+          "dead_cells": 0.0,
+          "ecm_quality": 0.95,
+          "vascular_quality": 0.9,
+          "immune_pressure": 0.1,
+          "cancer_risk": 0.0,
+          "fibrosis_index": 0.0
+        },
+        "tissue_parameters": {
+          "damage_rate": 0.005,
+          "differentiation_rate": 0.05,
+          "fibrosis_rate": 0.02,
+          "stochastic_jitter": 0.05
+        },
+        "policy": {
+          "name": "stroma-senescent-clearance",
+          "enabled": true,
+          "target": "senescent",
+          "source": "stem_pool",
+          "frequency": 10,
+          "max_replacement_fraction": 0.05,
+          "preserve_architecture": 0.9,
+          "immune_compatibility": 0.9,
+          "cancer_control": 0.9
+        },
+        "demand_coefficients": {}
+      }
+    ],
+    "shared_vascular_capacity": 12.0,
+    "shared_immune_capacity": 5.0,
+    "aggregation": "weighted_sum",
+    "coordination": "independent_tissue_policies",
+    "global_replacement_cap": null,
+    "systemic_damage_gain": 0.5,
+    "thresholds": {
+      "min_organ_function": 0.75,
+      "min_vital_tissue_function": 0.6,
+      "min_vascular_allocation_ratio": 0.6,
+      "min_immune_allocation_ratio": 0.6,
+      "max_organ_cancer_risk": 0.15,
+      "max_organ_fibrosis_index": 0.3
+    },
+    "notes": "Stage 4A experiment 2: each tissue runs its own Stage-3C-sustainable policy (parenchyma q5/f0.1, stroma q10/f0.05, strong controls) with NO organ coordination. Tests whether locally sustainable policies contend for shared vascular/immune capacity.",
+    "temporal_relief_model": "delayed_relief",
+    "temporal_params": {
+      "immediate_immune_cost_multiplier": 1.0,
+      "immediate_vascular_cost_multiplier": 1.0,
+      "relief_delay_steps": 5,
+      "relief_duration_steps": 10,
+      "relief_target": "composite",
+      "relief_magnitude_scale": 1.0,
+      "defer_steps": 5,
+      "defer_allocation_threshold": 0.6,
+      "deferred_plan_max_age": 30,
+      "lookahead_discount": 0.95
+    }
+  },
+  "output_prefix": "experiments/output/organ_delayed_relief_compare",
+  "notes": "Stage 4C compare: 6 modes under delayed relief (delay 5 from base? base temporal defaults neutral). 12 combos x 2 seeds."
+}

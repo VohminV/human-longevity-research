@@ -1,0 +1,109 @@
+{
+  "organ_id": "organ_immune_reserve_guard",
+  "model_version": "0.4.0",
+  "data_version": "0.1.0",
+  "seed": 42,
+  "steps": 200,
+  "dt": 1.0,
+  "tissues": [
+    {
+      "tissue_id": "parenchyma",
+      "role": "parenchyma",
+      "weight": 2.0,
+      "is_vital": true,
+      "required_function": 1.0,
+      "initial_state": {
+        "time": 0.0,
+        "stem_cells": 500.0,
+        "functional_cells": 8000.0,
+        "damaged_cells": 200.0,
+        "senescent_cells": 100.0,
+        "dead_cells": 0.0,
+        "ecm_quality": 0.9,
+        "vascular_quality": 0.9,
+        "immune_pressure": 0.1,
+        "cancer_risk": 0.0,
+        "fibrosis_index": 0.0
+      },
+      "tissue_parameters": {
+        "stochastic_jitter": 0.05
+      },
+      "policy": {
+        "name": "parenchyma-senescent-clearance",
+        "enabled": true,
+        "target": "senescent",
+        "source": "stem_pool",
+        "frequency": 5,
+        "max_replacement_fraction": 0.1,
+        "preserve_architecture": 0.9,
+        "immune_compatibility": 0.9,
+        "cancer_control": 0.9
+      },
+      "demand_coefficients": {}
+    },
+    {
+      "tissue_id": "stroma",
+      "role": "stroma",
+      "weight": 1.0,
+      "is_vital": true,
+      "required_function": 1.0,
+      "initial_state": {
+        "time": 0.0,
+        "stem_cells": 300.0,
+        "functional_cells": 4000.0,
+        "damaged_cells": 100.0,
+        "senescent_cells": 50.0,
+        "dead_cells": 0.0,
+        "ecm_quality": 0.95,
+        "vascular_quality": 0.9,
+        "immune_pressure": 0.1,
+        "cancer_risk": 0.0,
+        "fibrosis_index": 0.0
+      },
+      "tissue_parameters": {
+        "damage_rate": 0.005,
+        "differentiation_rate": 0.05,
+        "fibrosis_rate": 0.02,
+        "stochastic_jitter": 0.05
+      },
+      "policy": {
+        "name": "stroma-senescent-clearance",
+        "enabled": true,
+        "target": "senescent",
+        "source": "stem_pool",
+        "frequency": 10,
+        "max_replacement_fraction": 0.05,
+        "preserve_architecture": 0.9,
+        "immune_compatibility": 0.9,
+        "cancer_control": 0.9
+      },
+      "demand_coefficients": {}
+    }
+  ],
+  "shared_vascular_capacity": 12.0,
+  "shared_immune_capacity": 5.0,
+  "aggregation": "weighted_sum",
+  "coordination": "immune_reserve_guard",
+  "global_replacement_cap": null,
+  "systemic_damage_gain": 0.5,
+  "thresholds": {
+    "min_organ_function": 0.75,
+    "min_vital_tissue_function": 0.6,
+    "min_vascular_allocation_ratio": 0.6,
+    "min_immune_allocation_ratio": 0.6,
+    "max_organ_cancer_risk": 0.15,
+    "max_organ_fibrosis_index": 0.3
+  },
+  "notes": "Stage 4B single run: immune_reserve_guard over the same tissue policies. Executes all plans while predicted immune allocation holds at >= 0.6, else keeps only score >= 0.0 plans (top-1 fallback).",
+  "coordination_params": {
+    "alpha": 1.0,
+    "beta": 0.5,
+    "gamma": 1.0,
+    "delta": 1.0,
+    "epsilon": 1.0,
+    "w_vascular": 1.0,
+    "eps": 1e-06,
+    "score_cutoff": 0.0,
+    "immune_guard_threshold": 0.6
+  }
+}

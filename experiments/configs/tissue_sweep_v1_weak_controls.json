@@ -1,0 +1,88 @@
+{
+  "experiment_id": "tissue_sweep_v1_weak",
+  "model_version": "0.3.0",
+  "data_version": "0.1.0",
+  "steps": 200,
+  "dt": 1.0,
+  "seeds": [42, 7, 99],
+  "grid": {
+    "max_replacement_fraction": [0.0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5],
+    "frequency": [1, 5, 10, 25, 50]
+  },
+  "initial_state": {
+    "time": 0.0,
+    "stem_cells": 500.0,
+    "functional_cells": 8000.0,
+    "damaged_cells": 200.0,
+    "senescent_cells": 100.0,
+    "dead_cells": 0.0,
+    "ecm_quality": 0.9,
+    "vascular_quality": 0.9,
+    "immune_pressure": 0.1,
+    "cancer_risk": 0.0,
+    "fibrosis_index": 0.0
+  },
+  "tissue_parameters": {
+    "stochastic_jitter": 0.05
+  },
+  "policy_template": {
+    "name": "sweep-senescent-clearance",
+    "enabled": true,
+    "target": "senescent",
+    "source": "stem_pool",
+    "frequency": 5,
+    "max_replacement_fraction": 0.02,
+    "preserve_architecture": 0.9,
+    "immune_compatibility": 0.9,
+    "cancer_control": 0.9
+  },
+  "control_profiles": {
+    "weak_controls": {
+      "preserve_architecture": 0.4,
+      "immune_compatibility": 0.4,
+      "cancer_control": 0.4
+    }
+  },
+  "thresholds": {
+    "min_functional_fraction": 0.75,
+    "max_senescent_fraction": 0.1,
+    "min_stem_fraction": 0.5,
+    "max_cancer_risk": 0.15,
+    "max_fibrosis_index": 0.3,
+    "min_ecm_quality": 0.7,
+    "min_vascular_quality": 0.7,
+    "max_immune_pressure": 0.4,
+    "viability_failure_time_fraction": 0.5,
+    "sustainable_end_time_fraction": 0.9,
+    "boundary_sustainable_rate_min": 0.6666666666666666,
+    "boundary_ttf_fraction_min": 0.8
+  },
+  "metrics": [
+    "survival_time",
+    "healthspan_tissue",
+    "time_to_first_viability_failure",
+    "final_functional_cells",
+    "final_senescent_cells",
+    "final_damaged_cells",
+    "final_dead_cells",
+    "final_stem_cells",
+    "final_cancer_risk",
+    "area_under_senescent_curve",
+    "area_under_damage_curve",
+    "area_under_functional_curve",
+    "max_cancer_risk",
+    "final_fibrosis_index",
+    "final_ecm_quality",
+    "final_vascular_quality",
+    "final_immune_pressure",
+    "rejuvenation_delta_vs_baseline",
+    "senescence_reduction_vs_baseline",
+    "stem_depletion_delta_vs_baseline",
+    "replacement_events",
+    "total_replaced_cells",
+    "regime_label"
+  ],
+  "include_baseline": true,
+  "output_prefix": "experiments/output/tissue_sweep_v1_weak",
+  "notes": "Stage 3C weak-controls arm: same extended grid as tissue_sweep_v1_boundary_closure.json but weak_controls only (0.4/0.4/0.4). Standalone run for control-sensitivity comparison; the combined config remains the primary v1 artifact."
+}

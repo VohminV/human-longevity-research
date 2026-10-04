@@ -264,9 +264,121 @@ Pareto-фронт совпал почти со всей сеткой (польз
 HYP-0 (`docs/IMMORTALITY.md`) не затрагивается: горизонт конечен, t→∞ не
 исследуется.
 
-## 7. Следующий этап (предложение)
+## 7. Stage 3C — закрытие границы и контрольно-чувствительный свип
 
-Расширить сетку за край (доли >0.2 при q≥5) до закрытия границы; второй свип
-со слабыми контролями (0.4) для посещения risky/unstable режимов; затем —
-думать об органах (Stage 4+ по ROADMAP). Критерий: закрытая граница +
-наблюдённая промежуточная зона, а не только плато/коллапс.
+> Exploratory analysis внутри той же абстрактной тканевой модели. Не
+> доказательство бессмертия, не модель организма, не биологический вывод.
+
+### 7.1. Цель и сетка
+
+Конфиг `experiments/configs/tissue_sweep_v1_boundary_closure.json`: сетка v0
+расширена за открытый край — доли
+`[0.0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]`
+(12 × 5 = 60 точек на профиль), те же seeds `[42, 7, 99]`, горизонт 200 шагов,
+`stochastic_jitter = 0.05` — v1 сопоставима с v0 точка-в-точку до доли 0.2.
+Та же сетка прогоняется под двумя профилями контроля
+(`control_profiles` в конфиге, `longevity.experiment.tissue_sweep`):
+
+- `strong_controls` — `preserve_architecture / immune_compatibility /
+  cancer_control = 0.9` (дефолты Stage 3A/3B);
+- `weak_controls` — `0.4 / 0.4 / 0.4` (уровень агрессивного конфига Stage 3A).
+
+Это модельные operational settings замены, не биологические константы.
+Отдельный конфиг `experiments/configs/tissue_sweep_v1_weak_controls.json` —
+та же сетка только под слабым профилем (standalone-проверка чувствительности).
+Запуск:
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.tissue_sweep \
+  --config experiments/configs/tissue_sweep_v1_boundary_closure.json \
+  --out-prefix experiments/output/tissue_sweep_v1
+```
+
+Артефакты (префикс `experiments/output/tissue_sweep_v1`): legacy-четвёрка
+(`_long.csv` с колонками `control_profile / primary_failure_cause /
+failure_cause_sequence / first_*_time`, `_summary.csv` с колонкой
+`control_profile`, `_summary.json`, `_boundary.json`) плюс
+`_boundary_closure.json` (граница по каждой паре частота×профиль),
+`_regime_coverage.{json,csv}`, `_failure_causes.{json,csv}`,
+`_control_comparison.json`. Динамика `TissueModel` не менялась; причинность
+выводится из записанной траектории чистыми функциями
+(`longevity.analysis.tissue_sweep.failure_causality` и др.).
+
+### 7.2. Как считается закрытие границы
+
+Для каждой пары (частота, профиль) доли сортируются по возрастанию;
+`sustainable` точки — то же правило Stage 3B (`sustainable_rate ≥ 2/3` и
+средний ttf ≥ 80% горизонта):
+
+- `max_sustainable_fraction` — максимальная устойчивая доля (`null`, если
+  устойчивых нет);
+- `first_unsustainable_fraction` — минимальная неустойчивая доля строго выше
+  неё (`null`, если выше всё устойчиво);
+- `boundary_open = true` — максимальная доля сетки всё ещё устойчива
+  (переход за краем сетки). Это указание расширить сетку, а не доказательство
+  неограниченной устойчивости.
+
+### 7.3. Причины отказа
+
+Для каждой траектории фиксируется первое нарушение каждого
+viability-констрейнта; нарушение отображается на причину
+(`stem_depleted → stem_depletion`, `functional_below_threshold/tissue_empty →
+functional_collapse`, `senescent_fraction_exceeded → senescence_blowout`,
+`cancer_risk_exceeded → cancer_risk`, `fibrosis_exceeded → fibrosis`,
+`ecm_degraded → ecm_failure`, `vascular_degraded → vascular_failure`,
+`immune_pressure_exceeded → immune_failure`). `primary_failure_cause` —
+самая ранняя причина (`multiple_simultaneous`, если в earliest-момент их ≥2;
+`none`, если нарушений не было); `failure_cause_sequence` — все причины в
+порядке (время, канонический порядок). Порядок детерминирован и покрыт
+тестами.
+
+### 7.4. Результаты v1 (внутри модели)
+
+Граница по профилям (`max_sustainable`, `*` = край сетки, открыта):
+
+| freq | strong | weak |
+|---|---|---|
+| 1 | 0.05 (след. 0.1) | 0.02 (след. 0.05) |
+| 5 | 0.30 (след. 0.35) | 0.10 (след. 0.2) |
+| 10 | 0.50* | 0.10 (след. 0.2) |
+| 25 | 0.50* | 0.35 (след. 0.4) |
+| 50 | 0.50* | 0.50* |
+
+Закрыты: strong при q=1/5, weak при q=1/5/10/25. Открыты: strong при q≥10
+и weak при q=50 на доле 0.5 — даже половинная замена редкими событиями
+поглощается моделью. Ослабление контроля сдвигает границу вниз на каждом
+периоде (q=1: 0.05→0.02; q=5: 0.3→0.1; q=10: открыта→0.1).
+
+Покрытие режимов (360 прогонов: 180 strong + 180 weak): sustainable 234,
+collapsing 66, baseline_like 30, risky_but_functional 27 (все — weak),
+stem_depleting 3 (strong, q=5/f=0.35 — промежуточная точка между sustainable
+0.3 и collapsing 0.4: терминальный stem ~170 при целой functional ~7430 и
+низкой сенесценции ~126), unstable_high_replacement —
+`regime_not_visited_in_current_grid` (двойных риск/нишевых нарушений нет даже
+под слабым контролем — факт о модели, не пропуск анализа).
+
+Причинность: strong рвётся первым по `stem_depletion` (30 первичных; типичная
+цепочка `stem_depletion;functional_collapse`); weak — первым по `ecm_failure`
+(63 первичных; цепочки `ecm_failure`, `ecm_failure;stem_depletion;
+functional_collapse`). `functional_collapse` встречается только вторичным
+(37 раз), первичным — никогда: функция падает следом за резервом или нишей.
+`senescence_blowout` как первичное — 0: замена давит сенесценцию даже в
+рушащихся руках. Паттерн Stage 3B подтверждён и уточнён: рушащиеся strong-руки
+(q=1, f≥0.1) имеют сенесцентную долю ~5% при `stem = 0` — ткань «выглядит
+молодой» по сенесценции, но регенеративный резерв сожжён; под weak-контролем
+аналогичная «молодая» картина бывает при целых stem (~530), но с разрушенной
+ECM (~0.5).
+
+Компромиссы (средние по 60 точкам профиля, n=3 описательно): weak даёт чуть
+большее снижение сенесцентных (+138 vs +131), но ценой роста пикового рака
+(0.106 vs 0.079) и фиброза (0.108 vs 0.068) и меньшего healthspan (162 vs 177).
+Формулировка строго внутримодельная: ослабление контрольных параметров
+сдвигает границу устойчивости вниз и меняет профиль отказа со stem-первого
+на ECM-первый.
+
+### 7.5. Ограничения v1
+
+Одна абстрактная ткань; порядковые скорости; абстрактный шаг; операциональные
+пороги; n=3 — описательный разброс, не значимость; `unstable` не посещён;
+три края сетки открыты (нужны доли >0.5 или другая ось); `rejuvenation_delta`
+и `*_vs_baseline` — локальные тканевые прокси; HYP-0 не затрагивается.
