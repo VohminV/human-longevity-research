@@ -1,0 +1,30 @@
+{
+  "organism_id": "organism_aging_anti_inflammatory_only",
+  "model_version": "0.5.0",
+  "data_version": "0.1.0",
+  "seed": 42,
+  "duration_years": 150.0,
+  "dt": 0.25,
+  "organism_parameters": {},
+  "stage_bounds": {},
+  "thresholds": {},
+  "policies": [
+    {
+      "policy_id": "antiinfl_q5",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 5.0,
+      "intensity": 1.0,
+      "intervention_type": "anti_inflammatory_resolution",
+      "target_systems": []
+    }
+  ],
+  "bounded_epsilon": 0.01,
+  "aging_mechanism_model": "mechanistic_drivers",
+  "aging_drivers": {},
+  "adult_age_setpoint": 25.0,
+  "allow_sub_adult_biological_age": false,
+  "notes": "Stage 5C anti-inflammatory resolution only (completes the mechanistic policy set)."
+}

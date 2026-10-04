@@ -1,0 +1,14 @@
+{
+  "organism_id": "organism_life_course_baseline",
+  "model_version": "0.5.0",
+  "data_version": "0.1.0",
+  "seed": 42,
+  "duration_years": 150.0,
+  "dt": 0.25,
+  "organism_parameters": {},
+  "stage_bounds": {},
+  "thresholds": {},
+  "policies": [],
+  "bounded_epsilon": 0.01,
+  "notes": "Stage 5A natural life-course: no interventions. Reference arm for all longevity comparisons at equal seed."
+}

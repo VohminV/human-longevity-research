@@ -64,3 +64,68 @@ lim_{t→∞} P( организим функционален в момент t )
   4. «доказательное неподдержание деградации» — единственный кандидат на HYP-0.
 - Каждый отчёт об эксперименте обязан назвать пороги и горизонт, на котором сделан
   вывод (см. `docs/EXPERIMENTS.md`).
+
+## 6. Robust model criterion для candidate immortality policy (Stage 5B)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой bounded degradation наблюдается на
+длинном горизонте, устойчиво к множеству seed, параметрическому шуму и
+стрессовым сценариям, при соблюдении ограничений по онкориску,
+воспалению, фиброзу, резерву и нейронной непрерывности. Это не
+доказательство бессмертия, а операциональный критерий для computational
+exploration.
+
+Конкретно (`docs/ORGANISM_MODEL.md` §8): `robust_bounded_degradation_indicator`
+истинен, если success rate bounded ≥ `min_success_rate` (0.8) по сидам,
+worst-case slopes в допусках, окна rolling-чистые, cancer/inflammation/
+fibrosis/continuity/reserve в hard limits. Текущий статус по итогам
+Stage 5B — `hypothesis_not_proven`: ни одна проверенная политика не
+прошла критерий; связывающее ограничение — `biological_age_slope`.
+Детали статуса — в `research/hypotheses/HYP-0_immortality_policy.md`.
+
+## 7. Mechanistic candidate immortality criterion (Stage 5C)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой:
+
+1. biological_age slope после зрелости ограничен;
+2. ни один ключевой драйвер старения не имеет runaway trend;
+3. витальные системы сохраняют запас прочности;
+4. онкориск, воспаление, фиброз, резерв и нейронная непрерывность
+   остаются в допустимых пределах;
+5. результат устойчив к seed, шуму и стрессовым сценариям.
+
+Это операциональный критерий computational exploration, а не
+доказательство бессмертия.
+
+Конкретно (`docs/AGING_MODEL.md` §7): `robust_bounded_degradation_v2`
+истинен, если success rate ≥ `min_success_rate` (0.8), worst-case bio и
+driver slopes в допусках, hard limits соблюдены, нет terminal decline
+и ни один драйвер не имеет runaway trend. Текущий статус по итогам
+Stage 5C — `hypothesis_not_proven`: ни одна проверенная mechanistic
+политика не прошла критерий; доминирующие связывающие драйверы —
+`cellular_senescence` / `epigenetic_drift`.
+
+## 8. Organ-backed candidate immortality criterion (Stage 6A)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой:
+
+1. biological_age slope после зрелости ограничен;
+2. ни один ключевой драйвер старения не имеет runaway trend;
+3. критические органы сохраняют функцию выше безопасного порога;
+4. системные ресурсы не истощаются монотонно;
+5. онкориск, воспаление, фиброз, резерв и нейронная непрерывность
+   остаются ограниченными;
+6. результат устойчив к seed, шуму и стрессовым сценариям.
+
+Это операциональный критерий computational exploration, а не
+доказательство бессмертия.
+
+Конкретно (`docs/ORGAN_BACKED_ORGANISM_MODEL.md` §9):
+`robust_bounded_degradation_v3` добавляет к v2 требования по органам
+(функция + склоны), ресурсам (allocation + склоны) и отсутствию
+terminal decline. Текущий статус по итогам Stage 6A —
+`hypothesis_not_proven`: ни одна проверенная organ-backed политика не
+прошла критерий; связывающее ограничение — `biological_age_slope` во
+всех ячейках.

@@ -1,0 +1,71 @@
+{
+  "organism_id": "organism_aging_organ_inspired_mechanistic",
+  "model_version": "0.5.0",
+  "data_version": "0.1.0",
+  "seed": 42,
+  "duration_years": 150.0,
+  "dt": 0.25,
+  "organism_parameters": {},
+  "stage_bounds": {},
+  "thresholds": {},
+  "policies": [
+    {
+      "policy_id": "dna_q5",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 5.0,
+      "intensity": 1.0,
+      "intervention_type": "dna_repair_enhancement",
+      "target_systems": [],
+      "max_cancer_allowed": 1.0,
+      "min_reserve_required": 0.0
+    },
+    {
+      "policy_id": "seno_q10",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 10.0,
+      "intensity": 1.0,
+      "intervention_type": "senolytic_clearance",
+      "target_systems": [],
+      "max_cancer_allowed": 1.0,
+      "min_reserve_required": 0.0
+    },
+    {
+      "policy_id": "prot_q10",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 10.0,
+      "intensity": 1.0,
+      "intervention_type": "proteostasis_enhancement",
+      "target_systems": [],
+      "max_cancer_allowed": 1.0,
+      "min_reserve_required": 0.0
+    },
+    {
+      "policy_id": "surv_q10",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 10.0,
+      "intensity": 1.0,
+      "intervention_type": "cancer_surveillance_boost",
+      "target_systems": [],
+      "max_cancer_allowed": 0.5,
+      "min_reserve_required": 0.0
+    }
+  ],
+  "bounded_epsilon": 0.01,
+  "aging_mechanism_model": "mechanistic_drivers",
+  "aging_drivers": {},
+  "adult_age_setpoint": 25.0,
+  "allow_sub_adult_biological_age": false,
+  "notes": "Stage 5C mechanistic organ-inspired: no pruning of useful locals, separate recovery class, systemic-risk limits.."
+}

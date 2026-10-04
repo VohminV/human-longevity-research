@@ -1,0 +1,98 @@
+{
+  "experiment_id": "organism_robust_repair_plus_senolytic",
+  "seeds": [
+    42,
+    7,
+    99,
+    11,
+    23
+  ],
+  "scenarios": [
+    "nominal"
+  ],
+  "runs": {
+    "repair_plus_senolytic": {
+      "organism_id": "organism_robust_repair_plus_senolytic",
+      "model_version": "0.5.0",
+      "data_version": "0.1.0",
+      "seed": 42,
+      "duration_years": 150.0,
+      "dt": 0.25,
+      "organism_parameters": {},
+      "stage_bounds": {},
+      "thresholds": {},
+      "policies": [
+        {
+          "policy_id": "repair_q5",
+          "enabled": true,
+          "start_age": 25.0,
+          "stop_age": 150.0,
+          "trigger_type": "periodic",
+          "interval": 5.0,
+          "intensity": 1.0,
+          "intervention_type": "molecular_repair",
+          "target_systems": [],
+          "max_cancer_allowed": 1.0,
+          "min_reserve_required": 0.0
+        },
+        {
+          "policy_id": "senolytic_q5",
+          "enabled": true,
+          "start_age": 25.0,
+          "stop_age": 150.0,
+          "trigger_type": "periodic",
+          "interval": 5.0,
+          "intensity": 1.0,
+          "intervention_type": "cellular_replacement",
+          "target_systems": [],
+          "max_cancer_allowed": 1.0,
+          "min_reserve_required": 0.0
+        },
+        {
+          "policy_id": "antiinfl_q10",
+          "enabled": true,
+          "start_age": 25.0,
+          "stop_age": 150.0,
+          "trigger_type": "periodic",
+          "interval": 10.0,
+          "intensity": 1.0,
+          "intervention_type": "systemic_modulation",
+          "target_systems": [],
+          "max_cancer_allowed": 1.0,
+          "min_reserve_required": 0.0
+        },
+        {
+          "policy_id": "surveillance_q10",
+          "enabled": true,
+          "start_age": 25.0,
+          "stop_age": 150.0,
+          "trigger_type": "periodic",
+          "interval": 10.0,
+          "intensity": 1.0,
+          "intervention_type": "cancer_surveillance",
+          "target_systems": [],
+          "max_cancer_allowed": 1.0,
+          "min_reserve_required": 0.0
+        },
+        {
+          "policy_id": "recovery_q10",
+          "enabled": true,
+          "start_age": 25.0,
+          "stop_age": 150.0,
+          "trigger_type": "periodic",
+          "interval": 10.0,
+          "intensity": 1.0,
+          "intervention_type": "recovery_support",
+          "target_systems": [],
+          "max_cancer_allowed": 1.0,
+          "min_reserve_required": 0.0
+        }
+      ],
+      "bounded_epsilon": 0.01,
+      "notes": "Stage 5A combined maintenance: repair + replacement + modulation + surveillance + recovery. First radical-extension candidate."
+    }
+  },
+  "robust_criteria": {},
+  "output_prefix": "experiments/output/organism_robust_repair_plus_senolytic",
+  "notes": "Stage 5B hybrid repair+senolytic+support multi-seed check."
+}

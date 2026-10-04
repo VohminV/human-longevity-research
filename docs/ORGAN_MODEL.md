@@ -358,3 +358,13 @@ or deferring it can create the capacity failures it prevents.
 Ограничения: те же, что §§7–9, плюс некалиброванные recovery-параметры,
 single recovery policy на ткань, ECM-реставрация без pool-динамики,
 n ≤ 3.
+
+## 11. Связь со Stage 6A
+
+Идеи и уроки Stage 4A–4D (shared capacities, demand/allocation,
+recovery как отдельный pipeline, вред naive pruning) использованы как
+inspiration для reduced organ proxies Stage 6A — см.
+`docs/ORGAN_BACKED_ORGANISM_MODEL.md`. Это параметризация идеями, а не
+перенос кода: прокси — упрощённые состояния, а не экземпляры
+`OrganModel`. Закон ветки подтверждён уровнем выше: organism-level
+coordination не бьёт independent execution (scaling −0.25).

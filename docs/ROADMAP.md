@@ -294,6 +294,157 @@ recovery/capacity-метрики, sweep-расширение, конфиги
 `docs/ORGAN_MODEL.md`. Вывод усилен: non-interference оптимален даже при
 отделённом recovery; HYP-0 не затрагивается.
 
+## Этап 5A — Minimal organism life-course and longevity policy search (готов ✅)
+
+- [x] `OrganismModel`: стадии embryo→late_aging (+ вычисляемый
+      terminal_decline), 8 витальных систем (function/reserve/damage +
+      sensitivities; у brain — `informational_continuity`), 9 глобальных
+      драйверов старения, bio_age ≠ chrono_age, смерть отказом витальных
+      систем (12 причин + `unknown`-fallback по max_age), checkpoint/restore,
+      инжектируемый RNG
+- [x] `intervention.py`: 8 классов (repair/replacement/maintenance/
+      modulation/boost/neural/surveillance/recovery — у каждого польза И
+      цена), `LongevityPolicy` (periodic/threshold + refractory-cooldown +
+      constraints), `PolicySet` (детерминирован); 10 политик (natural,
+      senolytic, repair, regenerative/antiinfl/surveillance-блоки, neural,
+      combined, adaptive, organ-inspired)
+- [x] метрики: lifespan/healthspan (hs ≤ ls), AUC бремён, slopes после
+      зрелости, `bounded_degradation_indicator(ε)`, fitness multi-objective,
+      Pareto, агрегаты по сидам; `immortality_status = hypothesis_not_proven`
+- [x] раннер + CLI (`organism_runner --config/--out`), deterministic
+      policy search (grid/random/hill-climbing-lite, top-K, pareto, long CSV)
+- [x] 8 конфигов (`organism_life_course_{baseline,senolytic,molecular_repair,
+      combined_maintenance,adaptive_threshold,neural_preserving,
+      organ_inspired}` + `organism_policy_search_mini`)
+- [x] наблюдение (seed 42, в рамках модели): baseline 68.0/61.8 cascade;
+      repair (74.5) > replacement (70.0); combined 80.5; adaptive 117.8/100.2
+      (лучший, цена — cancer ×3.3); neural самый чистый по раку (0.89);
+      organ-inspired 79.0 ≈ combined при меньшем раке; search (27×2):
+      лучший repair q3 + senolytic q3 (96.2/84.8), bounded 0/27, pareto 14 —
+      candidate immortality policy НЕ найдена
+- [x] тесты (4 файла, 26 шт.): 12 групп по брифу (совместимость,
+      детерминизм, валидация, life-course, bio-age, 8 классов, trade-offs,
+      hs≤ls, neural identity, search, organ-inspired, scope без bio-claims)
+
+Новое: `longevity.model` (organism, intervention), `longevity.analysis`
+(organism_metrics), `longevity.experiment` (organism_runner,
+organism_policy_search), конфиги `experiments/configs/organism_*.json`,
+doc `docs/ORGANISM_MODEL.md`. HYP-0 формализована как candidate policy,
+не доказана.
+
+## Этап 5B — Robust long-horizon longevity policy search and stress testing (готов ✅)
+
+- [x] opt-in `perturbation_model = parametric_noise` (`none` побайтово = 5A):
+      шум aging/repair/efficacy на выделенных RNG-потоках + 7 типов
+      детерминированных шоков; по пути пойман баг общего perturb_seed=0
+      (все noise-прогоны были идентичны) + отсутствие seed в вызове модели
+      из раннера — исправлено с регрессионным тестом
+- [x] multi-seed агрегаты, rolling windows, `robust_bounded_degradation_indicator`
+      (rate ≥ 0.8 + worst-case slopes + чистые окна), binding constraints
+      (первое нарушение в каноническом порядке), robust fitness
+      (mean − λ·std − λ·worst, дефолтные λ = 0)
+- [x] stress suite из 9 сценариев + модуль `organism_robust` (CLI
+      `organism_stress`): runs × seeds × scenarios, comparison/binding/
+      stress-артефакты
+- [x] 8 конфигов (`organism_robust_{baseline,key_policies,adaptive_constrained,
+      repair_plus_senolytic,neural_preserving_extended}`,
+      `organism_long_horizon_search` (250y), `organism_stress_suite` (135 прогонов),
+      `organism_robust_policy_search_mini`)
+- [x] наблюдение (в рамках модели): ranking стабилен везде (adaptive 118.7 >
+      search_best 95.5 > combined 80.7 > inspired 79.1); robust_bounded —
+      false везде (0/45 stress-ячеек, 0/27 поисков); binding всегда
+      `biological_age_slope` (70/70); adaptive constrained: cancer −24% без
+      потери benefit; toxicity — самый опасный стресс; neural_stress не
+      влияет; long horizon (250y) без новых поздних причин
+- [x] тесты (3 файла, 23 шт.): 15 групп по брифу (совместимость,
+      детерминизм, агрегация, пертурбации, шоки, горизонт/окна, robust
+      индикатор, binding, stress, robust-поиск, adaptive constraints,
+      hybrid, neural-extended, checkpoint+cooldown, scope)
+
+Новое: perturbation/shock-слой `organism.py`, состояние cooldown
+`intervention.py`, robust/window/binding-метрики, `organism_robust`
+(мультисид + стрессы), robust-фитнес в поиске, конфиги
+`experiments/configs/organism_robust_*.json`,
+`organism_long_horizon_search.json`, `organism_stress_suite.json`,
+doc § Stage 5B в `docs/ORGANISM_MODEL.md`, критерий в `docs/IMMORTALITY.md`,
+статус в `research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`, связывающее ограничение —
+`biological_age_slope`.
+
+## Этап 5C — Mechanistic aging drivers and biological age reversibility search (готов ✅)
+
+- [x] opt-in `aging_mechanism_model = none | mechanistic_drivers`
+      (`none` численно идентичен Stage 5B); 8 драйверов с накоплением,
+      репарацией, обратимостью, diminishing returns; `biological_age` —
+      взвешенная агрегация с полом `adult_age_setpoint`
+      (rejuvenation = возврат к взрослому setpoint)
+- [x] 12 mechanistic вмешательств с ценами/рисками (reprogramming —
+      cancer/neural; telomere/stem — cancer; teratogenic proxy до
+      зрелости); `driver:*` биомаркеры; 12+ mechanistic политик
+      (одиночные, combined, adaptive, neural preserving, organ-inspired)
+- [x] `dominant_binding_driver`, `robust_bounded_degradation_v2`,
+      driver-aware fitness, binding-driver sweep, mechanistic stress
+      suite; 16 конфигов `organism_aging_*.json`
+- [x] наблюдение (в рамках модели): legacy 68.0 = Stage 5B бит-в-бит;
+      combined лучший (70.8, bio slope 0.417 >> eps); одиночные слабее;
+      search mini лучший 72.2/65.2, v2 false везде; sweep 18/27 —
+      `epigenetic_drift`, 9/27 — `cellular_senescence`; stress ranking
+      стабилен; bounded v2 — нигде
+- [x] тесты (4 файла): совместимость, детерминизм, границы, floor,
+      trade-offs, binding, v2, поиск, стресс, checkpoint, scope
+
+Новое: `longevity.model` (aging), mechanistic-слой `organism.py` /
+`intervention.py`, `longevity.analysis` (aging_metrics),
+`longevity.experiment` (organism_aging), конфиги
+`experiments/configs/organism_aging_*.json`, doc `docs/AGING_MODEL.md`,
+§ Stage 5C в `docs/ORGANISM_MODEL.md`, критерий в `docs/IMMORTALITY.md`,
+статус в `research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; доминирующие связывающие драйверы —
+`cellular_senescence` / `epigenetic_drift`.
+Ограничение: абстрактный организм, порядковые параметры,
+операциональные пороги, малое число seeds, HYP-0 формализована, но не
+доказана.
+
+## Этап 6A — Organ-backed emergent aging and cross-scale policy search (готов ✅)
+
+- [x] opt-in `organ_backed_model = none | reduced_organ_proxies`
+      (`none` численно идентичен Stage 5C); 8 reduced organ proxies
+      (идеи Stage 4, не экземпляры `OrganModel`), маппинг на витальные
+      системы, частично эмерджентные драйверы (`emergent_weights`)
+- [x] systemic resources (perfusion/immune/metabolic/repair) с
+      demand/allocation/shortfall; органные цены вмешательств;
+      отдельный `resource_shock` вне Stage 5B потока
+- [x] 5 organism coordination modes (independent/scaling/priority/
+      lookahead/deferral) + FIFO-очередь в checkpoint; органные
+      биомаркеры (`organ:*`, `resource:*`, минимумы)
+- [x] `dominant_binding_level/organ/driver/resource`,
+      `robust_bounded_degradation_v3`, cross-scale fitness
+      (`w_organ_slope`, `w_resource_shortfall`, `w_bounded_v3_bonus`),
+      coordination compare + resource sensitivity модули
+- [x] 10 конфигов `organism_organ_backed_*.json`
+- [x] наблюдение (в рамках модели): baseline 82.8/71.8; maintenance
+      88.0; combined 101.5/87.2; adaptive 97.5; search best 104.8;
+      coordination: independent = deferral = lookahead, scaling −0.25;
+      repair — критичнейший ресурс (бюджет 4 → ~76–79); stress ranking
+      стабилен; v3 — нигде, binding level везде `biological_age`
+- [x] тесты (5 файлов, 31 шт.): совместимость, детерминизм, маппинг,
+      эмерджентность, ресурсы, координация, binding, v3, свипы, поиск,
+      стресс, checkpoint, scope
+
+Новое: `longevity.model` (organ_backed), organ-слой `organism.py` /
+`intervention.py`, `longevity.analysis` (organ_backed_metrics),
+`longevity.experiment` (organism_organ_backed), конфиги
+`experiments/configs/organism_organ_backed_*.json`, doc
+`docs/ORGAN_BACKED_ORGANISM_MODEL.md`, § Stage 6A в
+`docs/ORGANISM_MODEL.md`, ссылка в `docs/ORGAN_MODEL.md`, секция в
+`docs/AGING_MODEL.md`, критерий в `docs/IMMORTALITY.md`, статус в
+`research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; связывающий уровень —
+`biological_age` во всех ячейках.
+Ограничение: абстрактный organ-backed организм, reduced proxies,
+порядковые параметры, операциональные пороги, малое число seeds,
+HYP-0 формализована, но не доказана.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

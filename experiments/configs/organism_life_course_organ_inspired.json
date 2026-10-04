@@ -1,0 +1,67 @@
+{
+  "organism_id": "organism_life_course_organ_inspired",
+  "model_version": "0.5.0",
+  "data_version": "0.1.0",
+  "seed": 42,
+  "duration_years": 150.0,
+  "dt": 0.25,
+  "organism_parameters": {},
+  "stage_bounds": {},
+  "thresholds": {},
+  "policies": [
+    {
+      "policy_id": "repair_q5",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 5.0,
+      "intensity": 1.0,
+      "intervention_type": "molecular_repair",
+      "target_systems": [],
+      "max_cancer_allowed": 1.0,
+      "min_reserve_required": 0.0
+    },
+    {
+      "policy_id": "senolytic_q10",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 10.0,
+      "intensity": 1.0,
+      "intervention_type": "cellular_replacement",
+      "target_systems": [],
+      "max_cancer_allowed": 1.0,
+      "min_reserve_required": 0.0
+    },
+    {
+      "policy_id": "recovery_q5",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 5.0,
+      "intensity": 1.0,
+      "intervention_type": "recovery_support",
+      "target_systems": [],
+      "max_cancer_allowed": 1.0,
+      "min_reserve_required": 0.0
+    },
+    {
+      "policy_id": "surveillance_q10",
+      "enabled": true,
+      "start_age": 25.0,
+      "stop_age": 150.0,
+      "trigger_type": "periodic",
+      "interval": 10.0,
+      "intensity": 1.0,
+      "intervention_type": "cancer_surveillance",
+      "target_systems": [],
+      "max_cancer_allowed": 0.5,
+      "min_reserve_required": 0.0
+    }
+  ],
+  "bounded_epsilon": 0.01,
+  "notes": "Stage 5A organ-inspired: never prune useful local actions without systemic cause; separate recovery class; cancer-constrained. Lessons of Stage 4D."
+}
