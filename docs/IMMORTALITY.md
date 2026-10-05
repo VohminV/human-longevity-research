@@ -200,3 +200,18 @@ Stage 6C — `hypothesis_not_proven`: ни одна проверенная rever
 Wall classification: `parametric_irreversibility_wall`. Unlimited-ceiling
 аблации помечены non-physiological exploratory. Статус —
 `hypothesis_not_proven`.
+
+## 12. Compound-wall interpretation rule (Stage 6E)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой v5 достигается robustly в
+не-exploratory режимах со стабильным вердиктом по seed/eps/dt. Появление
+v5 только в узком ultra-low окне conversion при false по обе стороны —
+это `knife_edge_parametric_wall`, а не успех; появление только с
+unlimited ceiling — `ceiling_mediated_wall`; смена вердикта при
+eps/dt/seed — `inconclusive_sensitivity_failure`.
+
+Конкретно (Stage 6E): knife-edge sweep 8×3 — v5=false везде, knife-edge
+нет; bio-age attribution — dominant `proteostasis_metabolic` при total
+slope ≈ 1.33; sensitivity eps×dt×seed — стабильно false; compound wall —
+`compound_residual_wall`. Статус — `hypothesis_not_proven`.

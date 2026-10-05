@@ -46,6 +46,30 @@ WALL_CLASSES = (
     "inconclusive",
 )
 
+# Stage 6E compound wall labels (diagnostic only; see classify_compound_wall).
+COMPOUND_WALL_LABELS = (
+    "no_wall",
+    "single_channel_parametric_wall",
+    "knife_edge_parametric_wall",
+    "compound_residual_wall",
+    "structural_under_current_abstraction_wall",
+    "ceiling_mediated_wall",
+    "inconclusive_sensitivity_failure",
+)
+
+# Stage 6E: driver-family grouping for biological_age_slope attribution.
+# Grounded in the mechanistic aggregation
+# (bio = setpoint + sum(contribution_i * damage_i / reference_i));
+# shares are a linear diagnostic proxy, not a conservation law.
+BIO_AGE_SOURCE_GROUPS: dict[str, tuple[str, ...]] = {
+    "genomic_integrity": ("dna_damage",),
+    "epigenetic": ("epigenetic_drift",),
+    "proteostasis_metabolic": ("proteostasis_loss", "mitochondrial_dysfunction"),
+    "inflammatory_senescent": ("cellular_senescence", "chronic_inflammation"),
+    "stem_exhaustion": ("stem_exhaustion",),
+    "oncogenic": ("cancer_prone",),
+}
+
 
 def _slope(times: list[float], values: list[float]) -> float:
     n = len(times)
@@ -270,4 +294,231 @@ def summarize_boundary_run(trajectory: list[dict[str, Any]], dt: float = 0.25) -
         "contributions": contributions,
         "attribution": attribution,
         "reversibility": rev_summary,
+    }
+
+
+def decompose_biological_age_slope(trajectory: list[dict[str, Any]],
+                                   driver_params: dict[str, dict[str, float]] | None = None,
+                                   ) -> dict[str, Any]:
+    """Diagnostic attribution of the mechanistic biological_age slope (pure, 6E).
+
+    Uses the model's own aggregation weights
+    (``contribution_i / adult_reference_i`` × post-adulthood damage slope).
+    The sum matches the measured bio-age slope up to flooring, clamping and
+    intervention deltas, so shares are an operational diagnostic proxy, not
+    a conservation law. Never mutates the trajectory.
+    """
+    from longevity.model.aging import DEFAULT_DRIVER_PARAMS, validate_aging_drivers
+
+    if not trajectory or len(trajectory) < 2:
+        raise ValueError("decompose_biological_age_slope of empty trajectory")
+    params = validate_aging_drivers(dict(driver_params or {})) if driver_params is not None \
+        else {name: dict(DEFAULT_DRIVER_PARAMS[name]) for name in AGING_DRIVERS}
+    adult = _adult_rows(trajectory)
+    has_drivers = any((row.get("aging") or {}).get("drivers") for row in trajectory[1:])
+    if not has_drivers or not adult:
+        return {"has_bio_age_attribution": False, "total_slope": 0.0,
+                "by_component": {}, "by_source": {}, "residual": 0.0,
+                "dominant_component": "none", "dominant_source": "none",
+                "top_components": [], "top_sources": [], "share_sum": 0.0,
+                "deterministic": True,
+                "notes": ("no mechanistic driver ledger in trajectory; "
+                          "attribution unavailable")}
+    times = [float(row["chronological_age"]) for row in adult]
+    total_slope = float(_slope(
+        times, [float(row["biological_age"]) for row in adult]))
+    by_component: dict[str, float] = {}
+    for name in AGING_DRIVERS:
+        series = [max(0.0, float((row.get("aging") or {}).get("drivers", {})
+                                 .get(name, {}).get("damage", 0.0))) for row in adult]
+        weight = float(params[name]["contribution"]) \
+            / max(1e-9, float(params[name]["adult_reference"]))
+        by_component[name] = weight * float(_slope(times, series))
+    by_source = {source: sum(by_component[d] for d in members)
+                 for source, members in BIO_AGE_SOURCE_GROUPS.items()}
+    explained = sum(by_component.values())
+    residual = total_slope - explained
+    positive = {k: max(0.0, v) for k, v in by_component.items()}
+    total_pos = sum(positive.values())
+    shares = {k: (positive[k] / total_pos if total_pos > 0.0 else 0.0) for k in positive}
+    comp_ranking = sorted(positive, key=lambda k: (-positive[k], k))
+    dominant_component = comp_ranking[0] if total_pos > 0.0 else "none"
+    spositive = {k: max(0.0, v) for k, v in by_source.items()}
+    stotal = sum(spositive.values())
+    sranking = sorted(spositive, key=lambda k: (-spositive[k], k))
+    dominant_source = sranking[0] if stotal > 0.0 else "none"
+    n_significant = sum(1 for v in spositive.values()
+                        if stotal > 0.0 and v / stotal >= 0.1)
+    return {
+        "has_bio_age_attribution": True,
+        "total_slope": float(total_slope),
+        "by_component": {k: float(v) for k, v in by_component.items()},
+        "by_source": {k: float(v) for k, v in by_source.items()},
+        "residual": float(residual),
+        "dominant_component": dominant_component,
+        "dominant_source": dominant_source,
+        "top_components": comp_ranking[:3],
+        "top_sources": sranking[:3],
+        "share_sum": float(sum(shares.values())),
+        "n_significant_sources": int(n_significant),
+        "deterministic": True,
+        "notes": ("linear diagnostic proxy from the model's aggregation weights; "
+                  "residual covers flooring, clamping and direct bio-age intervention deltas"),
+    }
+
+
+def classify_compound_wall(v5_default: bool,
+                           ablation_verdicts: dict[str, bool] | None = None,
+                           knife_band_verdicts: dict[float, bool] | None = None,
+                           irr_suppressed: bool = False,
+                           residual_binding: str = "none",
+                           n_residual_sources: int = 0,
+                           stability: dict[str, bool] | None = None,
+                           exploratory_only: bool = False) -> dict[str, Any]:
+    """Compound wall classification over 6D/6E probe evidence (pure, 6E).
+
+    Pure diagnostic homunculus over already-computed verdicts; never touches
+    the simulation. ``ablation_verdicts`` maps probe names
+    (``conversion_zero``, ``independent_zero``, ``both_suppressed``,
+    ``high_ceiling``, ``unlimited_ceiling``) to v5 booleans;
+    ``knife_band_verdicts`` maps ultra-low conversion scales to v5 booleans.
+    ``stability`` carries ``data_complete``, ``seed_stable``,
+    ``eps_stable``, ``dt_stable``. Missing evidence is never guessed:
+    incomplete data yields ``inconclusive_sensitivity_failure``.
+    """
+    ablation_verdicts = dict(ablation_verdicts or {})
+    knife_band_verdicts = dict(knife_band_verdicts or {})
+    stability = dict(stability or {})
+    for name, value in ablation_verdicts.items():
+        if not isinstance(value, bool):
+            raise ValueError(f"ablation verdict {name!r} must be a bool, got {value!r}")
+    for scale, value in knife_band_verdicts.items():
+        if not isinstance(value, bool):
+            raise ValueError(f"knife-band verdict {scale!r} must be a bool, got {value!r}")
+    if not stability.get("data_complete", False):
+        return {"wall_classification": "inconclusive_sensitivity_failure",
+                "wall_classification_reason": "insufficient data: refusing to guess a wall label",
+                "confidence": "low"}
+    if not (stability.get("seed_stable", False) and stability.get("eps_stable", False)
+            and stability.get("dt_stable", False)):
+        failed = sorted(k for k in ("seed_stable", "eps_stable", "dt_stable")
+                        if not stability.get(k, False))
+        return {"wall_classification": "inconclusive_sensitivity_failure",
+                "wall_classification_reason":
+                    f"verdict unstable across {', '.join(failed)}; no strong wall claim",
+                "confidence": "low"}
+    if v5_default and not exploratory_only:
+        return {"wall_classification": "no_wall",
+                "wall_classification_reason": "v5 true in default non-exploratory setting",
+                "confidence": "high"}
+    band = {float(s): bool(v) for s, v in knife_band_verdicts.items()}
+    band_true = sorted(s for s, v in band.items() if v)
+    band_ultra_low = [s for s in band_true if s <= 1e-4]
+    # Knife-edge: v5 true only inside the ultra-low nonzero band, false at
+    # zero and at/above 1e-3 (unstable parametric window, not a robust wall).
+    if band_ultra_low and not ablation_verdicts.get("conversion_zero", False) \
+            and not any(band.get(s, False) for s in band if s >= 1e-3):
+        return {"wall_classification": "knife_edge_parametric_wall",
+                "wall_classification_reason":
+                    f"v5 true only at ultra-low scales {band_ultra_low}; "
+                    "formally removable but not robust",
+                "confidence": "medium"}
+    if exploratory_only and not any(ablation_verdicts.get(k, False)
+                                    for k in ("conversion_zero", "independent_zero",
+                                              "both_suppressed", "high_ceiling")):
+        return {"wall_classification": "ceiling_mediated_wall",
+                "wall_classification_reason": "v5 true only with unlimited/exploratory ceiling",
+                "confidence": "medium"}
+    single = [k for k in ("conversion_zero", "independent_zero", "high_ceiling")
+              if ablation_verdicts.get(k, False)]
+    if len(single) == 1 and not ablation_verdicts.get("both_suppressed", False):
+        return {"wall_classification": "single_channel_parametric_wall",
+                "wall_classification_reason":
+                    f"v5 true with one moderate ablation ({single[0]}), stable; "
+                    "no unlimited ceiling, no knife-edge",
+                "confidence": "medium"}
+    if irr_suppressed and residual_binding in ("biological_age_slope", "information_debt") \
+            and n_residual_sources >= 2:
+        return {"wall_classification": "compound_residual_wall",
+                "wall_classification_reason":
+                    f"irreversible slope suppressed yet v5 false; binding shifted to "
+                    f"{residual_binding} across {n_residual_sources} residual sources; "
+                    "no single removable channel",
+                "confidence": "medium"}
+    if not any(ablation_verdicts.values()) and not band_true:
+        return {"wall_classification": "structural_under_current_abstraction_wall",
+                "wall_classification_reason":
+                    "v5 false under ultra-low conversion, zero independent and "
+                    "high/unlimited ceiling with stable residual attribution; "
+                    "structural only inside the current abstraction",
+                "confidence": "medium"}
+    return {"wall_classification": "inconclusive_sensitivity_failure",
+            "wall_classification_reason": "evidence pattern matches no wall archetype; "
+            "withholding a strong claim",
+            "confidence": "low"}
+
+
+def select_suppressed_evidence(per_ablation: dict[str, dict[str, Any]],
+                               eps_irreversible: float) -> dict[str, Any]:
+    """Pick the suppressed-yet-failing ablation for wall classification (pure, 6E).
+
+    ``per_ablation`` maps ablation name to ``max_irr_slope``,
+    ``v5`` (bool), ``binding`` (majority first constraint) and
+    ``n_sources`` (significant bio-age sources). Returns the suppressed
+    (slope in eps) but still-failing ablation with the smallest slope, or
+    ``{"name": None, ...}`` when no ablation suppresses the slope.
+    """
+    suppressed = {name: info for name, info in per_ablation.items()
+                  if float(info.get("max_irr_slope", 9e9)) <= float(eps_irreversible)
+                  and not bool(info.get("v5", True))}
+    if not suppressed:
+        return {"name": None, "irr_suppressed": False,
+                "residual_binding": "none", "n_residual_sources": 0}
+    name = sorted(suppressed,
+                  key=lambda k: (suppressed[k].get("max_irr_slope", 9e9), k))[0]
+    info = suppressed[name]
+    return {"name": name, "irr_suppressed": True,
+            "residual_binding": str(info.get("binding", "none")),
+            "n_residual_sources": int(info.get("n_sources", 0))}
+
+
+def compute_eps_sensitivity(summaries: list[dict[str, Any]],
+                            eps_values: list[float],
+                            base_criteria: dict[str, Any] | None = None) -> dict[str, Any]:
+    """v5 verdicts across uniform slope-eps values (pure, 6E).
+
+    Varies the nine per-run slope thresholds uniformly; worst-case gates
+    are held fixed. Never reruns the simulation.
+    """
+    from longevity.analysis.reversibility_metrics import (
+        robust_bounded_degradation_v5,
+        validate_v5_criteria,
+    )
+
+    if not summaries:
+        raise ValueError("compute_eps_sensitivity of empty summaries")
+    if not eps_values:
+        raise ValueError("eps_values must be non-empty")
+    for eps in eps_values:
+        if isinstance(eps, bool) or not isinstance(eps, (int, float)) \
+                or not math.isfinite(float(eps)) or float(eps) < 0.0:
+            raise ValueError(f"eps value must be finite and >= 0, got {eps!r}")
+    base = validate_v5_criteria(base_criteria)
+    slope_keys = ("eps_bio", "eps_bio_network", "eps_bio_rev", "eps_driver",
+                  "eps_reversible", "eps_irreversible", "eps_information",
+                  "eps_mutation", "eps_niche")
+    verdict_by_eps: dict[str, bool] = {}
+    for eps in eps_values:
+        criteria = dict(base)
+        for key in slope_keys:
+            criteria[key] = float(eps)
+        verdict_by_eps[str(eps)] = bool(
+            robust_bounded_degradation_v5(summaries, criteria)["robust_bounded_degradation_v5"])
+    values = list(verdict_by_eps.values())
+    return {
+        "eps_values": [float(e) for e in eps_values],
+        "verdict_by_eps": verdict_by_eps,
+        "eps_stable": all(v == values[0] for v in values),
+        "reason": ("verdict identical across eps" if all(v == values[0] for v in values)
+                   else "verdict changes across eps"),
     }

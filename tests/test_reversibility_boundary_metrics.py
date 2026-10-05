@@ -7,6 +7,7 @@ import pytest
 from longevity.analysis.boundary_metrics import (
     attribute_source,
     classify_wall,
+    select_suppressed_evidence,
     summarize_boundary_run,
     summarize_contributions,
 )
@@ -116,3 +117,20 @@ def test_boundary_run_summary_does_not_mutate():
     frozen = copy.deepcopy(traj)
     summarize_boundary_run(traj)
     assert traj == frozen
+
+
+def test_select_suppressed_evidence_prefers_smallest_failing_slope():
+    per_ablation = {
+        "default": {"max_irr_slope": 0.005, "v5": False,
+                    "binding": "biological_age_slope", "n_sources": 4},
+        "conversion_zero": {"max_irr_slope": 0.0008, "v5": False,
+                            "binding": "biological_age_slope", "n_sources": 3},
+        "independent_zero": {"max_irr_slope": 0.005, "v5": False,
+                             "binding": "biological_age_slope", "n_sources": 4},
+    }
+    out = select_suppressed_evidence(per_ablation, 0.004)
+    assert out == {"name": "conversion_zero", "irr_suppressed": True,
+                   "residual_binding": "biological_age_slope", "n_residual_sources": 3}
+    out_none = select_suppressed_evidence(per_ablation, 0.0001)
+    assert out_none == {"name": None, "irr_suppressed": False,
+                        "residual_binding": "none", "n_residual_sources": 0}

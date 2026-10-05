@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936D_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-478_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%936E_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-499_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -64,9 +64,9 @@ LONGEVITY ANALYSIS
 ## Прогресс
 
 ```text
-Этапы 1–6D:  ██████████████████ 18/18 завершены
+Этапы 1–6E:  ███████████████████ 19/19 завершены
 HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:       478 passing (детерминизм, инварианты, checkpoint/restore)
+Тесты:       499 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Блок | Этапы | Статус | Главный вывод |
@@ -81,7 +81,8 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | Organ-network | 6B | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
 | Reversibility | 6C | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
 | Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
-| Дальше | 6E+ | ⏳ | Следующий шаг по итогам классификации стены |
+| Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
+| Дальше | 6F+ | ⏳ | Следующий шаг по итогам compound-классификации |
 
 Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
 
@@ -110,7 +111,7 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | `AGING_MODEL.md` | Механистический слой старения и reversibility search (Stage 5C) |
 | `ORGAN_BACKED_ORGANISM_MODEL.md` | Organ-backed организм: прокси, ресурсы, координация (Stage 6A) |
 | `ORGAN_NETWORK_MODEL.md` | Organ-network: рёбра, feedback, hard limits, v4 (Stage 6B) |
-| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D |
+| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E |
 | `CALIBRATION.md` | Калибровка ранней динамики против данных (MODEL MISMATCH) |
 | `DEVELOPMENTAL_DYNAMICS.md` | Стадия-зависимый клеточный цикл (Этап 3.5) |
 | `ASSUMPTIONS.md` | Все принятые допущения |
@@ -282,6 +283,21 @@ Boundary probe (Stage 6D):
 ```bash
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_both_suppressed.json --out experiments/output/organism_reversibility_boundary_both_suppressed.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_conversion_ultra_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_conversion_ultra_sweep
+```
+
+**Этап 6E — compound wall attribution и knife-edge probe** — реализован:
+
+- [x] knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде, knife-edge нет, порога нет
+- [x] bio-age attribution: dominant `proteostasis_metabolic` (total slope ≈ 1.33, residual −0.014, 3 значимых источника), стабильна по аблациям
+- [x] sensitivity eps×dt×seed (60 прогонов): стабильно false везде; compound wall `compound_residual_wall`
+
+Compound wall (Stage 6E):
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_knife_edge_conversion_1e-4.json --out experiments/output/organism_reversibility_boundary_knife_edge_conversion_1e-4.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_knife_edge_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_knife_edge_sweep
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_compound_attribution.json --out-prefix experiments/output/organism_reversibility_boundary_compound_attribution
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_sensitivity.json --out-prefix experiments/output/organism_reversibility_boundary_sensitivity
 ```
 
 <!--

@@ -315,3 +315,16 @@ telomere/altered-communication/fibrosis — расширения; n ≤ 3
   ultra-свипы 9+9+7, search, stress — v5 false везде.
 - HYP-0: `hypothesis_not_proven`;
   wall — `parametric_irreversibility_wall` (исход 2).
+
+## 14. Stage 6E — Compound wall attribution and knife-edge probe (кратко)
+
+> Диагностический extension поверх 6D: knife-edge, bio-age attribution,
+> compound-классификатор, sensitivity. Полная версия —
+> `docs/REVERSIBILITY_MODEL.md` §13.
+
+- Knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде,
+  knife-edge нет; bio-age attribution стабильна (total slope ≈ 1.33,
+  dominant `proteostasis_metabolic`, residual −0.014, 3 источника).
+- Sensitivity eps×dt×seed (60 прогонов): стабильно false везде;
+  compound wall — `compound_residual_wall`.
+- HYP-0: `hypothesis_not_proven`.

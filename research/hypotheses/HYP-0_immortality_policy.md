@@ -175,6 +175,36 @@ Boundary probe добавлен, candidate robust bounded degradation v5
 Ограничения: абстрактная boundary-probe модель, порядковые параметры,
 операциональные пороги, n ≤ 3, нет биологической валидации.
 
+## Stage 6E result
+
+Compound wall attribution и knife-edge probe добавлены, candidate robust
+bounded degradation v5 **не найден** ни в nominal, ни в аблациях, ни в
+sensitivity:
+
+- knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false во всех
+  8 точках, включая 1e-6 — knife-edge нет, порога нет; binding везде
+  `biological_age_slope`; source `conversion` (≥0.01) →
+  `information_debt` (≤0.001);
+- bio-age attribution стабильна по аблациям: total slope ≈ 1.33,
+  dominant `proteostasis_loss` → `proteostasis_metabolic` (0.69), далее
+  `stem_exhaustion` (0.23), `inflammatory_senescent` (0.18); residual
+  −0.014 (linear proxy объясняет ~99%); значимых источников — 3;
+- sensitivity (eps 0.002/0.004/0.008 × dt 0.5/0.25/0.1 × 4 аблации × 5
+  seeds, 60 прогонов, v5 переоценён без реранов): eps/dt/seed stable все
+  true; v5=false во всех 36 ячейках, включая самый мягкий eps;
+- compound wall в sensitivity и compound-attribution независимо:
+  `compound_residual_wall` — irreversible slope подавлен, v5 false,
+  binding `biological_age_slope`, ≥2 остаточных источников;
+- `candidate_robust_bounded_degradation_v5_found = false` везде;
+- dominant wall: `compound_residual_wall` (уточнение 6D-метки
+  `parametric_irreversibility_wall` для v5 как целого).
+
+Статус остаётся `hypothesis_not_proven`. Attribution shares — linear
+diagnostic proxy, не conservation law; unlimited ceiling exploratory.
+Ограничения: абстрактная boundary-probe модель, порядковые параметры,
+операциональные пороги, dt ∈ {0.5, 0.25, 0.1}, n ≤ 5, нет биологической
+валидации.
+
 ## История статусов
 
 - Stage 5A (2026-10-04): hypothesis_not_proven, single-seed search, bounded 0/27.
@@ -193,3 +223,7 @@ Boundary probe добавлен, candidate robust bounded degradation v5
   conversion подавляем (slope в допуске), но v5 false везде;
   wall = parametric_irreversibility_wall, source = conversion,
   компонент = driver:stem_exhaustion.
+- Stage 6E: hypothesis_not_proven, knife-edge sweep (v5 false в 8/8,
+  knife-edge нет) + bio-age attribution (dominant proteostasis_metabolic)
+  + sensitivity (eps/dt/seed stable, v5 false в 36/36);
+  wall = compound_residual_wall.

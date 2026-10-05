@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH — презентация прогресса
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936D_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-478_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%936E_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-499_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -19,9 +19,9 @@
 [Mechanistic](#слайд-8-mechanistic) ·
 [Organ-backed](#слайд-9-organ-backed) · [Network](#слайд-10-organ-network) ·
 [Reversibility](#слайд-11-reversibility) · [Boundary](#слайд-12-boundary) ·
-[Цифры](#слайд-13-цифры) ·
-[HYP-0](#слайд-14-hyp-0) · [Дальше](#слайд-15-дальше) ·
-[Воспроизведение](#слайд-16-воспроизведение)
+[Compound wall](#слайд-13-compound-wall) · [Цифры](#слайд-14-цифры) ·
+[HYP-0](#слайд-15-hyp-0) · [Дальше](#слайд-16-дальше) ·
+[Воспроизведение](#слайд-17-воспроизведение)
 
 ---
 
@@ -50,12 +50,12 @@ ML-библиотек в ядре — только stdlib.
 
 ## Слайд 2. Прогресс
 
-Этапы 1–6D, детали — `docs/ROADMAP.md`.
+Этапы 1–6E, детали — `docs/ROADMAP.md`.
 
 ```text
-Этапы 1–6D:  ██████████████████ 18/18 завершены
+Этапы 1–6E:  ███████████████████ 19/19 завершены
 HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:       478 passing (детерминизм, инварианты, checkpoint/restore)
+Тесты:       499 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Этап | Статус | Одним предложением |
@@ -78,7 +78,8 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | 6B — Organ-network | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
 | 6C — Reversibility | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
 | 6D — Boundary probe | ✅ | Аблации conversion/accrual/ceiling; conversion=0 даёт slope в допуске, но v5 — нигде (открывается bio age) |
-| Дальше | 6E+ | ⏳ | Следующий шаг по итогам классификации стены |
+| 6E — Compound wall | ✅ | Knife sweep 8×3 без knife-edge + bio-age attribution + sensitivity stable; wall `compound_residual_wall` |
+| Дальше | 6F+ | ⏳ | Следующий шаг по итогам compound-классификации |
 
 ---
 
@@ -300,7 +301,27 @@ pie title Binding drivers, sweep 27x3
 
 ---
 
-## Слайд 13. Цифры
+## Слайд 13. Compound wall
+
+Этап 6E: knife-edge probe + bio-age attribution + sensitivity — проверка,
+не является ли стена 6D узким параметрическим эффектом.
+
+- Knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде,
+  включая 1e-6 — knife-edge нет, порога нет; source `conversion` (≥0.01)
+  → `information_debt` (≤0.001).
+- Bio-age attribution (веса модели, diagnostic proxy): total slope ≈ 1.33,
+  dominant `proteostasis_loss` → `proteostasis_metabolic` (0.69), далее
+  `stem_exhaustion` (0.23); residual −0.014 (~99% объяснено); значимых
+  источников — 3; стабильна по аблациям.
+- Sensitivity eps×dt×seed (60 прогонов, v5 переоценён без реранов):
+  eps/dt/seed stable все true; v5=false во всех 36 ячейках.
+- Compound wall (sensitivity и attribution независимо):
+  `compound_residual_wall` — irreversible подавлен, v5 false, binding
+  `biological_age_slope`, ≥2 остаточных источника.
+
+---
+
+## Слайд 14. Цифры
 
 Lifespan лучших политик (масштаб: 30 символов = 117.8 лет):
 
@@ -315,17 +336,18 @@ combined backed 6A   101.5  █████████████████�
 combined network 6B    76.5  ███████████████████
 combined revers 6C     69.5  ██████████████████
 boundary 6D            69.5  ██████████████████
+compound 6E            69.5  ██████████████████
 ```
 
 - Healthspan ≤ lifespan — всегда (инвариант, покрыт тестами).
 - Bounded degradation (v1, строгий v2, organ-backed v3, network v4,
   reversibility v5): **0 везде** — ни одна политика, ни один сид,
-  ни один стресс, ни одна аблация.
-- Тесты: **478 passing**. Артефакты — в `experiments/output/`.
+  ни один стресс, ни одна аблация, ни один eps/dt.
+- Тесты: **499 passing**. Артефакты — в `experiments/output/`.
 
 ---
 
-## Слайд 14. HYP-0
+## Слайд 15. HYP-0
 
 ```text
 HYP-0: hypothesis_not_proven
@@ -343,6 +365,8 @@ HYP-0: hypothesis_not_proven
 9. Boundary 6D (подавление irreversible flux)? — Slope в допуске при
    conversion=0, но v5 всё равно нет: открывается `biological_age_slope`.
    Wall: `parametric_irreversibility_wall`.
+10. Compound 6E (knife-edge + sensitivity)? — v5=false в 8/8 и 36/36;
+    knife-edge нет; attribution стабильна; wall `compound_residual_wall`.
 
 > Candidate policy не найдена — это граница текущей абстрактной модели,
 > а не опровержение гипотезы в реальности. Даже найденный кандидат был бы
@@ -352,26 +376,27 @@ HYP-0: hypothesis_not_proven
 
 ---
 
-## Слайд 15. Дальше
+## Слайд 16. Дальше
 
 ```text
-Stage 6C сказал: стена — irreversible accumulation через conversion.
 Stage 6D сказал: conversion подавим, но v5 всё равно нет — за стеной вторая стена.
+Stage 6E сказал: вторая стена составная (bio-age + info, ≥2 источников), стабильна по eps/dt/seed.
 ```
 
-- **Stage 6D** — done: irreversible slope параметрически подавим
-  (0.00082 при conversion=0), но v5 требует и bio slopes — исход 2.
-- Следующий шаг — решить по классификации: гетерогенные
+- **Stage 6E** — done: knife-edge нет, attribution стабильна
+  (dominant `proteostasis_metabolic`), sensitivity стабильна, wall —
+  `compound_residual_wall`.
+- Следующий шаг — решить по compound-классификации: гетерогенные
   ceiling/conversion, energy-coupled conversion или закрытие ветки
-  честным structural wall verdict (6E+).
+  честным wall verdict (6F+).
 
 ---
 
-## Слайд 16. Воспроизведение
+## Слайд 17. Воспроизведение
 
 ```bash
 python -m pip install -e ".[dev]"
-python -m pytest   # 478 passing
+python -m pytest   # 499 passing
 ```
 
 ```bash
@@ -386,10 +411,14 @@ $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config e
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_reversibility --config experiments/configs/organism_reversibility_coordination_compare.json --out-prefix experiments/output/organism_reversibility_coordination_compare
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_both_suppressed.json --out experiments/output/organism_reversibility_boundary_both_suppressed.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_conversion_ultra_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_conversion_ultra_sweep
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_knife_edge_conversion_1e-4.json --out experiments/output/organism_reversibility_boundary_knife_edge_conversion_1e-4.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_knife_edge_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_knife_edge_sweep
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_compound_attribution.json --out-prefix experiments/output/organism_reversibility_boundary_compound_attribution
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_sensitivity.json --out-prefix experiments/output/organism_reversibility_boundary_sensitivity
 ```
 
 Документы: `docs/ROADMAP.md` (план), `docs/AGING_MODEL.md` (Stage 5C),
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md` (Stage 6A),
 `docs/ORGAN_NETWORK_MODEL.md` (Stage 6B),
-`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D),
-`docs/ORGANISM_MODEL.md` (§8–12), `docs/IMMORTALITY.md` (§6–11).
+`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E),
+`docs/ORGANISM_MODEL.md` (§8–14), `docs/IMMORTALITY.md` (§6–12).

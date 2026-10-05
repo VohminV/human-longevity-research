@@ -1,4 +1,5 @@
-# REVERSIBILITY_MODEL.md — Reversibility ceiling и irreversible accumulation (Stage 6C)
+# REVERSIBILITY_MODEL.md — Reversibility ceiling, irreversible accumulation,
+# boundary probe и compound wall attribution (Stage 6C–6E)
 
 > Это НЕ модель человека. Порядковые скорости, абстрактные годы, reduced
 > proxies/рёбра, нет анатомии и калибровки.
@@ -201,3 +202,56 @@ classification (parametric vs structural — только внутримодел
 binding wall`. HYP-0 остаётся `hypothesis_not_proven`;
 `candidate_robust_bounded_degradation_v5_found = false` в default,
 аблациях и стрессе.
+
+## 13. Stage 6E — Compound wall attribution and knife-edge probe (кратко)
+
+Диагностический extension поверх Stage 6D: отвечает, является ли
+барьер после 6D узким параметрическим knife-edge, множественной
+остаточной стеной или нестабильным выводом. Новая биология не
+добавляется.
+
+Что добавлено (всё additive, `boundary_probe_model=none` по-прежнему
+эквивалентен 6C):
+
+- Knife-edge probe: single-конфиг (`conversion_scale=1e-4`,
+  `independent_accrual_scale=0.0`) и sweep
+  `0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1.0` при independent=0 —
+  переиспользует generic `conversion_ultra_sweep` раннера.
+- `decompose_biological_age_slope` (`boundary_metrics.py`): раскладка
+  mechanistic `biological_age_slope` по 8 драйверам весами
+  `contribution_i / adult_reference_i` и по 6 семейств-источников
+  (genomic, epigenetic, proteostasis_metabolic, inflammatory_senescent,
+  stem, oncogenic) + residual (floor/clamp/прямые delta bio-age).
+  Linear diagnostic proxy, не conservation law; вход не мутируется.
+- `classify_compound_wall` (pure): 7 labels — `no_wall`,
+  `single_channel_parametric_wall`, `knife_edge_parametric_wall`,
+  `compound_residual_wall`,
+  `structural_under_current_abstraction_wall`, `ceiling_mediated_wall`,
+  `inconclusive_sensitivity_failure`. Неполные данные или нестабильность
+  по seed/eps/dt → всегда `inconclusive_sensitivity_failure`, угадывания нет.
+- Sensitivity-kind в `organism_boundary.py`: траектории прогоняются один
+  раз на (dt × аблация × seed), вердикт v5 переоценивается на каждый eps
+  без реранов. Вердикты, stability-флаги и compound-классификация пишутся
+  в `*_sensitivity.json`.
+- Фитнес поиска не менялся: поиск идёт по nominal (non-exploratory)
+  базам; v5 в аблациях оценивается отдельно и маркируется.
+
+Главный результат (в рамках модели, seeds 42/7/99):
+
+- Knife-edge sweep 8×3: v5=false во всех 8 точках, включая 1e-6 —
+  knife-edge нет, порога нет. Binding везде `biological_age_slope`;
+  source смещается `conversion` (≥0.01) → `information_debt` (≤0.001).
+- Bio-age attribution стабильна по аблациям: total slope ≈ 1.33,
+  dominant `proteostasis_loss` → `proteostasis_metabolic` (0.69),
+  далее `stem_exhaustion` (0.23), `inflammatory_senescent` (0.18);
+  residual −0.014 (прокси объясняет ~99%); значимых источников (доля
+  ≥ 0.1) — 3.
+- Sensitivity (eps 0.002/0.004/0.008 × dt 0.5/0.25/0.1 × 4 аблации × 5
+  seeds, 60 прогонов + переоценка): eps_stable, dt_stable, seed_stable —
+  все true; v5=false в all 36 ячейках, включая самый мягкий eps.
+- Compound wall в sensitivity и compound-attribution: обе независимо дают
+  `compound_residual_wall` — irreversible slope подавлен, v5 false,
+  binding `biological_age_slope`, ≥2 остаточных источников.
+- HYP-0 остаётся `hypothesis_not_proven`. Это diagnostic classification
+  внутри abstract organ-network reversibility boundary-probe модели, а не
+  биологический закон и не доказательство (не)возможности бессмертия.
