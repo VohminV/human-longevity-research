@@ -147,3 +147,10 @@ resource`, `candidate_robust_bounded_degradation_v3_found` (только фла�
 биологической валидации. Отсутствие v3 — валидный, более сильный
 внутримодельный результат: даже эмерджентные органные ограничения не
 открыли bounded degradation. HYP-0 остаётся `hypothesis_not_proven`.
+
+## 12. Stage 6B — Cross-organ network (кратко)
+
+Ответ на вопрос Stage 6A — см. `docs/ORGAN_NETWORK_MODEL.md`. Рёбра,
+feedback, hard limits и network age утяжеляют baseline (82.8 → 67.0),
+но binding остаётся `biological_age_slope`; координация 6×3 не бьёт
+independent; v4 — нигде. HYP-0 остаётся `hypothesis_not_proven`.

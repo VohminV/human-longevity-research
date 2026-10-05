@@ -261,3 +261,57 @@ telomere/altered-communication/fibrosis — расширения; n ≤ 3
 - HYP-0: `hypothesis_not_proven`;
   `candidate_robust_bounded_degradation_v3_found = false`; binding —
   `biological_age_slope` во всех ячейках.
+
+## 11. Stage 6B — Cross-organ network и hard limits (кратко)
+
+> Ответ на вопрос Stage 6A: меняется ли картина, когда старение —
+> эмерджентное свойство сети органов, feedback, энергии, информации,
+> мутаций и необратимости. Полная версия — `docs/ORGAN_NETWORK_MODEL.md`.
+
+- Opt-in `organ_network_model = reduced_network_feedback` (`none` =
+  Stage 6A бит-в-бит); 12 рёбер, 7 feedback loops, hard limits, network
+  age с floor, 7 новых coordination modes, 9 новых причин отказа,
+  `robust_bounded_degradation_v4`, network binding v3.
+- Baseline 67.0/58.2, maintenance 73.0/65.0, combined 76.5/68.8,
+  adaptive 76.8/70.2, search best 75.2; coordination 6x3 все 76.5
+  (non-interference на сетевом уровне); repair снова критичен
+  (4 → ~55; ≥8 → ~77.8); stress ranking стабилен.
+- HYP-0: `hypothesis_not_proven`;
+  `candidate_robust_bounded_degradation_v4_found = false`; binding —
+  `biological_age` (и network slope) во всех ячейках.
+
+## 12. Stage 6C — Reversibility ceiling и irreversible accumulation (кратко)
+
+> Ответ на вопрос Stage 6B: reversible мусор или irreversible долг?
+> Полная версия — `docs/REVERSIBILITY_MODEL.md`.
+
+- Opt-in `reversibility_model = split_reversible_irreversible` (`none` =
+  Stage 6B бит-в-бит); per-driver/per-organ rev/irr ledger, conversion с
+  модификаторами, repair ceiling с cost/risk/diminishing, information
+  debt, mutation fixation, niche disorder, entropy, bio_rev с
+  динамическим irreversible floor, 9 новых intervention-типов, 7
+  coordination modes, 9 новых причин отказа, `robust_bounded_degradation_v5`.
+- Baseline 67.0/58.2 (wall `irreversible_accumulation`), combined
+  preventive+clearance 69.5/60.5, aggressive 69.0 (долги растут), neural
+  69.8/61.0, search best 68.8; conversion 0.05 → 60.5 (−9 лет);
+  coordination 4×3 все 69.5 (non-interference); ceiling sweep плоский.
+- HYP-0: `hypothesis_not_proven`;
+  `candidate_robust_bounded_degradation_v5_found = false`; первое
+  нарушение — `biological_age`, dominant wall — `irreversible_accumulation`.
+
+## 13. Stage 6D — Irreversibility boundary probe (кратко)
+
+> Диагностический этап: аблации, а не новая биология. Полная версия —
+> `docs/REVERSIBILITY_MODEL.md` §12.
+
+- Opt-in `boundary_probe_model = irreversibility_ablation` (`none` и
+  нейтральные scales = Stage 6C бит-в-бит); scales conversion /
+  independent / ceiling, component overrides, disable/unlimited флаги;
+  contribution decomposition, source attribution, wall classification.
+- conversion_scale=0: irreversible slope 0.00536 → 0.00082 (в допуске),
+  но v5 false — binding смещается на `biological_age_slope`;
+  independent sweep почти не двигает slope; ceiling sweep плоский;
+  attribution default → `conversion` / `driver:stem_exhaustion`;
+  ultra-свипы 9+9+7, search, stress — v5 false везде.
+- HYP-0: `hypothesis_not_proven`;
+  wall — `parametric_irreversibility_wall` (исход 2).

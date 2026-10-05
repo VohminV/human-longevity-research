@@ -68,6 +68,18 @@ class OrganismExperimentConfig:
     systemic_resources: dict[str, Any] = field(default_factory=dict)
     coordination_mode: str = "independent_organ_policies"
     emergent_weights: dict[str, Any] = field(default_factory=dict)
+    organ_network_model: str = "none"
+    organ_network_edges: list = field(default_factory=list)
+    organ_network_feedback: dict[str, Any] = field(default_factory=dict)
+    organ_network_hard_limits: dict[str, Any] = field(default_factory=dict)
+    irreversible_thresholds: dict[str, Any] = field(default_factory=dict)
+    allow_sub_adult_network_age: bool = False
+    reversibility_model: str = "none"
+    reversibility_params: dict[str, Any] = field(default_factory=dict)
+    allow_sub_adult_reversibility_age: bool = False
+    boundary_probe_model: str = "none"
+    boundary_params: dict[str, Any] = field(default_factory=dict)
+    component_overrides: list = field(default_factory=list)
     notes: str = ""
 
     def __post_init__(self) -> None:
@@ -103,6 +115,37 @@ class OrganismExperimentConfig:
         validate_resource_budgets(dict(self.systemic_resources or {}))
         validate_coordination_mode(self.coordination_mode)
         validate_emergent_weights(dict(self.emergent_weights or {}))
+        from longevity.model.organ_network import (
+            validate_feedback_config,
+            validate_hard_limits,
+            validate_irreversible_thresholds,
+            validate_network_edges,
+            validate_organ_network_model,
+        )
+        validate_organ_network_model(self.organ_network_model)
+        validate_network_edges(list(self.organ_network_edges or []) or None
+                               if self.organ_network_edges else None)
+        validate_feedback_config(dict(self.organ_network_feedback or {}))
+        validate_hard_limits(dict(self.organ_network_hard_limits or {}))
+        validate_irreversible_thresholds(dict(self.irreversible_thresholds or {}))
+        if not isinstance(self.allow_sub_adult_network_age, bool):
+            raise ValueError("allow_sub_adult_network_age must be a bool")
+        from longevity.model.reversibility import (
+            validate_reversibility_model,
+            validate_reversibility_params,
+        )
+        validate_reversibility_model(self.reversibility_model)
+        validate_reversibility_params(dict(self.reversibility_params or {}))
+        if not isinstance(self.allow_sub_adult_reversibility_age, bool):
+            raise ValueError("allow_sub_adult_reversibility_age must be a bool")
+        from longevity.model.boundary import (
+            validate_boundary_params,
+            validate_boundary_probe_model,
+            validate_component_overrides,
+        )
+        validate_boundary_probe_model(self.boundary_probe_model)
+        validate_boundary_params(dict(self.boundary_params or {}))
+        validate_component_overrides(list(self.component_overrides or []))
         if not isinstance(self.adult_age_setpoint, (int, float)) or float(self.adult_age_setpoint) < 0:
             raise ValueError("adult_age_setpoint must be >= 0")
         if not isinstance(self.allow_sub_adult_biological_age, bool):
@@ -150,10 +193,84 @@ class OrganismExperimentConfig:
             "model_scope": scope_for_model(mode),
         }
 
+    def effective_organ_network(self) -> dict[str, Any]:
+        from longevity.model.organ_network import (
+            scope_for_network_model,
+            validate_feedback_config,
+            validate_hard_limits,
+            validate_irreversible_thresholds,
+            validate_network_edges,
+            validate_organ_network_model,
+        )
+        mode = validate_organ_network_model(self.organ_network_model)
+        edges = validate_network_edges(list(self.organ_network_edges or []) or None
+                                       if self.organ_network_edges else None)
+        scope = scope_for_network_model(mode)
+        if mode == "none":
+            from longevity.model.organ_backed import scope_for_model
+
+            scope = self.effective_organ_backed()["model_scope"]
+        return {
+            "organ_network_model": mode,
+            "organ_network_edges": edges,
+            "organ_network_feedback": validate_feedback_config(
+                dict(self.organ_network_feedback or {})),
+            "organ_network_hard_limits": validate_hard_limits(
+                dict(self.organ_network_hard_limits or {})),
+            "irreversible_thresholds": validate_irreversible_thresholds(
+                dict(self.irreversible_thresholds or {})),
+            "allow_sub_adult_network_age": bool(self.allow_sub_adult_network_age),
+            "model_scope": scope,
+        }
+
+    def effective_reversibility(self) -> dict[str, Any]:
+        from longevity.model.reversibility import (
+            scope_for_reversibility_model,
+            validate_reversibility_model,
+            validate_reversibility_params,
+        )
+        mode = validate_reversibility_model(self.reversibility_model)
+        scope = scope_for_reversibility_model(mode)
+        if mode == "none":
+            scope = self.effective_organ_network()["model_scope"]
+        return {
+            "reversibility_model": mode,
+            "reversibility_params": validate_reversibility_params(
+                dict(self.reversibility_params or {})),
+            "allow_sub_adult_reversibility_age": bool(self.allow_sub_adult_reversibility_age),
+            "model_scope": scope,
+        }
+
+    def effective_boundary(self) -> dict[str, Any]:
+        from longevity.model.boundary import (
+            is_neutral_boundary,
+            scope_for_boundary_model,
+            validate_boundary_params,
+            validate_boundary_probe_model,
+            validate_component_overrides,
+        )
+        mode = validate_boundary_probe_model(self.boundary_probe_model)
+        params = validate_boundary_params(dict(self.boundary_params or {}))
+        overrides = validate_component_overrides(list(self.component_overrides or []))
+        scope = scope_for_boundary_model(mode)
+        if mode == "none":
+            scope = self.effective_reversibility()["model_scope"]
+        return {
+            "boundary_probe_model": mode,
+            "boundary_params": params,
+            "component_overrides": overrides,
+            "neutral": is_neutral_boundary(params, overrides) if mode != "none" else True,
+            "model_scope": scope,
+        }
+
     def to_config_dict(self) -> dict[str, Any]:
+        network = self.effective_organ_network()
+        reversibility = self.effective_reversibility()
+        boundary = self.effective_boundary()
+        scope = boundary["model_scope"]
         return {
             "organism_id": self.organism_id,
-            "model_scope": self.effective_organ_backed()["model_scope"],
+            "model_scope": scope,
             "model_version": self.model_version,
             "data_version": self.data_version,
             "seed": self.seed,
@@ -175,6 +292,18 @@ class OrganismExperimentConfig:
             "systemic_resources": self.effective_organ_backed()["systemic_resources"],
             "coordination_mode": self.effective_organ_backed()["coordination_mode"],
             "emergent_weights": self.effective_organ_backed()["emergent_weights"],
+            "organ_network_model": network["organ_network_model"],
+            "organ_network_edges": network["organ_network_edges"],
+            "organ_network_feedback": network["organ_network_feedback"],
+            "organ_network_hard_limits": network["organ_network_hard_limits"],
+            "irreversible_thresholds": network["irreversible_thresholds"],
+            "allow_sub_adult_network_age": network["allow_sub_adult_network_age"],
+            "reversibility_model": reversibility["reversibility_model"],
+            "reversibility_params": reversibility["reversibility_params"],
+            "allow_sub_adult_reversibility_age": reversibility["allow_sub_adult_reversibility_age"],
+            "boundary_probe_model": boundary["boundary_probe_model"],
+            "boundary_params": boundary["boundary_params"],
+            "component_overrides": boundary["component_overrides"],
             "notes": self.notes,
         }
 
@@ -203,6 +332,18 @@ class OrganismExperimentConfig:
             systemic_resources=data.get("systemic_resources", {}),
             coordination_mode=data.get("coordination_mode", "independent_organ_policies"),
             emergent_weights=data.get("emergent_weights", {}),
+            organ_network_model=data.get("organ_network_model", "none"),
+            organ_network_edges=data.get("organ_network_edges", []),
+            organ_network_feedback=data.get("organ_network_feedback", {}),
+            organ_network_hard_limits=data.get("organ_network_hard_limits", {}),
+            irreversible_thresholds=data.get("irreversible_thresholds", {}),
+            allow_sub_adult_network_age=bool(data.get("allow_sub_adult_network_age", False)),
+            reversibility_model=data.get("reversibility_model", "none"),
+            reversibility_params=data.get("reversibility_params", {}),
+            allow_sub_adult_reversibility_age=bool(data.get("allow_sub_adult_reversibility_age", False)),
+            boundary_probe_model=data.get("boundary_probe_model", "none"),
+            boundary_params=data.get("boundary_params", {}),
+            component_overrides=data.get("component_overrides", []),
             notes=data.get("notes", ""),
         )
 
@@ -243,6 +384,19 @@ def run_organism_experiment(config: OrganismExperimentConfig, out_path: str | No
         systemic_resources=config.effective_organ_backed()["systemic_resources"],
         coordination_mode=config.effective_organ_backed()["coordination_mode"],
         emergent_weights=config.effective_organ_backed()["emergent_weights"],
+        organ_network_model=config.effective_organ_network()["organ_network_model"],
+        organ_network_edges=config.effective_organ_network()["organ_network_edges"],
+        organ_network_feedback=config.effective_organ_network()["organ_network_feedback"],
+        organ_network_hard_limits=config.effective_organ_network()["organ_network_hard_limits"],
+        irreversible_thresholds=config.effective_organ_network()["irreversible_thresholds"],
+        allow_sub_adult_network_age=config.effective_organ_network()["allow_sub_adult_network_age"],
+        reversibility_model=config.effective_reversibility()["reversibility_model"],
+        reversibility_params=config.effective_reversibility()["reversibility_params"],
+        allow_sub_adult_reversibility_age=config.effective_reversibility()[
+            "allow_sub_adult_reversibility_age"],
+        boundary_probe_model=config.effective_boundary()["boundary_probe_model"],
+        boundary_params=config.effective_boundary()["boundary_params"],
+        component_overrides=config.effective_boundary()["component_overrides"],
     )
     policies = PolicySet(list(config.policies or []))
     trajectory = model.run(config.duration_years, config.dt, bounds, thresholds, policies)
@@ -255,12 +409,36 @@ def run_organism_experiment(config: OrganismExperimentConfig, out_path: str | No
         summary["organs"] = organ_backed_summary["organs"]
         summary["systemic_resources"] = organ_backed_summary["systemic_resources"]
         summary["cross_scale"] = organ_backed_summary["cross_scale"]
+    if config.effective_organ_network()["organ_network_model"] != "none":
+        from longevity.analysis.organ_network_metrics import summarize_organ_network_run
+
+        network_summary = summarize_organ_network_run(trajectory, config.dt)
+        summary["organ_network"] = network_summary["organ_network"]
+        summary["network_binding"] = network_summary["network_binding"]
+        summary["hard_limits"] = network_summary["hard_limits"]
+    if config.effective_reversibility()["reversibility_model"] != "none":
+        from longevity.analysis.reversibility_metrics import summarize_reversibility_run
+
+        rev_summary = summarize_reversibility_run(trajectory, config.dt)
+        summary["reversibility"] = rev_summary["reversibility"]
+        summary["reversibility_binding"] = rev_summary["reversibility_binding"]
+    if config.effective_boundary()["boundary_probe_model"] != "none":
+        from longevity.analysis.boundary_metrics import summarize_boundary_run
+
+        boundary_summary = summarize_boundary_run(trajectory, config.dt)
+        summary["boundary"] = boundary_summary["boundary"]
+        summary["contributions"] = boundary_summary["contributions"]
+        summary["attribution"] = boundary_summary["attribution"]
     wall_seconds = round(time.perf_counter() - wall_start, 4)
     result: dict[str, Any] = {
         "organism_id": config.organism_id,
-        "model_scope": config.effective_organ_backed()["model_scope"],
+        "model_scope": config.effective_boundary()["model_scope"],
         "immortality_status": "hypothesis_not_proven",
         "organ_backed_model": config.effective_organ_backed()["organ_backed_model"],
+        "organ_network_model": config.effective_organ_network()["organ_network_model"],
+        "reversibility_model": config.effective_reversibility()["reversibility_model"],
+        "boundary_probe_model": config.effective_boundary()["boundary_probe_model"],
+        "boundary_exploratory": bool((trajectory[-1].get("boundary") or {}).get("exploratory", False)),
         "coordination_mode": config.effective_organ_backed()["coordination_mode"],
         "config": config.to_config_dict(),
         "trajectory": trajectory,

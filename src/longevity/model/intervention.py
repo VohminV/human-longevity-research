@@ -36,6 +36,16 @@ INTERVENTION_TYPES = (
     "fibrosis_reversal_support",
     "cancer_surveillance_boost",
     "neural_protective_maintenance",
+    # Stage 6C reversibility-targeted interventions.
+    "reversible_clearance",
+    "conversion_suppression",
+    "damage_prevention",
+    "irreversible_repair_pulse",
+    "information_preservation",
+    "mutation_fixation_control",
+    "niche_integrity_support",
+    "entropy_management",
+    "combined_reversibility_maintenance",
 )
 
 TRIGGER_TYPES = ("periodic", "threshold_based")
@@ -182,6 +192,75 @@ INTERVENTION_EFFECTS: dict[str, dict[str, float]] = {
         "delta_neural_continuity": 0.010,
         "organ_delta_continuity": 0.010,
     },
+    # --- Stage 6C reversibility interventions (rev_* keys are inert unless
+    # reversibility_model is enabled; standard deltas keep them comparable) ---
+    "reversible_clearance": {
+        "delta_senescence": -0.012, "delta_inflammation": -0.004,
+        "delta_reserve": -0.006, "delta_biological_age": -0.05,
+        "organ_delta_senescence": -0.008,
+        "organ_resource_cost": {"immune": 0.02, "repair": 0.01},
+        "rev_clearance": 0.030,
+    },
+    "conversion_suppression": {
+        "delta_inflammation": -0.008, "delta_reserve": -0.006,
+        "delta_biological_age": -0.03,
+        "organ_resource_cost": {"metabolic": 0.02},
+        "rev_conversion_suppression": 0.50,
+        "rev_prevention": 0.008,
+    },
+    "damage_prevention": {
+        "delta_damage_global": -0.004, "delta_inflammation": -0.004,
+        "delta_biological_age": -0.03,
+        "rev_prevention": 0.020,
+    },
+    "irreversible_repair_pulse": {
+        "delta_cancer": 0.004, "delta_reserve": -0.012,
+        "delta_inflammation": 0.003, "delta_biological_age": -0.08,
+        "organ_resource_cost": {"repair": 0.05, "metabolic": 0.03, "immune": 0.02},
+        "rev_irreversible_repair": 0.030,
+    },
+    "information_preservation": {
+        "delta_neural_continuity": 0.008, "delta_reserve": -0.006,
+        "delta_biological_age": -0.02,
+        "organ_delta_continuity": 0.008,
+        "organ_resource_cost": {"metabolic": 0.02},
+        "rev_information_repair": 0.020,
+        "rev_conversion_suppression": 0.20,
+    },
+    "mutation_fixation_control": {
+        "delta_cancer": -0.008, "delta_reserve": -0.006,
+        "delta_biological_age": -0.02,
+        "organ_resource_cost": {"immune": 0.03},
+        "rev_mutation_repair": 0.020,
+    },
+    "niche_integrity_support": {
+        "delta_reserve_global": 0.006, "delta_inflammation": -0.004,
+        "delta_biological_age": -0.03,
+        "organ_delta_recovery": 0.02,
+        "organ_resource_cost": {"repair": 0.02, "metabolic": 0.02},
+        "rev_niche_repair": 0.025,
+        "rev_conversion_suppression": 0.20,
+    },
+    "entropy_management": {
+        "delta_damage_global": -0.003, "delta_reserve": -0.004,
+        "delta_biological_age": -0.02,
+        "organ_resource_cost": {"metabolic": 0.02},
+        "rev_entropy_reduction": 0.020,
+        "rev_prevention": 0.006,
+    },
+    "combined_reversibility_maintenance": {
+        "delta_senescence": -0.010, "delta_inflammation": -0.010,
+        "delta_fibrosis": -0.004, "delta_reserve": -0.010,
+        "delta_biological_age": -0.06,
+        "organ_delta_senescence": -0.008, "organ_delta_fibrosis": -0.006,
+        "organ_resource_cost": {"repair": 0.03, "immune": 0.02, "metabolic": 0.02},
+        "rev_clearance": 0.020,
+        "rev_prevention": 0.012,
+        "rev_conversion_suppression": 0.40,
+        "rev_niche_repair": 0.012,
+        "rev_information_repair": 0.006,
+        "rev_mutation_repair": 0.006,
+    },
 }
 
 _EFFECT_KEYS = (
@@ -193,6 +272,13 @@ _EFFECT_KEYS = (
 
 # Stage 6A organ-proxy delta keys (operational, applied only when the
 # organ-backed model is enabled; inert otherwise).
+# Stage 6C reversibility delta keys (operational, applied only when the
+# reversibility model is enabled; inert otherwise).
+_REVERSIBILITY_EFFECT_KEYS = (
+    "rev_clearance", "rev_prevention", "rev_conversion_suppression",
+    "rev_irreversible_repair", "rev_information_repair", "rev_mutation_repair",
+    "rev_niche_repair", "rev_entropy_reduction",
+)
 _ORGAN_EFFECT_KEYS = (
     "organ_delta_function", "organ_delta_damage", "organ_delta_senescence",
     "organ_delta_fibrosis", "organ_delta_cancer_risk", "organ_delta_ecm",
@@ -211,7 +297,8 @@ def validate_effect(effect: dict[str, Any]) -> dict[str, Any]:
     target_systems = effect.get("target_systems", [])
     if not isinstance(target_systems, list) or not all(isinstance(t, str) for t in target_systems):
         raise ValueError("effect.target_systems must be a list of strings")
-    unknown = set(effect) - set(_EFFECT_KEYS) - set(_ORGAN_EFFECT_KEYS) - {
+    unknown = set(effect) - set(_EFFECT_KEYS) - set(_ORGAN_EFFECT_KEYS) \
+        - set(_REVERSIBILITY_EFFECT_KEYS) - {
         "intervention_type", "target_systems", "source", "intensity",
         "target_drivers", "driver_repairs", "driver_reversals",
         "pre_adult_firing", "target_organ_ids", "organ_resource_cost"}
@@ -236,6 +323,15 @@ def validate_effect(effect: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"effect.{key} must be a number, got {value!r}")
         if not math.isfinite(float(value)):
             raise ValueError(f"effect.{key} must be finite, got {value!r}")
+        cleaned[key] = float(value)
+    for key in _REVERSIBILITY_EFFECT_KEYS:
+        value = effect.get(key, 0.0)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"effect.{key} must be a number, got {value!r}")
+        if not math.isfinite(float(value)):
+            raise ValueError(f"effect.{key} must be finite, got {value!r}")
+        if float(value) < 0.0:
+            raise ValueError(f"effect.{key} out of range, got {value!r}")
         cleaned[key] = float(value)
     from longevity.model.aging import AGING_DRIVERS  # deferred: avoid import cycle
     from longevity.model.organ_backed import (  # deferred: avoid import cycle

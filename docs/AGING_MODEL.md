@@ -220,7 +220,28 @@ proxies (`emergent_weights`): `cellular_senescence` (0.5),
 `(1-w)*phenomenological + w*emergent`, границы и floor соблюдаются.
 Детали — `docs/ORGAN_BACKED_ORGANISM_MODEL.md` §4.
 
-## 10. Ограничения
+## 10. Network-derived biological age и hard limits (Stage 6B)
+
+Stage 6B добавляет `biological_age_network = adult_setpoint +
+contribution(drivers, organ deficit, resource shortfall, feedback,
+mutation, information loss, fibrosis, cancer, cascade)` с floor на
+adult setpoint (`allow_sub_adult_network_age=true` — exploratory mode).
+Legacy `biological_age` сохранён. Hard limits (energy, information,
+mutation ceiling, irreversible damage, niche, toxicity) делают
+«омолодить всё бесплатно» невозможным. Детали —
+`docs/ORGAN_NETWORK_MODEL.md` §§4–5.
+
+## 11. Reversible / irreversible split и repair ceiling (Stage 6C)
+
+Stage 6C разделяет каждый драйвер и органный прокси на reversible и
+irreversible компоненты (`damage = reversible + irreversible`):
+conversion переклассифицирует массу под действием воспаления, energy /
+repair shortfall, cascade, niche и toxicity; irreversible repair возможен
+только в пределах `repair_ceiling` с ценой, риском и diminishing
+returns и никогда ниже floor. `biological_age_reversibility` получает
+динамический irreversible floor. Детали — `docs/REVERSIBILITY_MODEL.md`.
+
+## 12. Ограничения
 Абстрактный организм; порядковые скорости; операциональные пороги;
 малые сетки и n ≤ 3 (описательно, не значимость); некалиброванные
 параметры драйверов; нет биологической валидации; HYP-0 — только

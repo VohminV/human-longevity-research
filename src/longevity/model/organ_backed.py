@@ -61,6 +61,22 @@ ORGAN_COORDINATION_MODES = (
     "vital_organ_priority",
     "lookahead_organ_resource",
     "deferral_organ_resource",
+    # Stage 6B network-aware modes (additive; legacy modes unchanged).
+    "independent_network",
+    "network_bottleneck_priority",
+    "cascade_guard",
+    "information_preservation_priority",
+    "mutation_load_guard",
+    "lookahead_network",
+    "deferral_network",
+    # Stage 6C reversibility-aware modes (additive; legacy modes unchanged).
+    "independent_reversibility",
+    "preventive_priority",
+    "repair_ceiling_guard",
+    "information_guard",
+    "mutation_guard",
+    "entropy_budget_scheduler",
+    "lookahead_reversibility",
 )
 
 # Operational per-proxy dynamics (O-6A-1…; not measurements). Rates are
@@ -404,6 +420,15 @@ def coordinate_organ_effects(
     (sorted proxy id, stable effect order).
     """
     validate_coordination_mode(mode)
+    # Stage 6B: network-aware modes delegate to the organ-network layer
+    # with a neutral (empty) network context when none is supplied, so
+    # legacy callers keep deterministic behavior.
+    from longevity.model.organ_network import NETWORK_COORDINATION_MODES  # deferred
+
+    if mode in NETWORK_COORDINATION_MODES:
+        from longevity.model.organ_network import coordinate_network_effects  # deferred
+
+        return coordinate_network_effects(effects, proxies, allocation, mode, queue, None)
     queue = [dict(entry) for entry in (queue or [])]
     executed: list[dict[str, Any]] = []
     deferred: list[dict[str, Any]] = []

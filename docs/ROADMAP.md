@@ -445,6 +445,118 @@ HYP-0: `hypothesis_not_proven`; связывающий уровень —
 порядковые параметры, операциональные пороги, малое число seeds,
 HYP-0 формализована, но не доказана.
 
+## Этап 6B — Cross-organ network, systemic feedback, and hard physical limits (готов ✅)
+
+- [x] opt-in `organ_network_model = none | reduced_network_feedback`
+      (`none` численно идентичен Stage 6A); 12 рёбер по умолчанию,
+      7 feedback loops, hard limits (energy/information/mutation/
+      irreversible/niche/toxicity)
+- [x] network-derived `biological_age_network` с floor adult setpoint;
+      7 network coordination modes; 9 новых причин отказа (аддитивно)
+- [x] `robust_bounded_degradation_v4` + network binding analysis
+      (level/organ/driver/resource/edge/loop/hard limit)
+- [x] 11 конфигов `organism_organ_network_*.json` (baseline, maintenance,
+      combined, adaptive, neural, coordination compare, resource sweep,
+      hard-limit sweep, robust search mini, stress)
+- [x] наблюдение (в рамках модели): baseline 67.0/58.2; combined
+      76.5/68.8; adaptive 76.8/70.2; coordination 6×3 все 76.5
+      (non-interference на сетевом уровне); repair снова критичен
+      (4 → ~55; ≥8 → ~77.8); v4 — нигде, binding везде `biological_age_slope`
+- [x] тесты (6 файлов, 39 шт.): совместимость, детерминизм, feedback,
+      limits, coordination, binding, v4, свипы, поиск, стресс, checkpoint, scope
+
+Новое: `longevity.model` (organ_network), сетевой слой `organism.py` /
+`intervention`-pricing, `longevity.analysis` (organ_network_metrics),
+`longevity.experiment` (organism_organ_network), конфиги
+`experiments/configs/organism_organ_network_*.json`, doc
+`docs/ORGAN_NETWORK_MODEL.md`, § Stage 6B в `docs/ORGANISM_MODEL.md`,
+`docs/AGING_MODEL.md`, `docs/ORGAN_BACKED_ORGANISM_MODEL.md`, критерий в
+`docs/IMMORTALITY.md`, статус в `research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; связывающее ограничение —
+`biological_age_slope` во всех ячейках.
+Ограничение: абстрактный organ-network организм, reduced proxies/edges,
+порядковые параметры, операциональные пороги, малое число seeds,
+HYP-0 формализована, но не доказана.
+
+## Этап 6C — Reversibility ceiling and irreversible accumulation search (готов ✅)
+
+- [x] opt-in `reversibility_model = none | split_reversible_irreversible`
+      (`none` численно идентичен Stage 6B); per-driver/per-organ
+      reversible/irreversible ledger, conversion с модификаторами,
+      repair ceiling с cost/risk/diminishing, information debt, mutation
+      fixation, niche disorder, entropy production
+- [x] reversibility-derived `biological_age_reversibility` с динамическим
+      irreversible floor; 9 новых intervention-типов (`rev_*` ключи);
+      7 coordination modes; 9 новых причин отказа (аддитивно)
+- [x] `robust_bounded_degradation_v5` + reversibility binding analysis
+      (wall/level/organ/driver/resource/edge/loop/hard limit)
+- [x] 14 конфигов `organism_reversibility_*.json` (baseline, preventive,
+      clearance, irreversible repair, combined, aggressive, neural,
+      coordination compare, ceiling sweep, conversion sweep,
+      info/mutation sweep, robust search mini, stress)
+- [x] наблюдение (в рамках модели): baseline 67.0/58.2, wall
+      `irreversible_accumulation`; combined 69.5/60.5; aggressive 69.0
+      (долги растут); conversion 0.05 роняет lifespan 69.5 → 60.5;
+      coordination 4×3 все 69.5 (non-interference); ceiling sweep плоский;
+      v5 — нигде, binding везде `biological_age_slope`
+- [x] тесты (6 файлов, 39 шт.): совместимость, детерминизм, split,
+      conversion, ceiling, floor, interventions, trade-offs, coordination,
+      binding, v5, свипы, поиск, стресс, checkpoint, scope
+
+Новое: `longevity.model` (reversibility), reversibility-слой
+`organism.py` / `intervention.py`, `longevity.analysis`
+(reversibility_metrics), `longevity.experiment`
+(organism_reversibility), конфиги
+`experiments/configs/organism_reversibility_*.json`, doc
+`docs/REVERSIBILITY_MODEL.md`, § Stage 6C в `docs/ORGAN_NETWORK_MODEL.md`,
+`docs/AGING_MODEL.md`, `docs/ORGANISM_MODEL.md`, критерий в
+`docs/IMMORTALITY.md`, статус в `research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; доминирующий wall —
+`irreversible_accumulation` / conversion.
+Ограничение: абстрактный organ-network reversibility организм, reduced
+proxies/edges, порядковые параметры, операциональные пороги, малое число
+seeds, HYP-0 формализована, но не доказана.
+
+## Этап 6D — Irreversibility boundary probe and structural wall attribution (готов ✅)
+
+- [x] opt-in `boundary_probe_model = none | irreversibility_ablation`
+      (`none` и нейтральные scales численно идентичны Stage 6C);
+      `conversion_scale` / `independent_accrual_scale` /
+      `repair_ceiling_scale`, component overrides, ablation flags
+      (unlimited ceiling — non-physiological exploratory, помечается)
+- [x] contribution decomposition
+      (`conversion_flux + independent_accrual − repair_offset = net slope`),
+      dominant source attribution, parametric-vs-structural wall
+      classification (только внутримодельная)
+- [x] 13 конфигов `organism_reversibility_boundary_*.json` (legacy, default,
+      conversion/independent/both suppressed, high/unlimited ceiling,
+      3 ultra-свипа 9+9+7 точек, component attribution, robust search, stress)
+- [x] наблюдение (в рамках модели): conversion_scale=0 снижает
+      irreversible slope 0.00536 → 0.00082 (в допуске), но v5 false —
+      binding смещается на `biological_age_slope`;
+      independent sweep почти не двигает slope (conversion доминирует);
+      ceiling sweep плоский; attribution default → conversion /
+      `driver:stem_exhaustion`, conversion_zero → independent /
+      `driver:dna_damage`, both_suppressed → `information_debt`;
+      v5 false везде (default, аблации, свипы, search, stress)
+- [x] wall classification: `parametric_irreversibility_wall` —
+      irreversible-компонент подавим параметрически, но v5 как целое
+      недостижима (исход 2: подавление открывает другую стену)
+- [x] тесты (5 файлов, 30 шт.): совместимость, нейтральность scales,
+      детерминизм, валидация, аблации, overrides, decomposition,
+      attribution, classification, свипы, поиск, стресс, checkpoint, scope
+
+Новое: `longevity.model` (boundary), ablation-слой `organism.py`,
+`longevity.analysis` (boundary_metrics), `longevity.experiment`
+(organism_boundary), конфиги
+`experiments/configs/organism_reversibility_boundary_*.json`, § Stage 6D
+в `docs/REVERSIBILITY_MODEL.md`, критерий в `docs/IMMORTALITY.md`,
+статус в `research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; dominant source — `conversion`,
+компонент — `driver:stem_exhaustion`.
+Ограничение: диагностические аблации, не биологические допущения;
+абстрактная модель; порядковые параметры; n ≤ 3.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

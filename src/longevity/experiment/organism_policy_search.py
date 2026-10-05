@@ -234,10 +234,62 @@ def _evaluate_combo(combo: dict[str, Any], config: OrganismPolicySearchConfig) -
                      for s in seed_summaries.values()] + [0.0])
     resource_penalty = w.get("w_resource_shortfall", 0.0) * shortfall
     v3_bonus = w.get("w_bounded_v3_bonus", 0.0) * (1.0 if v3["robust_bounded_degradation_v3"] else 0.0)
+    try:
+        from longevity.analysis.organ_network_metrics import (  # local: analysis reuse
+            robust_bounded_degradation_v4,
+        )
+
+        v4 = robust_bounded_degradation_v4(list(seed_summaries.values()))
+    except Exception:
+        v4 = {"robust_bounded_degradation_v4": False}
+    worst_feedback = max([float(s.get("organ_network", {}).get("worst_feedback_gain", 0.0))
+                          for s in seed_summaries.values()] + [0.0])
+    worst_cascade = max([float(s.get("organ_network", {}).get("max_cascade_risk", 0.0))
+                         for s in seed_summaries.values()] + [0.0])
+    worst_mutation = max([float(s.get("organ_network", {}).get("max_mutation_load", 0.0))
+                          for s in seed_summaries.values()] + [0.0])
+    feedback_penalty = w.get("w_feedback_runaway", 0.0) * worst_feedback
+    cascade_penalty = w.get("w_cascade_risk", 0.0) * worst_cascade
+    mutation_penalty = w.get("w_mutation_load", 0.0) * worst_mutation
+    energy_shortfall = max([max(0.0, 30.0 - float(s.get("organ_network", {}).get(
+        "min_energy_budget", 30.0))) for s in seed_summaries.values()] + [0.0])
+    energy_penalty = w.get("w_energy_shortfall", 0.0) * energy_shortfall
+    v4_bonus = w.get("w_bounded_v4_bonus", 0.0) * (1.0 if v4["robust_bounded_degradation_v4"] else 0.0)
+    try:
+        from longevity.analysis.reversibility_metrics import (  # local: analysis reuse
+            robust_bounded_degradation_v5,
+        )
+
+        v5 = robust_bounded_degradation_v5(list(seed_summaries.values()))
+    except Exception:
+        v5 = {"robust_bounded_degradation_v5": False}
+    worst_irr = max([float(s.get("reversibility", {}).get("worst_irreversible_slope", 0.0))
+                     for s in seed_summaries.values()] + [0.0])
+    worst_conv = max([float(s.get("reversibility", {}).get("conversion_rate", 0.0))
+                      for s in seed_summaries.values()] + [0.0])
+    worst_info = max([float(s.get("reversibility", {}).get("information_debt_final", 0.0))
+                      for s in seed_summaries.values()] + [0.0])
+    worst_niche = max([float(s.get("reversibility", {}).get("niche_disorder_final", 0.0))
+                       for s in seed_summaries.values()] + [0.0])
+    irr_penalty = w.get("w_irreversible_slope", 0.0) * worst_irr
+    conv_penalty = w.get("w_conversion_runaway", 0.0) * worst_conv
+    info_penalty = w.get("w_information_debt", 0.0) * worst_info
+    niche_penalty = w.get("w_niche_disorder", 0.0) * worst_niche
+    ceiling_exhaust = max([max(0.0, float(s.get("reversibility", {}).get("repair_ceiling", 0.0))
+                               - float(s.get("reversibility", {}).get("repair_remaining_min", 0.0)))
+                           for s in seed_summaries.values()] + [0.0])
+    ceiling_penalty = w.get("w_repair_ceiling_exhaustion", 0.0) * ceiling_exhaust
+    entropy_worst = max([float(s.get("reversibility", {}).get("entropy_production_final", 0.0))
+                         for s in seed_summaries.values()] + [0.0])
+    entropy_penalty = w.get("w_entropy_production", 0.0) * entropy_worst
+    v5_bonus = w.get("w_bounded_v5_bonus", 0.0) * (1.0 if v5["robust_bounded_degradation_v5"] else 0.0)
     return {
         "combo": combo,
         "fitness": robust["robust_fitness"] - driver_penalty + v2_bonus
-        - organ_penalty - resource_penalty + v3_bonus,
+        - organ_penalty - resource_penalty + v3_bonus
+        - feedback_penalty - cascade_penalty - mutation_penalty - energy_penalty + v4_bonus
+        - irr_penalty - conv_penalty - info_penalty - niche_penalty
+        - ceiling_penalty - entropy_penalty + v5_bonus,
         "fitness_mean": robust["fitness_mean"],
         "fitness_std": robust["fitness_std"],
         "fitness_min": robust["fitness_min"],
@@ -245,8 +297,15 @@ def _evaluate_combo(combo: dict[str, Any], config: OrganismPolicySearchConfig) -
         "worst_driver_slope": worst_driver,
         "worst_organ_slope": worst_organ,
         "total_shortfall_auc": shortfall,
+        "worst_feedback_gain": worst_feedback,
+        "worst_cascade_risk": worst_cascade,
+        "worst_mutation_load": worst_mutation,
         "robust_v2": v2,
         "robust_v3": v3,
+        "robust_v4": v4,
+        "robust_v5": v5,
+        "worst_irreversible_slope": worst_irr,
+        "worst_conversion_rate": worst_conv,
         "aggregate": aggregate,
         "seeds": seed_summaries,
         "representative": representative,

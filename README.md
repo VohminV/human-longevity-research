@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936A_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-364_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%936D_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-478_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -64,9 +64,9 @@ LONGEVITY ANALYSIS
 ## Прогресс
 
 ```text
-Этапы 1–6A:  ███████████████ 15/15 завершены
+Этапы 1–6D:  ██████████████████ 18/18 завершены
 HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:       364 passing (детерминизм, инварианты, checkpoint/restore)
+Тесты:       478 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Блок | Этапы | Статус | Главный вывод |
@@ -78,7 +78,10 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | Robust | 5B | ✅ | Binding constraint везде одно: `biological_age_slope` (70/70) |
 | Mechanistic | 5C | ✅ | Драйверы разложены; доминируют `cellular_senescence` / `epigenetic_drift`; v2 — нигде |
 | Organ-backed | 6A | ✅ | Прокси + ресурсы + координация; лучший 104.8; v3 — нигде, binding везде `biological_age` |
-| Дальше | 5D / 6B | ⏳ | Более глубокая обратимость или следующий cross-scale шаг |
+| Organ-network | 6B | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
+| Reversibility | 6C | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
+| Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
+| Дальше | 6E+ | ⏳ | Следующий шаг по итогам классификации стены |
 
 Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
 
@@ -106,6 +109,8 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | `ORGANISM_MODEL.md` | Модель организменного жизненного цикла и поиска политик (Stage 5A) |
 | `AGING_MODEL.md` | Механистический слой старения и reversibility search (Stage 5C) |
 | `ORGAN_BACKED_ORGANISM_MODEL.md` | Organ-backed организм: прокси, ресурсы, координация (Stage 6A) |
+| `ORGAN_NETWORK_MODEL.md` | Organ-network: рёбра, feedback, hard limits, v4 (Stage 6B) |
+| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D |
 | `CALIBRATION.md` | Калибровка ранней динамики против данных (MODEL MISMATCH) |
 | `DEVELOPMENTAL_DYNAMICS.md` | Стадия-зависимый клеточный цикл (Этап 3.5) |
 | `ASSUMPTIONS.md` | Все принятые допущения |
@@ -196,9 +201,28 @@ tests/         — тесты ключевых инвариантов
 - [x] лучший результат: combined organ-backed — lifespan 101.5 / healthspan 87.2; search best — 104.8
 - [x] coordination не бьёт independent (scaling −0.25); repair — критичнейший ресурс; `robust_bounded_degradation_v3` — нигде
 
+**Этап 6B — organ-network emergent aging и hard limits** — реализован:
+
+- [x] 12 рёбер + 7 feedback loops + hard limits + network age (opt-in, `none` = Stage 6A бит-в-бит)
+- [x] лучший результат: adaptive network — lifespan 76.8 / healthspan 70.2; search best — 75.2
+- [x] coordination 6×3 не бьёт independent_network (все 76.5); repair снова критичен; `robust_bounded_degradation_v4` — нигде
+
+**Этап 6C — reversibility ceiling и irreversible accumulation** — реализован:
+
+- [x] per-driver/per-organ reversible/irreversible ledger + conversion + repair ceiling + information/mutation/niche/entropy (opt-in, `none` = Stage 6B бит-в-бит)
+- [x] лучший результат: neural preserving — lifespan 69.8 / healthspan 61.0; search best — 68.8
+- [x] conversion 0.05 роняет lifespan 69.5 → 60.5; coordination 4×3 не бьёт independent; `robust_bounded_degradation_v5` — нигде
+
+**Этап 6D — irreversibility boundary probe и атрибуция стены** — реализован:
+
+- [x] opt-in `boundary_probe_model` (аблации conversion/accrual/ceiling + overrides + flags; `none` и нейтральные scales = Stage 6C бит-в-бит)
+- [x] conversion_scale=0 снижает irreversible slope в допуск, но v5 false везде — открывается `biological_age_slope` (исход 2)
+- [x] attribution: source `conversion` / `driver:stem_exhaustion`; wall `parametric_irreversibility_wall`
+
 Полный план и детали — в `docs/ROADMAP.md`, `docs/TISSUE_MODEL.md`,
 `docs/ORGAN_MODEL.md`, `docs/ORGANISM_MODEL.md`, `docs/AGING_MODEL.md`,
-`docs/ORGAN_BACKED_ORGANISM_MODEL.md`.
+`docs/ORGAN_BACKED_ORGANISM_MODEL.md`, `docs/ORGAN_NETWORK_MODEL.md`,
+`docs/REVERSIBILITY_MODEL.md`.
 
 ## Как начать
 
@@ -237,6 +261,27 @@ Organ-backed организм (Stage 6A):
 ```bash
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_backed_combined.json --out experiments/output/organism_organ_backed_combined.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_backed --config experiments/configs/organism_organ_backed_coordination_compare.json --out-prefix experiments/output/organism_organ_backed_coordination_compare
+```
+
+Organ-network организм (Stage 6B):
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_network_combined.json --out experiments/output/organism_organ_network_combined.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_network --config experiments/configs/organism_organ_network_coordination_compare.json --out-prefix experiments/output/organism_organ_network_coordination_compare
+```
+
+Reversibility организм (Stage 6C):
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_combined_preventive_clearance.json --out experiments/output/organism_reversibility_combined_preventive_clearance.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_reversibility --config experiments/configs/organism_reversibility_coordination_compare.json --out-prefix experiments/output/organism_reversibility_coordination_compare
+```
+
+Boundary probe (Stage 6D):
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_both_suppressed.json --out experiments/output/organism_reversibility_boundary_both_suppressed.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_conversion_ultra_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_conversion_ultra_sweep
 ```
 
 <!--

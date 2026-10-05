@@ -129,3 +129,74 @@ terminal decline. Текущий статус по итогам Stage 6A —
 `hypothesis_not_proven`: ни одна проверенная organ-backed политика не
 прошла критерий; связывающее ограничение — `biological_age_slope` во
 всех ячейках.
+
+## 9. Organ-network candidate immortality criterion (Stage 6B)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой:
+
+1. biological_age slope после зрелости ограничен;
+2. ни один ключевой драйвер старения не имеет runaway trend;
+3. критические органы сохраняют функцию выше безопасного порога;
+4. системные ресурсы не истощаются монотонно;
+5. обратные связи не входят в runaway режим;
+6. каскадный риск ограничен;
+7. онкориск и мутационная нагрузка остаются в допустимых пределах;
+8. нейронная непрерывность и информационная целостность сохраняются;
+9. энергетический и токсический бюджеты вмешательств не истощаются;
+10. результат устойчив к seed, шуму и стрессовым сценариям.
+
+Это операциональный критерий computational exploration, а не
+доказательство бессмертия.
+
+Конкретно (`docs/ORGAN_NETWORK_MODEL.md` §8):
+`robust_bounded_degradation_v4` добавляет к v3 требования по network age
+slope, cascade, mutation, feedback, energy, toxicity и отсутствию failed
+edges/hard-limit violations. Текущий статус по итогам Stage 6B —
+`hypothesis_not_proven`: ни одна проверенная organ-network политика не
+прошла критерий; доминирующее связывающее ограничение —
+`biological_age_slope`.
+
+## 10. Reversibility-aware candidate immortality criterion (Stage 6C)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой:
+
+1. biological_age slope после зрелости ограничен;
+2. reversible burden не растёт неограниченно;
+3. irreversible accumulation slope не положителен или достаточно мал;
+4. conversion в необратимое состояние не имеет runaway trend;
+5. repair ceiling не истощается монотонно;
+6. information debt, mutation fixation, niche disorder и entropy
+   production остаются ограниченными;
+7. критические органы и системные ресурсы сохраняют запас прочности;
+8. онкориск, воспаление, фиброз, энергия, токсичность и нейронная
+   непрерывность соблюдаются;
+9. результат устойчив к seed, шуму и стрессовым сценариям.
+
+Это операциональный критерий computational exploration, а не
+доказательство бессмертия.
+
+Конкретно (`docs/REVERSIBILITY_MODEL.md` §9):
+`robust_bounded_degradation_v5` добавляет к v4 требования по bio_rev
+slope, reversible/irreversible/info/mutation/niche slopes, conversion
+rate, repair remaining и отсутствию runaway. Текущий статус по итогам
+Stage 6C — `hypothesis_not_proven`: ни одна проверенная reversibility
+политика не прошла критерий; доминирующий wall —
+`irreversible_accumulation` / conversion.
+
+## 11. Boundary-probe interpretation rule (Stage 6D)
+
+Если candidate bounded degradation появляется только при диагностическом
+подавлении irreversible flux, это означает не доказательство бессмертия,
+а то, что текущая абстрактная модель допускает bounded degradation лишь
+вблизи нулевого необратимого накопления. Такой результат должен
+формулироваться как parametric или structural model constraint, а не как
+биологический вывод.
+
+Конкретно (Stage 6D): conversion_scale=0 снижает irreversible slope в
+допуск, но v5 остаётся false — binding смещается на
+`biological_age_slope` (исход 2: подавление открывает другую стену).
+Wall classification: `parametric_irreversibility_wall`. Unlimited-ceiling
+аблации помечены non-physiological exploratory. Статус —
+`hypothesis_not_proven`.

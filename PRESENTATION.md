@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH — презентация прогресса
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936A_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-364_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%936D_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-478_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -17,9 +17,11 @@
 [Ткань](#слайд-4-ткань) · [Орган](#слайд-5-орган) ·
 [Организм](#слайд-6-организм) · [Robust](#слайд-7-robust) ·
 [Mechanistic](#слайд-8-mechanistic) ·
-[Organ-backed](#слайд-9-organ-backed) · [Цифры](#слайд-10-цифры) ·
-[HYP-0](#слайд-11-hyp-0) · [Дальше](#слайд-12-дальше) ·
-[Воспроизведение](#слайд-13-воспроизведение)
+[Organ-backed](#слайд-9-organ-backed) · [Network](#слайд-10-organ-network) ·
+[Reversibility](#слайд-11-reversibility) · [Boundary](#слайд-12-boundary) ·
+[Цифры](#слайд-13-цифры) ·
+[HYP-0](#слайд-14-hyp-0) · [Дальше](#слайд-15-дальше) ·
+[Воспроизведение](#слайд-16-воспроизведение)
 
 ---
 
@@ -48,10 +50,12 @@ ML-библиотек в ядре — только stdlib.
 
 ## Слайд 2. Прогресс
 
-Этапы 1–6A, детали — `docs/ROADMAP.md`.
+Этапы 1–6D, детали — `docs/ROADMAP.md`.
 
 ```text
-Этапы 1–6A:  ███████████████ 15/15 завершены
+Этапы 1–6D:  ██████████████████ 18/18 завершены
+HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
+Тесты:       478 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Этап | Статус | Одним предложением |
@@ -71,7 +75,10 @@ ML-библиотек в ядре — только stdlib.
 | 5B — Robust + stress | ✅ | Binding везде одно: `biological_age_slope` (70/70) |
 | 5C — Mechanistic aging | ✅ | Драйверы разложены; v2 — нигде; доминируют senescence / epigenetic drift |
 | 6A — Organ-backed | ✅ | Прокси + ресурсы + координация; лучший 104.8; v3 — нигде, binding везде `biological_age` |
-| Дальше | 5D / 6B | ⏳ | Более глубокая обратимость или следующий cross-scale шаг |
+| 6B — Organ-network | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
+| 6C — Reversibility | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
+| 6D — Boundary probe | ✅ | Аблации conversion/accrual/ceiling; conversion=0 даёт slope в допуске, но v5 — нигде (открывается bio age) |
+| Дальше | 6E+ | ⏳ | Следующий шаг по итогам классификации стены |
 
 ---
 
@@ -208,7 +215,92 @@ pie title Binding drivers, sweep 27x3
 
 ---
 
-## Слайд 10. Цифры
+## Слайд 10. Organ-network
+
+Этап 6B: межорганные связи, feedback-контуры и жёсткие физические /
+информационные ограничения.
+
+- 12 рёбер (vascular/immune/metabolic/сигналы/spread/seeding/repair flow)
+  + 7 feedback loops с gain и runaway-детекцией + hard limits
+  (energy/information/mutation/irreversible/niche/toxicity).
+- Сетевой биологический возраст с полом adult setpoint.
+
+| Политика | Lifespan | Healthspan | Binding |
+|---|---|---|---|
+| network baseline | 67.0 | 58.2 | biological_age_slope |
+| network maintenance | 73.0 | 65.0 | biological_age_slope |
+| **network combined** | **76.5** | **68.8** | biological_age_slope |
+| network adaptive | 76.8 | 70.2 | biological_age_slope |
+| search best (12×3) | 75.2 | 67.5 | v4 false везде |
+
+- Сеть утяжеляет baseline 6A (82.8 → 67.0): рёбра и feedback — реальная
+  нагрузка; dominant edge `cardio_vascular_to_brain`.
+- Coordination 6×3: все режимы 76.5, gain 0.0 — non-interference
+  подтверждён на сетевом уровне.
+- Repair снова критичен; energy сам по себе исхода не меняет; v4 — нигде.
+
+---
+
+## Слайд 11. Reversibility
+
+Этап 6C: повреждения делятся на reversible и irreversible
+(идея Stage 5D внутри organ-network архитектуры).
+
+- Per-driver/per-organ ledger (`damage = reversible + irreversible`),
+  conversion с модификаторами, repair ceiling с ценой/риском/diminishing,
+  information debt, mutation fixation, niche disorder, entropy;
+  bio-возраст с динамическим irreversible floor.
+- 9 новых вмешательств (clearance, suppression, prevention,
+  irreversible repair, info/mutation/niche/entropy, combined).
+
+| Политика | Lifespan | Healthspan | Стена |
+|---|---|---|---|
+| reversibility baseline | 67.0 | 58.2 | irreversible_accumulation |
+| preventive only | 68.2 | 59.2 | biological_age_slope |
+| clearance only | 69.0 | 60.5 | biological_age_slope |
+| irreversible repair only | 67.0 | 58.2 | потолок не тронут |
+| **combined preventive+clearance** | **69.5** | **60.5** | irreversible_accumulation |
+| aggressive reversal | 69.0 | 60.5 | долги растут |
+| neural preserving | 69.8 | 61.0 | continuity держится |
+| search best (6×3) | 68.8 | 60.2 | v5 false везде |
+
+- Reversible slope удержим (0.002–0.003), irreversible — нет
+  (0.003–0.005 против eps 0.004); conversion — главный механизм:
+  rate 0.05 роняет lifespan 69.5 → 60.5 (−9 лет).
+- Repair ceiling sweep плоский — потолок не binding, политика его не
+  исчерпывает; coordination 4×3 — все 69.5.
+
+---
+
+## Слайд 12. Boundary
+
+Этап 6D: диагностический boundary probe — аблации, а не новая биология.
+
+- Opt-in `boundary_probe_model` (scales conversion/accrual/ceiling,
+  component overrides, disable/unlimited флаги; unlimited — exploratory).
+- Contribution decomposition (`conversion + independent − repair = net`
+  по компонентам), source attribution, wall classification.
+
+| Аблация | Lifespan | Irreversible slope | v5 |
+|---|---|---|---|
+| default | 69.5 | 0.00536 | false |
+| conversion_zero | 69.5 | 0.00082 (в допуске!) | false |
+| independent_zero | 69.5 | 0.00501 | false |
+| both_suppressed | 69.5 | ~0.0008 | false |
+| high/unlimited ceiling | 69.5 | — | false |
+
+- Подавление conversion ограничивает irreversible slope, но v5 всё
+  равно false — binding смещается на `biological_age_slope` (исход 2).
+- Attribution: default → `conversion` / `driver:stem_exhaustion`;
+  conversion_zero → `independent_irreversible_accrual` /
+  `driver:dna_damage`; both_suppressed → `information_debt`.
+- Ultra-свипы 9+9+7 точек, search, stress: v5 false везде, порога нет.
+- Wall: `parametric_irreversibility_wall` — компонент подавим, v5 как
+  целое недостижима.
+
+---
+
+## Слайд 13. Цифры
 
 Lifespan лучших политик (масштаб: 30 символов = 117.8 лет):
 
@@ -220,16 +312,20 @@ adaptive 5A           117.8  █████████████████
 combined mech 5C       70.8  ██████████████████
 search best mech 5C    72.2  ██████████████████
 combined backed 6A   101.5  ██████████████████████████
+combined network 6B    76.5  ███████████████████
+combined revers 6C     69.5  ██████████████████
+boundary 6D            69.5  ██████████████████
 ```
 
 - Healthspan ≤ lifespan — всегда (инвариант, покрыт тестами).
-- Bounded degradation (v1, строгий v2, organ-backed v3): **0 везде** —
-  ни одна политика, ни один сид, ни один стресс.
-- Тесты: **364 passing**. Артефакты: ~217 файлов в `experiments/output/`.
+- Bounded degradation (v1, строгий v2, organ-backed v3, network v4,
+  reversibility v5): **0 везде** — ни одна политика, ни один сид,
+  ни один стресс, ни одна аблация.
+- Тесты: **478 passing**. Артефакты — в `experiments/output/`.
 
 ---
 
-## Слайд 11. HYP-0
+## Слайд 14. HYP-0
 
 ```text
 HYP-0: hypothesis_not_proven
@@ -241,6 +337,12 @@ HYP-0: hypothesis_not_proven
 4. Рак/воспаление/фиброз/continuity в пределах? — Да, но это не binding.
 5. Устойчивость к seed/шуму/стрессу? — Ranking стабилен, bounded нет.
 6. Organ-backed v3 (органы + ресурсы)? — Нет нигде; binding level везде `biological_age`.
+7. Network v4 (рёбра + feedback + hard limits)? — Нет нигде; binding везде `biological_age`.
+8. Reversibility v5 (conversion + ceiling + info/mutation/niche)? — Нет
+   нигде; dominant wall `irreversible_accumulation` / conversion.
+9. Boundary 6D (подавление irreversible flux)? — Slope в допуске при
+   conversion=0, но v5 всё равно нет: открывается `biological_age_slope`.
+   Wall: `parametric_irreversibility_wall`.
 
 > Candidate policy не найдена — это граница текущей абстрактной модели,
 > а не опровержение гипотезы в реальности. Даже найденный кандидат был бы
@@ -250,26 +352,26 @@ HYP-0: hypothesis_not_proven
 
 ---
 
-## Слайд 12. Дальше
+## Слайд 15. Дальше
 
 ```text
-Stage 5C сказал: чинишь один драйвер — binding смещается на следующий.
+Stage 6C сказал: стена — irreversible accumulation через conversion.
+Stage 6D сказал: conversion подавим, но v5 всё равно нет — за стеной вторая стена.
 ```
 
-- **Stage 6A** — done: organ-backed buffering продлевает жизнь
-  (101.5), но bounded не открывает.
-- **Stage 5D** — более глубокие механизмы обратимости с явными
-  физическими и ресурсными пределами.
-- Открытый вопрос: есть ли в модели конфигурация, где *все* драйверы
-  одновременно bounded без неприемлемой цены?
+- **Stage 6D** — done: irreversible slope параметрически подавим
+  (0.00082 при conversion=0), но v5 требует и bio slopes — исход 2.
+- Следующий шаг — решить по классификации: гетерогенные
+  ceiling/conversion, energy-coupled conversion или закрытие ветки
+  честным structural wall verdict (6E+).
 
 ---
 
-## Слайд 13. Воспроизведение
+## Слайд 16. Воспроизведение
 
 ```bash
 python -m pip install -e ".[dev]"
-python -m pytest   # 364 passing
+python -m pytest   # 478 passing
 ```
 
 ```bash
@@ -278,8 +380,16 @@ $env:PYTHONPATH='src'; python -m longevity.experiment.organism_policy_search --c
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_robust --config experiments/configs/organism_aging_stress_mechanistic.json --out-prefix experiments/output/organism_aging_stress_mechanistic
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_backed_combined.json --out experiments/output/organism_organ_backed_combined.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_backed --config experiments/configs/organism_organ_backed_coordination_compare.json --out-prefix experiments/output/organism_organ_backed_coordination_compare
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_network_combined.json --out experiments/output/organism_organ_network_combined.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_network --config experiments/configs/organism_organ_network_coordination_compare.json --out-prefix experiments/output/organism_organ_network_coordination_compare
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_combined_preventive_clearance.json --out experiments/output/organism_reversibility_combined_preventive_clearance.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_reversibility --config experiments/configs/organism_reversibility_coordination_compare.json --out-prefix experiments/output/organism_reversibility_coordination_compare
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_both_suppressed.json --out experiments/output/organism_reversibility_boundary_both_suppressed.json
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_conversion_ultra_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_conversion_ultra_sweep
 ```
 
 Документы: `docs/ROADMAP.md` (план), `docs/AGING_MODEL.md` (Stage 5C),
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md` (Stage 6A),
-`docs/ORGANISM_MODEL.md` (§8–10), `docs/IMMORTALITY.md` (§6–8).
+`docs/ORGAN_NETWORK_MODEL.md` (Stage 6B),
+`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D),
+`docs/ORGANISM_MODEL.md` (§8–12), `docs/IMMORTALITY.md` (§6–11).

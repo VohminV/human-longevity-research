@@ -141,6 +141,28 @@ DEATH_CAUSES = (
     "metabolic_support_failure",
     "repair_budget_exhaustion",
     "global_resource_exhaustion",
+    # Stage 6B organ-network causes (appended after 6A; canonical order
+    # of all earlier violations is preserved).
+    "network_cascade_failure",
+    "energy_exhaustion",
+    "information_loss",
+    "mutation_load_failure",
+    "feedback_runaway",
+    "bottleneck_edge_failure",
+    "critical_organ_cascade",
+    "hard_limit_violation",
+    "unknown_network_collapse",
+    # Stage 6C reversibility causes (appended after 6B; canonical order
+    # of all earlier violations is preserved).
+    "irreversible_accumulation_failure",
+    "repair_ceiling_exhaustion",
+    "conversion_runaway",
+    "information_debt_failure",
+    "mutation_fixation_failure",
+    "niche_disorder_failure",
+    "entropy_production_failure",
+    "biological_age_floor_erosion",
+    "unknown_reversibility_collapse",
     "unknown",
 )
 
@@ -342,6 +364,9 @@ class OrganismState:
     shock_history: list = field(default_factory=list)
     aging: dict[str, Any] | None = None
     organ_backed: dict[str, Any] | None = None
+    organ_network: dict[str, Any] | None = None
+    reversibility: dict[str, Any] | None = None
+    boundary: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = {key: getattr(self, key) for key in (
@@ -350,7 +375,8 @@ class OrganismState:
             "senescence_burden", "inflammation", "fibrosis", "cancer_burden",
             "epigenetic_drift", "proteostasis_capacity", "mitochondrial_function",
             "intervention_history", "rejuvenation_events", "failure_cause", "death_time",
-            "active_shocks", "shock_history", "aging", "organ_backed")}
+            "active_shocks", "shock_history", "aging", "organ_backed", "organ_network",
+            "reversibility", "boundary")}
         data["systems"] = {name: VitalSystemState.from_dict(info).to_dict()
                            for name, info in self.systems.items()}
         return copy.deepcopy(data)
@@ -365,7 +391,8 @@ class OrganismState:
             "senescence_burden", "inflammation", "fibrosis", "cancer_burden",
             "epigenetic_drift", "proteostasis_capacity", "mitochondrial_function",
             "intervention_history", "rejuvenation_events", "failure_cause", "death_time",
-            "active_shocks", "shock_history", "aging", "organ_backed")}
+            "active_shocks", "shock_history", "aging", "organ_backed", "organ_network",
+            "reversibility", "boundary")}
         kwargs["systems"] = systems
         # Legacy (Stage 5A) states carry no shock lists.
         kwargs["active_shocks"] = list(kwargs.get("active_shocks") or [])
@@ -408,6 +435,27 @@ def organism_invariant_violation(state: OrganismState) -> str | None:
             validate_organ_backed_state(state.organ_backed)
         except ValueError as exc:
             return f"organ_backed invalid: {exc}"
+    if state.organ_network is not None:
+        from longevity.model.organ_network import validate_organ_network_state  # deferred
+
+        try:
+            validate_organ_network_state(state.organ_network)
+        except ValueError as exc:
+            return f"organ_network invalid: {exc}"
+    if state.reversibility is not None:
+        from longevity.model.reversibility import validate_reversibility_state  # deferred
+
+        try:
+            validate_reversibility_state(state.reversibility)
+        except ValueError as exc:
+            return f"reversibility invalid: {exc}"
+    if state.boundary is not None:
+        from longevity.model.boundary import validate_boundary_state  # deferred
+
+        try:
+            validate_boundary_state(state.boundary)
+        except ValueError as exc:
+            return f"boundary invalid: {exc}"
     if state.failure_cause not in DEATH_CAUSES:
         return f"unknown failure cause {state.failure_cause!r}"
     if set(state.systems) != set(VITAL_SYSTEMS):
@@ -458,6 +506,18 @@ class OrganismModel:
         systemic_resources: dict[str, Any] | None = None,
         coordination_mode: str = "independent_organ_policies",
         emergent_weights: dict[str, Any] | None = None,
+        organ_network_model: str = "none",
+        organ_network_edges: list[dict[str, Any]] | None = None,
+        organ_network_feedback: dict[str, Any] | None = None,
+        organ_network_hard_limits: dict[str, Any] | None = None,
+        irreversible_thresholds: dict[str, Any] | None = None,
+        allow_sub_adult_network_age: bool = False,
+        reversibility_model: str = "none",
+        reversibility_params: dict[str, Any] | None = None,
+        allow_sub_adult_reversibility_age: bool = False,
+        boundary_probe_model: str = "none",
+        boundary_params: dict[str, Any] | None = None,
+        component_overrides: list[dict[str, Any]] | None = None,
     ):
         from longevity.model.aging import (  # deferred: avoid import cycle
             default_driver_state,
@@ -471,6 +531,27 @@ class OrganismModel:
             validate_organ_backed_model,
             validate_proxy_params,
             validate_resource_budgets,
+        )
+        from longevity.model.organ_network import (  # deferred: avoid import cycle
+            default_organ_network_state,
+            validate_feedback_config,
+            validate_hard_limits,
+            validate_irreversible_thresholds,
+            validate_network_edges,
+            validate_organ_network_model,
+        )
+        from longevity.model.reversibility import (  # deferred: avoid import cycle
+            default_reversibility_state,
+            validate_reversibility_model,
+            validate_reversibility_params,
+        )
+        from longevity.model.boundary import (  # deferred: avoid import cycle
+            _ablation_hash,
+            default_boundary_state,
+            effective_repair_ceiling,
+            validate_boundary_params,
+            validate_boundary_probe_model,
+            validate_component_overrides,
         )
 
         self.state = state or self.default_state()
@@ -499,12 +580,70 @@ class OrganismModel:
         self.resource_budgets = validate_resource_budgets(systemic_resources)
         self.coordination_mode = validate_coordination_mode(coordination_mode)
         self.emergent_weights = validate_emergent_weights(emergent_weights)
+        self.organ_network_model = validate_organ_network_model(organ_network_model)
+        self.network_edges = validate_network_edges(organ_network_edges)
+        self.network_feedback_config = validate_feedback_config(organ_network_feedback)
+        self.network_hard_limits = validate_hard_limits(organ_network_hard_limits)
+        self.irreversible_thresholds = validate_irreversible_thresholds(irreversible_thresholds)
+        if not isinstance(allow_sub_adult_network_age, bool):
+            raise ValueError("allow_sub_adult_network_age must be a bool")
+        self.allow_sub_adult_network_age = allow_sub_adult_network_age
+        self.reversibility_model = validate_reversibility_model(reversibility_model)
+        self.reversibility_params = validate_reversibility_params(reversibility_params)
+        if not isinstance(allow_sub_adult_reversibility_age, bool):
+            raise ValueError("allow_sub_adult_reversibility_age must be a bool")
+        self.allow_sub_adult_reversibility_age = allow_sub_adult_reversibility_age
+        self.boundary_probe_model = validate_boundary_probe_model(boundary_probe_model)
+        self.boundary_params = validate_boundary_params(boundary_params)
+        self.component_overrides = validate_component_overrides(component_overrides)
         self._apply_static_perturbation()
         if self.aging_model == "mechanistic_drivers" and self.state.aging is None:
             self.state.aging = default_driver_state()
         if self.organ_backed_model == "reduced_organ_proxies" and self.state.organ_backed is None:
             self.state.organ_backed = default_organ_backed_state()
             self.state.organ_backed["resources"]["budgets"] = dict(self.resource_budgets)
+        if self.organ_network_model == "reduced_network_feedback" and self.state.organ_network is None:
+            self.state.organ_network = default_organ_network_state()
+            self.state.organ_network["edges"] = [
+                {**dict(e), "utilization": 0.0, "failure_risk": 0.0, "failed": False}
+                for e in self.network_edges
+            ]
+            self.state.organ_network["hard_limits"] = dict(self.network_hard_limits)
+            self.state.organ_network["irreversible_thresholds"] = dict(self.irreversible_thresholds)
+            for loop, cfg in self.network_feedback_config.items():
+                self.state.organ_network["feedback"][loop]["enabled"] = cfg["enabled"]
+                self.state.organ_network["feedback"][loop]["configured_gain"] = cfg["gain"]
+            self.state.organ_network["biological_age_network"] = float(self.adult_age_setpoint)
+        if self.reversibility_model == "split_reversible_irreversible" \
+                and self.state.reversibility is None:
+            self.state.reversibility = default_reversibility_state()
+            self.state.reversibility["repair_ceiling"] = float(
+                self.reversibility_params["repair_ceiling"])
+            self.state.reversibility["repair_remaining"] = float(
+                self.reversibility_params["repair_ceiling"])
+            self.state.reversibility["biological_age_reversibility"] = float(
+                self.adult_age_setpoint)
+            self.state.reversibility["biological_age_floor_dynamic"] = float(
+                self.adult_age_setpoint)
+        if self.boundary_probe_model == "irreversibility_ablation" and self.state.boundary is None:
+            exploratory = bool(self.boundary_params.get("force_repair_ceiling_unlimited", False)
+                               or self.boundary_params.get("disable_repair_ceiling", False))
+            self.state.boundary = {
+                "params": dict(self.boundary_params),
+                "overrides": [dict(o) for o in self.component_overrides],
+                "exploratory": exploratory,
+                "ablation_flags_hash": _ablation_hash(self.boundary_params,
+                                                     self.component_overrides),
+            }
+        if self.reversibility_model == "split_reversible_irreversible" \
+                and self.state.reversibility is not None \
+                and self.boundary_probe_model == "irreversibility_ablation":
+            # Effective ceiling under ablation (unlimited modes use a large
+            # finite sentinel and are marked exploratory in metadata).
+            ceiling, _ = effective_repair_ceiling(
+                float(self.reversibility_params["repair_ceiling"]), self.boundary_params)
+            self.state.reversibility["repair_ceiling"] = float(ceiling)
+            self.state.reversibility["repair_remaining"] = float(ceiling)
 
     def _apply_static_perturbation(self) -> None:
         """One-time init perturbation of rates (seeded, order-fixed)."""
@@ -549,6 +688,10 @@ class OrganismModel:
                                          "magnitude": magnitude, "duration": duration})
         if self.organ_backed_model == "reduced_organ_proxies":
             self._maybe_organ_shock(dt)
+        if self.organ_network_model == "reduced_network_feedback":
+            self._maybe_network_shock(dt)
+        if self.reversibility_model == "split_reversible_irreversible":
+            self._maybe_reversibility_shock(dt)
         return [event]
 
     def _maybe_organ_shock(self, dt: float) -> None:
@@ -567,6 +710,29 @@ class OrganismModel:
                         * (0.5 + self.shock_rng.random()))
         duration = int(self.perturbation["shock_duration_steps"])
         event = {"age": self.state.chronological_age, "type": ORGAN_BACKED_SHOCK_TYPES[0],
+                 "magnitude": magnitude, "remaining": duration, "duration": duration}
+        self.state.active_shocks.append(dict(event))
+        self.state.shock_history.append({"age": event["age"], "type": event["type"],
+                                         "magnitude": magnitude, "duration": duration})
+
+    def _maybe_network_shock(self, dt: float) -> None:
+        """Separate organ-network shock draw (Stage 6B only).
+
+        Uses its own gate on the shock stream so Stage 5B/6A shock
+        sequences stay untouched; legacy modes never create network shocks.
+        """
+        from longevity.model.organ_network import ORGAN_NETWORK_SHOCK_TYPES  # deferred
+
+        probability = float(self.perturbation["shock_probability_per_step"]) * 0.4
+        if probability <= 0.0 or self.shock_rng.random() >= probability:
+            return
+        _ = dt
+        magnitude = max(0.0, float(self.perturbation["shock_magnitude_scale"])
+                        * (0.5 + self.shock_rng.random()))
+        duration = int(self.perturbation["shock_duration_steps"])
+        shock_type = ORGAN_NETWORK_SHOCK_TYPES[
+            int(self.shock_rng.random() * len(ORGAN_NETWORK_SHOCK_TYPES)) % len(ORGAN_NETWORK_SHOCK_TYPES)]
+        event = {"age": self.state.chronological_age, "type": shock_type,
                  "magnitude": magnitude, "remaining": duration, "duration": duration}
         self.state.active_shocks.append(dict(event))
         self.state.shock_history.append({"age": event["age"], "type": event["type"],
@@ -613,6 +779,47 @@ class OrganismModel:
                     for resource in SYSTEMIC_RESOURCES:
                         budgets[resource] = max(0.0, float(budgets[resource])
                                                 - 0.05 * magnitude * dt)
+            elif shock_type == "edge_failure":
+                if s.organ_network is not None and s.organ_network.get("edges"):
+                    import hashlib as _hashlib
+
+                    idx = int(_hashlib.sha256(
+                        f"{s.chronological_age:.4f}".encode()).hexdigest(), 16) \
+                        % len(s.organ_network["edges"])
+                    edge = s.organ_network["edges"][idx]
+                    edge["failure_risk"] = min(1.0, float(edge.get("failure_risk", 0.0))
+                                               + 0.2 * magnitude)
+                    if edge["failure_risk"] > float(edge.get("failure_threshold", 0.6)):
+                        edge["failed"] = True
+            elif shock_type == "feedback_amplification":
+                if s.organ_network is not None:
+                    for loop in s.organ_network.get("feedback", {}):
+                        info = s.organ_network["feedback"][loop]
+                        info["gain_value"] = max(0.0, min(2.0, float(info.get("gain_value", 0.0))
+                                                          + 0.05 * magnitude * dt))
+                    s.inflammation = min(1.0, s.inflammation + 0.01 * magnitude * dt)
+            elif shock_type == "energy_shortage":
+                if s.organ_network is not None:
+                    s.organ_network["energy_budget"] = max(
+                        0.0, float(s.organ_network.get("energy_budget", 0.0))
+                        - 0.5 * magnitude * dt)
+            elif shock_type == "conversion_spike":
+                if s.reversibility is not None:
+                    from longevity.model.aging import AGING_DRIVERS  # deferred
+
+                    bump = 0.01 * magnitude * dt
+                    for name in AGING_DRIVERS:
+                        comp = s.reversibility["drivers"][name]
+                        move = min(float(comp.get("reversible", 0.0)), bump)
+                        comp["reversible"] = max(0.0, float(comp["reversible"]) - move)
+                        comp["irreversible"] = max(0.0, min(1.0, float(comp["irreversible"]) + move))
+                    s.reversibility["total_conversion_flux"] = max(
+                        0.0, float(s.reversibility.get("total_conversion_flux", 0.0)) + bump)
+            elif shock_type == "repair_ceiling_shock":
+                if s.reversibility is not None:
+                    s.reversibility["repair_remaining"] = max(
+                        0.0, float(s.reversibility.get("repair_remaining", 0.0))
+                        - 0.02 * magnitude * dt)
             shock["remaining"] = int(shock["remaining"]) - 1
             if int(shock["remaining"]) > 0:
                 remaining.append(shock)
@@ -875,11 +1082,66 @@ class OrganismModel:
                         + 0.5 * float(proxy["informational_continuity"]))
 
     def _coordinate_effects(self, effects: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-        """Run organism-level coordination over organ-targeted effects (6A)."""
+        """Run organism-level coordination over organ-targeted effects (6A/6B/6C)."""
         from longevity.model.organ_backed import coordinate_organ_effects  # deferred
+        from longevity.model.organ_network import NETWORK_COORDINATION_MODES  # deferred
+        from longevity.model.reversibility import REVERSIBILITY_COORDINATION_MODES  # deferred
 
         s = self.state
         assert s.organ_backed is not None
+        if self.coordination_mode in REVERSIBILITY_COORDINATION_MODES:
+            from longevity.model.reversibility import coordinate_reversibility_effects  # deferred
+
+            if s.reversibility is None:
+                return list(effects), {"mode": self.coordination_mode, "n_pending": len(effects),
+                                       "n_executed": len(effects), "n_deferred": 0, "n_rejected": 0}
+            queue = list(s.reversibility.get("coordination_queue", []))
+            result = coordinate_reversibility_effects(
+                effects, s.reversibility, self.coordination_mode, queue)
+            s.reversibility["coordination_queue"] = result["queue"]
+            stats = s.organ_backed["coordination_stats"]
+            stats["executed"] += len(result["executed"])
+            stats["deferred"] += len(result["deferred"])
+            stats["rejected"] += len(result["rejected"])
+            if result["detail"]["mode"] != "independent_reversibility":
+                stats["scaled"] += len(result["executed"])
+            net_stats = s.reversibility["coordination_stats"]
+            if result["detail"]["mode"] == "preventive_priority":
+                net_stats["preventive_priority_executions"] += len(result["executed"])
+            if result["detail"]["mode"] == "repair_ceiling_guard":
+                net_stats["repair_ceiling_guard_rejections"] += len(result["rejected"])
+            if result["detail"]["mode"] == "information_guard":
+                net_stats["information_guard_rejections"] += len(result["rejected"])
+            if result["detail"]["mode"] == "mutation_guard":
+                net_stats["mutation_guard_rejections"] += len(result["rejected"])
+            return result["executed"], result["detail"]
+        if self.coordination_mode in NETWORK_COORDINATION_MODES:
+            from longevity.model.organ_network import coordinate_network_effects  # deferred
+
+            network_ctx = s.organ_network if s.organ_network is not None else {}
+            result = coordinate_network_effects(
+                effects, s.organ_backed["proxies"],
+                s.organ_backed["resources"]["allocation"],
+                self.coordination_mode, s.organ_backed["coordination_queue"], network_ctx)
+            s.organ_backed["coordination_queue"] = result["queue"]
+            stats = s.organ_backed["coordination_stats"]
+            stats["executed"] += len(result["executed"])
+            stats["deferred"] += len(result["deferred"])
+            stats["rejected"] += len(result["rejected"])
+            if result["detail"]["mode"] != "independent_network":
+                stats["scaled"] += len(result["executed"])
+            if s.organ_network is not None:
+                net_stats = s.organ_network["coordination_stats"]
+                detail = result["detail"]
+                if result["detail"]["mode"] == "cascade_guard":
+                    net_stats["cascade_guard_rejections"] += len(result["rejected"])
+                if result["detail"]["mode"] == "network_bottleneck_priority":
+                    net_stats["bottleneck_priority_executions"] += len(result["executed"])
+                if result["detail"]["mode"] == "mutation_load_guard":
+                    net_stats["mutation_guard_rejections"] += len(result["rejected"])
+                if result["detail"]["mode"] == "information_preservation_priority":
+                    net_stats["information_priority_executions"] += len(result["executed"])
+            return result["executed"], result["detail"]
         result = coordinate_organ_effects(
             effects, s.organ_backed["proxies"],
             s.organ_backed["resources"]["allocation"],
@@ -947,6 +1209,10 @@ class OrganismModel:
             s.biological_age = bio
         if self.organ_backed_model == "reduced_organ_proxies":
             self._apply_organ_effect(effect, source)
+        if self.organ_network_model == "reduced_network_feedback" and s.organ_network is not None:
+            self._apply_network_effect_costs(effect)
+        if self.reversibility_model == "split_reversible_irreversible" and s.reversibility is not None:
+            self._apply_reversibility_effect(effect)
         if s.biological_age < bio_before - 1e-9:
             s.rejuvenation_events += 1
         s.functional_reserve = max(0.0, s.functional_reserve + float(effect.get("delta_reserve_global", 0.0)))
@@ -1072,6 +1338,10 @@ class OrganismModel:
             violations.append("neural_identity_loss")
         if s.organ_backed is not None:
             violations.extend(self._organ_backed_violations())
+        if s.organ_network is not None:
+            violations.extend(self._organ_network_violations())
+        if s.reversibility is not None:
+            violations.extend(self._reversibility_violations())
         ordered = [c for c in DEATH_CAUSES if c in violations]
         return (len(ordered) == 0, ordered)
 
@@ -1108,6 +1378,642 @@ class OrganismModel:
             violations.append("global_resource_exhaustion")
         return violations
 
+    def _organ_network_violations(self) -> list[str]:
+        """Network/hard-limit death checks (Stage 6B; pure read)."""
+        s = self.state
+        net = s.organ_network
+        assert net is not None
+        violations: list[str] = []
+        limits = net.get("hard_limits", {})
+        if float(net.get("cascade_risk", 0.0)) > float(limits.get("max_cascade_risk", 0.6)):
+            violations.append("network_cascade_failure")
+        if float(net.get("energy_budget", 1.0)) <= 1e-9:
+            violations.append("energy_exhaustion")
+        brain_cont = 1.0
+        if s.organ_backed is not None and "brain_cns_proxy" in s.organ_backed["proxies"]:
+            brain_cont = float(s.organ_backed["proxies"]["brain_cns_proxy"]
+                               .get("informational_continuity", 1.0))
+        else:
+            brain_cont = float(s.systems["brain_cns"].get("informational_continuity", 1.0))
+        if brain_cont < float(limits.get("min_informational_continuity", 0.5)) * 0.6:
+            violations.append("information_loss")
+        if float(net.get("mutation_load", 0.0)) > float(limits.get("max_mutation_load", 1.0)):
+            violations.append("mutation_load_failure")
+        max_gain = 0.0
+        runaway_loops = []
+        for loop, info in (net.get("feedback", {}) or {}).items():
+            gain = max(0.0, float(info.get("gain_value", 0.0)))
+            max_gain = max(max_gain, gain)
+            if gain > float(limits.get("max_feedback_gain", 0.8)):
+                runaway_loops.append(loop)
+        if runaway_loops:
+            violations.append("feedback_runaway")
+        failed_edges = [e for e in net.get("edges", []) if e.get("failed")]
+        if failed_edges:
+            violations.append("bottleneck_edge_failure")
+        if s.organ_backed is not None:
+            from longevity.model.organ_backed import ORGAN_PROXIES  # deferred
+
+            critical_failed = 0
+            for pid in ORGAN_PROXIES:
+                proxy = s.organ_backed["proxies"][pid]
+                params = self.organ_proxy_params.get(pid, {})
+                if float(params.get("critical", 1.0)) > 0.5 \
+                        and float(proxy.get("function", 1.0)) < float(params.get("failure_threshold", 0.25)):
+                    critical_failed += 1
+            if critical_failed >= 2:
+                violations.append("critical_organ_cascade")
+        if net.get("failed_hard_limit_ids"):
+            violations.append("hard_limit_violation")
+        return violations
+
+    def _reversibility_violations(self) -> list[str]:
+        """Reversibility wall death checks (Stage 6C; pure read)."""
+        s = self.state
+        rev = s.reversibility
+        assert rev is not None
+        params = self.reversibility_params
+        violations: list[str] = []
+        if float(rev.get("irreversible_burden", 0.0)) > 0.55:
+            violations.append("irreversible_accumulation_failure")
+        if float(rev.get("repair_remaining", 1.0)) <= 1e-9 \
+                and float(rev.get("repair_used_global", 0.0)) > 0.0:
+            violations.append("repair_ceiling_exhaustion")
+        if bool(rev.get("conversion_runaway", False)):
+            violations.append("conversion_runaway")
+        if float(rev.get("information_debt", 0.0)) > float(params["max_information_debt"]):
+            violations.append("information_debt_failure")
+        if float(rev.get("mutation_fixation", 0.0)) > float(params["max_mutation_fixation"]):
+            violations.append("mutation_fixation_failure")
+        if float(rev.get("niche_disorder", 0.0)) > float(params["max_niche_disorder"]):
+            violations.append("niche_disorder_failure")
+        adult_years = max(0.0, float(s.chronological_age) - 20.0)
+        if adult_years > 1.0 and float(rev.get("entropy_auc", 0.0)) / adult_years \
+                > float(params["max_entropy_rate"]) * 4.0:
+            violations.append("entropy_production_failure")
+        floor = float(rev.get("biological_age_floor_dynamic", self.adult_age_setpoint))
+        if floor > float(self.adult_age_setpoint) + 30.0:
+            violations.append("biological_age_floor_erosion")
+        if rev.get("failed_ids"):
+            violations.append("unknown_reversibility_collapse")
+        return violations
+
+    def _reversibility_step(self, dt: float, stage: str) -> None:
+        """Reversible / irreversible accumulation + conversion + ceiling (6C).
+
+        Stage 6D boundary scales multiply the base conversion / independent
+        rates (neutral 1.0 reproduces 6C exactly); per-component overrides
+        multiply individual ledger entries.
+        """
+        from longevity.model.aging import AGING_DRIVERS  # deferred
+        from longevity.model.organ_backed import ORGAN_PROXIES  # deferred
+        from longevity.model.reversibility import (  # deferred
+            compute_reversibility_age,
+            conversion_modifiers,
+        )
+        from longevity.model.boundary import (  # deferred
+            effective_conversion_scale,
+            effective_independent_scale,
+            override_for,
+        )
+
+        s = self.state
+        rev = s.reversibility
+        assert rev is not None
+        params = self.reversibility_params
+        boundary_active = self.boundary_probe_model == "irreversibility_ablation"
+        bparams = self.boundary_params if boundary_active else None
+        overrides = self.component_overrides if boundary_active else []
+        base_conv = float(params["base_conversion_rate"])
+        base_indep = float(params["independent_irreversible_rate"])
+        if bparams is not None:
+            if bparams.get("disable_conversion", False):
+                base_conv = 0.0
+            else:
+                base_conv *= max(0.0, float(bparams.get("conversion_scale", 1.0)))
+            if bparams.get("disable_independent_accrual", False):
+                base_indep = 0.0
+            else:
+                base_indep *= max(0.0, float(bparams.get("independent_accrual_scale", 1.0)))
+        mult = {"embryo": 0.0, "fetal": 0.0, "infancy": 0.05, "childhood": 0.1,
+                "adolescence": 0.25, "adult_homeostasis": 1.0, "early_aging": 1.6,
+                "late_aging": 2.2, "terminal_decline": 2.6}[stage]
+        if mult <= 0.0:
+            self._update_reversibility_age()
+            return
+        # Prevention buffer decays and blunts new accumulation.
+        prevention = max(0.0, float(rev.get("prevention_pending", 0.0)))
+        prevention = max(0.0, prevention - prevention * 0.5 * dt - 0.002 * dt)
+        rev["prevention_pending"] = prevention
+        energy_shortfall = 0.0
+        repair_shortfall = 0.0
+        cascade = 0.0
+        if s.organ_backed is not None:
+            alloc = s.organ_backed["resources"]["allocation"]
+            energy_shortfall = 0.0
+            if s.organ_network is not None:
+                initial = max(1e-9, float(s.organ_network.get("hard_limits", {})
+                                          .get("energy_budget_initial", 30.0)))
+                energy_shortfall = max(0.0, 1.0 - float(s.organ_network.get("energy_budget", initial))
+                                       / initial)
+            repair_shortfall = max(0.0, 1.0 - max(0.0, min(1.0, float(alloc.get("repair", 1.0)))))
+        if s.organ_network is not None:
+            cascade = max(0.0, min(1.0, float(s.organ_network.get("cascade_risk", 0.0))))
+        toxicity = 0.0
+        if s.organ_network is not None:
+            toxicity = max(0.0, min(1.0, float(s.organ_network.get("intervention_toxicity", 0.0)) / 3.0))
+        modifier = conversion_modifiers(
+            max(0.0, min(1.0, float(s.inflammation))), energy_shortfall,
+            repair_shortfall, cascade, max(0.0, min(1.0, float(rev.get("niche_disorder", 0.0)))),
+            toxicity, params)
+        flux = 0.0
+        # Driver ledger: conversion reclassifies; independent accrual adds irr.
+        if s.aging is not None:
+            for name in AGING_DRIVERS:
+                cell = s.aging["drivers"][name]
+                comp = rev["drivers"][name]
+                ov = override_for(overrides, "driver", name) if overrides else None
+                conv_rate = base_conv
+                indep_rate = base_indep
+                if ov is not None:
+                    if ov.get("conversion_rate_override") is not None:
+                        conv_rate = base_conv * max(0.0, float(ov["conversion_rate_override"]))
+                    if ov.get("independent_accrual_override") is not None:
+                        indep_rate = base_indep * max(0.0, float(ov["independent_accrual_override"]))
+                damage = max(0.0, min(1.0, float(cell.get("damage", 0.0))))
+                irr = max(0.0, min(1.0, float(comp.get("irreversible", 0.0))))
+                irr = min(irr, damage)
+                reversible = max(0.0, damage - irr)
+                convert = min(reversible, conv_rate * reversible * modifier * mult * dt)
+                indep = indep_rate * mult * dt
+                reversible -= convert
+                irr_new = min(1.0, irr + convert + indep)
+                flux += convert
+                comp["reversible"] = max(0.0, min(1.0, reversible))
+                comp["irreversible"] = max(0.0, min(1.0, irr_new))
+                comp["conversion_rate"] = convert / max(dt, 1e-9)
+                comp["conversion_cumul"] = max(0.0, float(comp.get("conversion_cumul", 0.0)) + convert)
+                comp["independent_cumul"] = max(0.0, float(comp.get("independent_cumul", 0.0)) + indep)
+        # Organ ledger mirrors proxy damage the same way.
+        if s.organ_backed is not None:
+            for pid in ORGAN_PROXIES:
+                proxy = s.organ_backed["proxies"][pid]
+                comp = rev["organs"][pid]
+                ov = override_for(overrides, "organ", pid) if overrides else None
+                conv_rate = base_conv
+                indep_rate = 0.5 * base_indep
+                if ov is not None:
+                    if ov.get("conversion_rate_override") is not None:
+                        conv_rate = base_conv * max(0.0, float(ov["conversion_rate_override"]))
+                    if ov.get("independent_accrual_override") is not None:
+                        indep_rate = base_indep * max(0.0, float(ov["independent_accrual_override"]))
+                damage = max(0.0, float(proxy.get("damage", 0.0)))
+                damage_n = max(0.0, min(1.0, damage))
+                irr = max(0.0, min(1.0, float(comp.get("irreversible", 0.0))))
+                irr = min(irr, damage_n)
+                reversible = max(0.0, damage_n - irr)
+                convert = min(reversible, conv_rate * reversible * modifier * mult * dt)
+                indep = indep_rate * mult * dt
+                reversible -= convert
+                irr_new = min(1.0, irr + convert + indep)
+                flux += 0.5 * convert
+                comp["reversible"] = max(0.0, min(1.0, reversible))
+                comp["irreversible"] = max(0.0, min(1.0, irr_new))
+                comp["conversion_rate"] = convert / max(dt, 1e-9)
+                comp["conversion_cumul"] = max(0.0, float(comp.get("conversion_cumul", 0.0)) + convert)
+                comp["independent_cumul"] = max(0.0, float(comp.get("independent_cumul", 0.0)) + indep)
+        rev["total_conversion_flux"] = max(0.0, float(rev.get("total_conversion_flux", 0.0)) + flux)
+        threshold = float(params["conversion_runaway_threshold"])
+        per_step = flux / max(dt, 1e-9)
+        if per_step > threshold and rev.get("time_to_first_conversion_threshold") is None:
+            rev["time_to_first_conversion_threshold"] = float(s.chronological_age)
+        max_comp_rate = 0.0
+        for comp in list(rev["drivers"].values()) + list(rev["organs"].values()):
+            max_comp_rate = max(max_comp_rate, float(comp.get("conversion_rate", 0.0)))
+        rev["conversion_runaway"] = bool(max_comp_rate > threshold)
+        # Global burdens: means over ledgers (deterministic order).
+        if s.aging is not None:
+            rev["reversible_burden"] = sum(float(rev["drivers"][n]["reversible"])
+                                          for n in AGING_DRIVERS) / max(1, len(AGING_DRIVERS))
+            irr_drivers = sum(float(rev["drivers"][n]["irreversible"])
+                              for n in AGING_DRIVERS) / max(1, len(AGING_DRIVERS))
+        else:
+            rev["reversible_burden"] = max(0.0, min(1.0, float(s.global_damage)))
+            irr_drivers = 0.0
+        irr_organs = sum(float(rev["organs"][p]["irreversible"]) for p in rev["organs"]) \
+            / max(1, len(rev["organs"]))
+        rev["irreversible_burden"] = max(0.0, min(1.0, 0.6 * irr_drivers + 0.4 * irr_organs))
+        # Information / mutation / niche / entropy drift (all capped, no NaN).
+        brain_irr = 0.0
+        if "brain_cns_proxy" in rev["organs"]:
+            brain_irr = float(rev["organs"]["brain_cns_proxy"]["irreversible"])
+        info_step = (0.004 * brain_irr + 0.002 * float(s.epigenetic_drift)) * mult * dt
+        rev["information_debt"] = max(0.0, min(1.0, float(rev["information_debt"]) + info_step))
+        cancer_irr = 0.0
+        if s.aging is not None and "cancer_prone" in rev["drivers"]:
+            cancer_irr = float(rev["drivers"]["cancer_prone"]["irreversible"])
+        mut_step = (0.5 * float(params["independent_irreversible_rate"])
+                    * (0.5 + cancer_irr) * mult * dt)
+        rev["mutation_fixation"] = max(0.0, min(1.0, float(rev["mutation_fixation"]) + mut_step))
+        niche_in = max(0.0, min(1.0, float(s.inflammation) * 0.5 + energy_shortfall * 0.5))
+        rev["niche_disorder"] = max(0.0, min(1.0, float(rev["niche_disorder"])
+                                             + 0.004 * niche_in * mult * dt))
+        entropy_step = (flux * 0.5 + max(0.0, 1.0 - (1.0 - energy_shortfall)) * 0.002) * mult
+        rev["entropy_production"] = max(0.0, entropy_step / max(dt, 1e-9) * dt)
+        rev["entropy_auc"] = max(0.0, float(rev.get("entropy_auc", 0.0)) + entropy_step * dt)
+        # Niche disorder feeds back by slowing future clearance implicitly
+        # via the conversion modifier (documented coupling).
+        self._update_reversibility_age()
+
+    def _update_reversibility_age(self) -> None:
+        """Refresh reversibility bio age + floor from current ledgers."""
+        from longevity.model.reversibility import compute_reversibility_age  # deferred
+
+        s = self.state
+        rev = s.reversibility
+        assert rev is not None
+        total, floor, rev_c, irr_c = compute_reversibility_age(
+            self.adult_age_setpoint, float(rev.get("reversible_burden", 0.0)),
+            float(rev.get("irreversible_burden", 0.0)),
+            float(rev.get("information_debt", 0.0)),
+            float(rev.get("mutation_fixation", 0.0)),
+            float(rev.get("niche_disorder", 0.0)),
+            self.reversibility_params, self.allow_sub_adult_reversibility_age)
+        rev["biological_age_reversibility"] = float(total)
+        rev["biological_age_floor_dynamic"] = float(floor)
+        rev["reversible_age_contribution"] = float(rev_c)
+        rev["irreversible_age_contribution"] = float(irr_c)
+
+    def _apply_reversibility_effect(self, effect: dict[str, Any]) -> None:
+        """Apply rev_* keys to the reversibility ledger (Stage 6C)."""
+        from longevity.model.aging import AGING_DRIVERS  # deferred
+        from longevity.model.organ_backed import ORGAN_PROXIES  # deferred
+
+        s = self.state
+        rev = s.reversibility
+        assert rev is not None
+        params = self.reversibility_params
+        intensity = max(0.0, float(effect.get("intensity", 1.0)))
+        # Prevention buffer (blunts future accumulation implicitly via step).
+        prevention = max(0.0, float(effect.get("rev_prevention", 0.0)))
+        if prevention > 0.0:
+            rev["prevention_pending"] = max(0.0, float(rev.get("prevention_pending", 0.0))
+                                            + prevention * float(params["prevention_relief"]))
+        # Reversible clearance: reduce rev pools and underlying damage.
+        clearance = max(0.0, float(effect.get("rev_clearance", 0.0)))
+        if clearance > 0.0:
+            if s.aging is not None:
+                for name in AGING_DRIVERS:
+                    comp = rev["drivers"][name]
+                    take = min(float(comp["reversible"]), clearance / 8.0)
+                    comp["reversible"] = max(0.0, float(comp["reversible"]) - take)
+                    cell = s.aging["drivers"][name]
+                    cell["damage"] = max(float(self.aging_drivers[name]["floor"]),
+                                         max(0.0, min(1.0, float(cell.get("damage", 0.0)) - take)))
+            if s.organ_backed is not None:
+                for pid in ORGAN_PROXIES:
+                    comp = rev["organs"][pid]
+                    take = min(float(comp["reversible"]), clearance / 16.0)
+                    comp["reversible"] = max(0.0, float(comp["reversible"]) - take)
+                    proxy = s.organ_backed["proxies"][pid]
+                    proxy["damage"] = max(0.0, float(proxy.get("damage", 0.0)) - take)
+            rev["reversible_burden"] = max(0.0, float(rev.get("reversible_burden", 0.0)) - clearance * 0.2)
+        # Conversion suppression is realized as a smaller next-step modifier
+        # via a transient prevention bump (documented approximation).
+        suppression = max(0.0, min(1.0, float(effect.get("rev_conversion_suppression", 0.0))))
+        if suppression > 0.0:
+            rev["prevention_pending"] = max(0.0, float(rev.get("prevention_pending", 0.0))
+                                            + suppression * 0.02 * intensity)
+        # Irreversible repair subject to ceiling / floor / diminishing.
+        requested = max(0.0, float(effect.get("rev_irreversible_repair", 0.0)))
+        if requested > 0.0 and not (self.boundary_probe_model == "irreversibility_ablation"
+                                    and self.boundary_params.get("disable_irreversible_repair", False)):
+            remaining = max(0.0, float(rev.get("repair_remaining", 0.0)))
+            allowed = min(requested, remaining)
+            # Diminishing: the fuller the ceiling usage, the less realized.
+            used_frac = 1.0 - remaining / max(1e-9, float(rev.get("repair_ceiling", 0.3)))
+            realized = allowed * max(0.0, 1.0 - float(params["repair_diminishing"]) * used_frac)
+            per_driver = realized / 16.0
+            if s.aging is not None:
+                for name in AGING_DRIVERS:
+                    comp = rev["drivers"][name]
+                    take = min(float(comp["irreversible"]), per_driver)
+                    floor = float(self.aging_drivers[name]["floor"])
+                    comp["irreversible"] = max(0.0, float(comp["irreversible"]) - take)
+                    comp["repair_used"] = max(0.0, float(comp["repair_used"]) + take)
+                    comp["repair_cumul"] = max(0.0, float(comp.get("repair_cumul", 0.0)) + take)
+                    cell = s.aging["drivers"][name]
+                    cell["damage"] = max(floor, max(0.0, min(1.0, float(cell.get("damage", 0.0)) - take)))
+            if s.organ_backed is not None:
+                for pid in ORGAN_PROXIES:
+                    comp = rev["organs"][pid]
+                    take = min(float(comp["irreversible"]), per_driver * 0.5)
+                    comp["irreversible"] = max(0.0, float(comp["irreversible"]) - take)
+                    comp["repair_used"] = max(0.0, float(comp["repair_used"]) + take)
+                    comp["repair_cumul"] = max(0.0, float(comp.get("repair_cumul", 0.0)) + take)
+                    proxy = s.organ_backed["proxies"][pid]
+                    proxy["damage"] = max(0.0, float(proxy.get("damage", 0.0)) - take)
+            rev["repair_used_global"] = max(0.0, float(rev.get("repair_used_global", 0.0)) + realized)
+            rev["repair_remaining"] = max(0.0, remaining - realized)
+            cost = realized * float(params["repair_cost_per_unit"])
+            risk = realized * float(params["repair_risk_per_unit"])
+            rev["repair_cost_auc"] = max(0.0, float(rev.get("repair_cost_auc", 0.0)) + cost)
+            rev["repair_risk_auc"] = max(0.0, float(rev.get("repair_risk_auc", 0.0)) + risk)
+            s.inflammation = max(0.0, min(1.0, float(s.inflammation) + risk * 0.3))
+            s.cancer_burden = max(0.0, min(1.0, float(s.cancer_burden) + risk * 0.2))
+            if s.organ_network is not None:
+                s.organ_network["mutation_load"] = max(
+                    0.0, float(s.organ_network.get("mutation_load", 0.0)) + risk * 0.1)
+                s.organ_network["intervention_toxicity"] = max(
+                    0.0, float(s.organ_network.get("intervention_toxicity", 0.0)) + cost * 0.2)
+            if rev.get("repair_ceiling_exhaustion_time") is None and rev["repair_remaining"] <= 1e-9 \
+                    and realized > 0.0:
+                rev["repair_ceiling_exhaustion_time"] = float(s.chronological_age)
+        # Information / mutation / niche / entropy repairs (capped, costly).
+        info_rep = max(0.0, float(effect.get("rev_information_repair", 0.0)))
+        if info_rep > 0.0:
+            # Already-lost identity is sticky: only a fraction is recoverable.
+            rev["information_debt"] = max(0.0, float(rev.get("information_debt", 0.0)) - info_rep * 0.5)
+        mut_rep = max(0.0, float(effect.get("rev_mutation_repair", 0.0)))
+        if mut_rep > 0.0:
+            rev["mutation_fixation"] = max(0.0, float(rev.get("mutation_fixation", 0.0)) - mut_rep * 0.5)
+            if s.organ_network is not None:
+                s.organ_network["mutation_load"] = max(
+                    0.0, float(s.organ_network.get("mutation_load", 0.0)) - mut_rep * 0.2)
+        niche_rep = max(0.0, float(effect.get("rev_niche_repair", 0.0)))
+        if niche_rep > 0.0:
+            rev["niche_disorder"] = max(0.0, float(rev.get("niche_disorder", 0.0)) - niche_rep * 0.6)
+        entropy_red = max(0.0, float(effect.get("rev_entropy_reduction", 0.0)))
+        if entropy_red > 0.0:
+            rev["entropy_production"] = max(0.0, float(rev.get("entropy_production", 0.0))
+                                            - entropy_red * 0.3)
+        # Aggressive repair without guards raises debt (no free lunch).
+        if str(effect.get("intervention_type", "")) == "irreversible_repair_pulse":
+            rev["information_debt"] = max(0.0, min(1.0, float(rev.get("information_debt", 0.0))
+                                                  + 0.004 * intensity))
+            rev["mutation_fixation"] = max(0.0, min(1.0, float(rev.get("mutation_fixation", 0.0))
+                                                   + 0.004 * intensity))
+        self._update_reversibility_age()
+
+    def _maybe_reversibility_shock(self, dt: float) -> None:
+        """Separate reversibility shock draw (Stage 6C only)."""
+        from longevity.model.reversibility import REVERSIBILITY_SHOCK_TYPES  # deferred
+
+        probability = float(self.perturbation["shock_probability_per_step"]) * 0.3
+        if probability <= 0.0 or self.shock_rng.random() >= probability:
+            return
+        _ = dt
+        magnitude = max(0.0, float(self.perturbation["shock_magnitude_scale"])
+                        * (0.5 + self.shock_rng.random()))
+        duration = int(self.perturbation["shock_duration_steps"])
+        shock_type = REVERSIBILITY_SHOCK_TYPES[
+            int(self.shock_rng.random() * len(REVERSIBILITY_SHOCK_TYPES)) % len(REVERSIBILITY_SHOCK_TYPES)]
+        event = {"age": self.state.chronological_age, "type": shock_type,
+                 "magnitude": magnitude, "remaining": duration, "duration": duration}
+        self.state.active_shocks.append(dict(event))
+        self.state.shock_history.append({"age": event["age"], "type": event["type"],
+                                         "magnitude": magnitude, "duration": duration})
+
+    def _organ_network_step(self, dt: float, stage: str) -> None:
+        """Cross-organ edges + feedback + hard limits (Stage 6B, opt-in)."""
+        from longevity.model.organ_backed import ORGAN_PROXIES, SYSTEMIC_RESOURCES  # deferred
+        from longevity.model.organ_network import (  # deferred
+            compute_cascade_risk,
+            compute_feedback_gains,
+            compute_network_age,
+        )
+
+        s = self.state
+        net = s.organ_network
+        assert net is not None
+        assert s.organ_backed is not None
+        proxies = s.organ_backed["proxies"]
+        allocation = s.organ_backed["resources"]["allocation"]
+        mult = {"embryo": 0.0, "fetal": 0.0, "infancy": 0.05, "childhood": 0.1,
+                "adolescence": 0.25, "adult_homeostasis": 1.0, "early_aging": 1.6,
+                "late_aging": 2.2, "terminal_decline": 2.6}[stage]
+        # Deliver due delayed edge effects (FIFO, deterministic order).
+        due_now: dict[str, float] = {}
+        still_pending: list[dict[str, Any]] = []
+        for item in net.get("pending_delays", []):
+            remaining = int(item.get("remaining", 0)) - 1
+            if remaining <= 0:
+                due_now[item["target"]] = due_now.get(item["target"], 0.0) + float(item.get("amount", 0.0))
+            else:
+                still_pending.append({"edge_id": item["edge_id"], "target": item["target"],
+                                      "amount": float(item.get("amount", 0.0)), "remaining": remaining})
+        net["pending_delays"] = still_pending
+        for target, amount in due_now.items():
+            if target in proxies:
+                proxies[target]["damage"] = max(0.0, float(proxies[target]["damage"]) + amount)
+        # Edge coupling: source burden -> target damage / demand.
+        for edge in net.get("edges", []):
+            source = proxies.get(edge["source"])
+            target = proxies.get(edge["target"])
+            if source is None or target is None:
+                edge["utilization"] = 0.0
+                edge["failure_risk"] = 0.0
+                edge["failed"] = False
+                continue
+            weight = float(edge.get("weight", 0.0))
+            if weight <= 0.0:
+                edge["utilization"] = 0.0
+                edge["failure_risk"] = 0.0
+                edge["failed"] = False
+                continue
+            etype = str(edge.get("edge_type", ""))
+            gain = float(edge.get("gain", 1.0))
+            if etype in ("vascular_dependency", "immune_dependency",
+                         "metabolic_dependency", "repair_resource_flow"):
+                burden = max(0.0, float(source.get("damage", 0.0))) \
+                    + max(0.0, min(1.0, float(source.get("senescence_burden", 0.0)))) * 0.5
+                effect = weight * gain * burden * mult * dt
+            elif etype in ("inflammatory_spread", "fibrosis_spread", "cancer_seeding_risk"):
+                key = {"inflammatory_spread": "immune_pressure",
+                       "fibrosis_spread": "fibrosis",
+                       "cancer_seeding_risk": "cancer_risk"}[etype]
+                burden = max(0.0, min(1.0, float(source.get(key, 0.0))))
+                effect = weight * gain * burden * mult * dt
+            else:  # signals: weak coupling via dysfunction
+                burden = max(0.0, 1.0 - float(source.get("function", 1.0)))
+                effect = weight * gain * burden * mult * dt * 0.5
+            delay = int(edge.get("delay_steps", 0))
+            if delay > 0 and effect > 1e-12:
+                still_pending.append({"edge_id": edge["edge_id"], "target": edge["target"],
+                                      "amount": effect, "remaining": delay})
+            elif effect > 1e-12:
+                target["damage"] = max(0.0, float(target.get("damage", 0.0)) + effect)
+            utilization = max(0.0, min(1.0, weight * 4.0 * (0.3 + min(1.0, burden))))
+            protection = float(edge.get("protection_sensitivity", 0.5))
+            immune_alloc = max(0.0, min(1.0, float(allocation.get("immune", 1.0))))
+            failure_risk = max(0.0, min(1.0, utilization * gain * (1.0 - protection * immune_alloc * 0.3)))
+            edge["utilization"] = utilization
+            edge["failure_risk"] = failure_risk
+            was_failed = bool(edge.get("failed", False))
+            edge["failed"] = bool(failure_risk > float(edge.get("failure_threshold", 0.6)))
+            if edge["failed"] and not was_failed:
+                net["failed_edge_ids"] = sorted(set(net.get("failed_edge_ids", [])) | {edge["edge_id"]})
+                net["network_failure_sequence"] = list(net.get("network_failure_sequence", [])) + [edge["edge_id"]]
+        net["pending_delays"] = still_pending
+        # Feedback gains (pure) then operational application.
+        gains = compute_feedback_gains(proxies, allocation, self.network_feedback_config)
+        for loop, value in gains.items():
+            net["feedback"][loop]["gain_value"] = float(value)
+            net["feedback"][loop]["burden"] = float(value)
+        infl = gains.get("inflammation_damage_loop", 0.0)
+        immune_ex = gains.get("immune_exhaustion_loop", 0.0)
+        metab = gains.get("metabolic_repair_loop", 0.0)
+        vasc = gains.get("vascular_support_loop", 0.0)
+        neural = gains.get("neural_identity_loop", 0.0)
+        cancer_loop = gains.get("cancer_surveillance_loop", 0.0)
+        fibro = gains.get("fibrosis_stiffness_loop", 0.0)
+        if mult > 0.0:
+            s.inflammation = max(0.0, min(1.0, s.inflammation + 0.01 * infl * mult * dt))
+            for pid in ORGAN_PROXIES:
+                proxy = proxies[pid]
+                proxy["damage"] = max(0.0, float(proxy["damage"])
+                                      + (0.004 * infl + 0.003 * metab + 0.003 * vasc
+                                         + 0.002 * fibro) * mult * dt)
+                proxy["senescence_burden"] = max(0.0, min(1.0, float(proxy["senescence_burden"])
+                                                          + 0.002 * infl * mult * dt))
+                proxy["fibrosis"] = max(0.0, min(1.0, float(proxy["fibrosis"])
+                                                 + 0.002 * fibro * mult * dt))
+                proxy["immune_pressure"] = max(0.0, min(1.0, float(proxy["immune_pressure"])
+                                                        + 0.004 * infl * mult * dt))
+                node = net["nodes"][pid]
+                node["feedback_inflammation"] = max(0.0, min(2.0, 0.5 * infl))
+                node["feedback_damage"] = max(0.0, min(2.0, 0.4 * (infl + metab + vasc)))
+                node["feedback_repair"] = max(0.0, min(2.0, 0.3 * metab))
+            s.cancer_burden = max(0.0, min(1.0, s.cancer_burden + 0.004 * cancer_loop * mult * dt))
+            s.global_damage = max(0.0, s.global_damage + 0.002 * (infl + metab) * mult * dt)
+            _ = immune_ex
+        # Energy budget: drain + intervention-agnostic metabolic cost.
+        limits = net.get("hard_limits", {})
+        demands = s.organ_backed["resources"]["demand"]
+        total_demand = sum(max(0.0, float(v)) for v in demands.values())
+        drain = float(limits.get("energy_drain_per_year", 0.05)) * mult * dt \
+            + 0.002 * total_demand * dt
+        metabolic_func = float(proxies.get("metabolic_proxy", {}).get("function", 0.5))
+        net["energy_budget"] = max(0.0, float(net.get("energy_budget", 0.0)) - drain
+                                   + 0.005 * metabolic_func * dt)
+        # Toxicity decay; niche disorder persists (no free washout).
+        net["intervention_toxicity"] = max(
+            0.0, float(net.get("intervention_toxicity", 0.0))
+            - float(limits.get("toxicity_decay_per_year", 0.02)) * dt)
+        # Irreversible damage: below-threshold function ratchets a floor.
+        for pid in ORGAN_PROXIES:
+            proxy = proxies[pid]
+            node = net["nodes"][pid]
+            threshold = float(net.get("irreversible_thresholds", {}).get(pid, 0.2))
+            if float(proxy.get("function", 1.0)) < threshold:
+                node["irreversible_damage"] = max(
+                    float(node.get("irreversible_damage", 0.0)),
+                    min(0.5, float(proxy.get("damage", 0.0)) * 0.3))
+            floor = float(node.get("irreversible_damage", 0.0))
+            if float(proxy.get("damage", 0.0)) < floor:
+                proxy["damage"] = floor
+        # Cascade + network age.
+        cascade = compute_cascade_risk(proxies, allocation, gains, self.organ_proxy_params)
+        net["cascade_risk"] = cascade
+        net["max_cascade_risk_seen"] = max(float(net.get("max_cascade_risk_seen", 0.0)), cascade)
+        brain_proxy = proxies.get("brain_cns_proxy", {})
+        continuity = max(0.0, min(1.0, float(brain_proxy.get("informational_continuity", 1.0))))
+        net["information_loss_risk"] = max(0.0, min(1.0, 1.0 - continuity))
+        driver_damages: dict[str, float] = {}
+        if s.aging is not None:
+            driver_damages = {name: float(cell.get("damage", 0.0))
+                              for name, cell in s.aging["drivers"].items()}
+        else:
+            driver_damages = {}
+        organ_deficit = sum(max(0.0, 1.0 - float(p.get("function", 1.0))) for p in proxies.values()) \
+            / max(1, len(proxies))
+        shortfall_frac = 0.0
+        if allocation:
+            shortfall_frac = 1.0 - min(max(0.0, min(1.0, float(v))) for v in allocation.values())
+            shortfall_frac = max(0.0, min(1.0, shortfall_frac))
+        mean_gain = sum(gains.values()) / max(1, len(gains))
+        fibrosis_mean = sum(max(0.0, min(1.0, float(p.get("fibrosis", 0.0))))
+                            for p in proxies.values()) / max(1, len(proxies))
+        cancer_mean = max(0.0, min(1.0, float(s.cancer_burden)))
+        bio_net, contrib = compute_network_age(
+            self.adult_age_setpoint, driver_damages, self.aging_drivers,
+            organ_deficit, shortfall_frac, mean_gain,
+            max(0.0, float(net.get("mutation_load", 0.0))),
+            max(0.0, min(1.0, 1.0 - continuity)),
+            fibrosis_mean, cancer_mean, cascade,
+            None, self.allow_sub_adult_network_age)
+        net["network_age_contribution"] = float(contrib)
+        net["biological_age_network"] = float(bio_net)
+        # Hard-limit violation ledger (operational, deterministic order).
+        violated: list[str] = []
+        if float(net.get("mutation_load", 0.0)) > float(limits.get("max_mutation_load", 1.0)):
+            violated.append("mutation_load_ceiling")
+        if continuity < float(limits.get("min_informational_continuity", 0.5)):
+            violated.append("information_preservation_constraint")
+        if cascade > float(limits.get("max_cascade_risk", 0.6)):
+            violated.append("cascade_risk_limit")
+        if float(net.get("energy_budget", 1.0)) <= 1e-9:
+            violated.append("energy_budget")
+        if float(net.get("intervention_toxicity", 0.0)) > float(limits.get("max_intervention_toxicity", 3.0)):
+            violated.append("intervention_toxicity_budget")
+        if float(net.get("niche_disorder", 0.0)) > float(limits.get("niche_integrity_limit", 1.0)):
+            violated.append("niche_integrity_limit")
+        for loop, info in net.get("feedback", {}).items():
+            if float(info.get("gain_value", 0.0)) > float(limits.get("max_feedback_gain", 0.8)) \
+                    and loop not in net.get("failed_feedback_loop_ids", []):
+                net["failed_feedback_loop_ids"] = sorted(
+                    set(net.get("failed_feedback_loop_ids", [])) | {loop})
+                net["network_failure_sequence"] = list(net.get("network_failure_sequence", [])) + [loop]
+        net["failed_hard_limit_ids"] = sorted(set(violated))
+        # Energy shortage throttles repair capacities (no free repair).
+        if float(net.get("energy_budget", 1.0)) < 0.2 * float(limits.get("energy_budget_initial", 30.0)):
+            for pid in ORGAN_PROXIES:
+                proxies[pid]["repair_capacity"] = max(
+                    0.0, float(proxies[pid].get("repair_capacity", 0.0)) * (1.0 - 0.05 * dt))
+
+    def _apply_network_effect_costs(self, effect: dict[str, Any]) -> None:
+        """Energy/mutation/toxicity/niche pricing for one effect (Stage 6B)."""
+        from longevity.model.organ_network import PROLIFERATIVE_TYPES  # deferred
+
+        s = self.state
+        net = s.organ_network
+        assert net is not None
+        limits = net.get("hard_limits", {})
+        intensity = max(0.0, float(effect.get("intensity", 1.0)))
+        net["energy_budget"] = max(
+            0.0, float(net.get("energy_budget", 0.0))
+            - float(limits.get("energy_per_intervention", 0.10)) * intensity)
+        toxicity = float(limits.get("toxicity_per_intensity", 0.05)) * intensity
+        if str(effect.get("intervention_type", "")) in PROLIFERATIVE_TYPES:
+            toxicity *= 2.0
+        net["intervention_toxicity"] = max(0.0, float(net.get("intervention_toxicity", 0.0)) + toxicity)
+        itype = str(effect.get("intervention_type", ""))
+        mutation_delta = {
+            "telomere_maintenance": 0.020,
+            "stem_niche_restoration": 0.020,
+            "epigenetic_reprogramming_pulse": 0.030,
+            "regenerative_boost": 0.020,
+            "cellular_replacement": 0.005,
+        }.get(itype, 0.0) * intensity
+        # Cancer surveillance cannot erase load; it only slows growth
+        # (operational: partial mitigation, never full compensation).
+        if itype in ("cancer_surveillance", "cancer_surveillance_boost"):
+            net["mutation_load"] = max(0.0, float(net.get("mutation_load", 0.0)) - 0.002 * intensity)
+        net["mutation_load"] = max(0.0, float(net.get("mutation_load", 0.0)) + mutation_delta)
+        if itype in ("stem_niche_restoration", "regenerative_boost",
+                     "epigenetic_reprogramming_pulse"):
+            net["niche_disorder"] = max(
+                0.0, float(net.get("niche_disorder", 0.0))
+                + float(limits.get("niche_disorder_per_stem", 0.03)) * intensity)
+        # Information preservation: aggressive reprogramming harms continuity;
+        # continuity cannot be freely restored (capped trickle only).
+        if itype == "epigenetic_reprogramming_pulse" and s.organ_backed is not None:
+            brain = s.organ_backed["proxies"].get("brain_cns_proxy")
+            if brain is not None:
+                brain["informational_continuity"] = max(
+                    0.0, min(1.0, float(brain.get("informational_continuity", 1.0))
+                             - 0.005 * intensity))
+
     def _scale_effect(self, effect: dict[str, Any]) -> dict[str, Any]:
         """Apply efficacy scale + noise to an effect (Stage 5B, deterministic)."""
         if self.perturbation["model"] == "none":
@@ -1122,6 +2028,10 @@ class OrganismModel:
                 scaled[key] = float(value) * factor
         for key, value in scaled.items():
             if key.startswith("organ_delta_") and isinstance(value, (int, float)) \
+                    and not isinstance(value, bool):
+                scaled[key] = float(value) * factor
+        for key, value in scaled.items():
+            if key.startswith("rev_") and isinstance(value, (int, float)) \
                     and not isinstance(value, bool):
                 scaled[key] = float(value) * factor
         return scaled
@@ -1142,6 +2052,13 @@ class OrganismModel:
         if self.organ_backed_model == "reduced_organ_proxies":
             assert s.organ_backed is not None
             self._organ_backed_step(dt, s.developmental_stage)
+        if self.organ_network_model == "reduced_network_feedback":
+            assert s.organ_network is not None
+            assert s.organ_backed is not None
+            self._organ_network_step(dt, s.developmental_stage)
+        if self.reversibility_model == "split_reversible_irreversible":
+            assert s.reversibility is not None
+            self._reversibility_step(dt, s.developmental_stage)
         new_shocks = self._maybe_shock(dt)
         self._apply_active_shocks(dt)
         applied = []
@@ -1154,6 +2071,10 @@ class OrganismModel:
             applied.append(self.apply_effect(self._scale_effect(effect), effect.get("source", "policy")))
         if self.organ_backed_model == "reduced_organ_proxies":
             # Organ-targeted repairs must be visible to systems immediately.
+            self._map_proxies_to_systems()
+        if self.organ_network_model == "reduced_network_feedback" and s.organ_network is not None \
+                and s.organ_backed is not None:
+            # Network coupling must be visible to systems immediately.
             self._map_proxies_to_systems()
         s.vitality_index = self._vitality()
         s.functional_reserve = self._clamp01(sum(
@@ -1211,6 +2132,18 @@ class OrganismModel:
             "systemic_resources": copy.deepcopy(self.resource_budgets),
             "coordination_mode": self.coordination_mode,
             "emergent_weights": copy.deepcopy(self.emergent_weights),
+            "organ_network_model": self.organ_network_model,
+            "organ_network_edges": copy.deepcopy(self.network_edges),
+            "organ_network_feedback": copy.deepcopy(self.network_feedback_config),
+            "organ_network_hard_limits": copy.deepcopy(self.network_hard_limits),
+            "irreversible_thresholds": copy.deepcopy(self.irreversible_thresholds),
+            "allow_sub_adult_network_age": self.allow_sub_adult_network_age,
+            "reversibility_model": self.reversibility_model,
+            "reversibility_params": copy.deepcopy(self.reversibility_params),
+            "allow_sub_adult_reversibility_age": self.allow_sub_adult_reversibility_age,
+            "boundary_probe_model": self.boundary_probe_model,
+            "boundary_params": copy.deepcopy(self.boundary_params),
+            "component_overrides": copy.deepcopy(self.component_overrides),
             "policy_cooldown": copy.deepcopy(policy_state) if policy_state is not None else {},
             "state": self.state.to_dict(),
         }
@@ -1225,6 +2158,27 @@ class OrganismModel:
             validate_organ_backed_model,
             validate_proxy_params,
             validate_resource_budgets,
+        )
+        from longevity.model.organ_network import (  # deferred
+            default_organ_network_state,
+            validate_feedback_config,
+            validate_hard_limits,
+            validate_irreversible_thresholds,
+            validate_network_edges,
+            validate_organ_network_model,
+        )
+        from longevity.model.reversibility import (  # deferred
+            default_reversibility_state,
+            validate_reversibility_model,
+            validate_reversibility_params,
+        )
+        from longevity.model.boundary import (  # deferred
+            _ablation_hash,
+            default_boundary_state,
+            effective_repair_ceiling,
+            validate_boundary_params,
+            validate_boundary_probe_model,
+            validate_component_overrides,
         )
 
         model = cls.__new__(cls)
@@ -1258,6 +2212,19 @@ class OrganismModel:
         model.coordination_mode = validate_coordination_mode(
             data.get("coordination_mode", "independent_organ_policies"))
         model.emergent_weights = validate_emergent_weights(data.get("emergent_weights", None))
+        model.organ_network_model = validate_organ_network_model(data.get("organ_network_model", "none"))
+        model.network_edges = validate_network_edges(data.get("organ_network_edges", None))
+        model.network_feedback_config = validate_feedback_config(data.get("organ_network_feedback", None))
+        model.network_hard_limits = validate_hard_limits(data.get("organ_network_hard_limits", None))
+        model.irreversible_thresholds = validate_irreversible_thresholds(data.get("irreversible_thresholds", None))
+        model.allow_sub_adult_network_age = bool(data.get("allow_sub_adult_network_age", False))
+        model.reversibility_model = validate_reversibility_model(data.get("reversibility_model", "none"))
+        model.reversibility_params = validate_reversibility_params(data.get("reversibility_params", None))
+        model.allow_sub_adult_reversibility_age = bool(
+            data.get("allow_sub_adult_reversibility_age", False))
+        model.boundary_probe_model = validate_boundary_probe_model(data.get("boundary_probe_model", "none"))
+        model.boundary_params = validate_boundary_params(data.get("boundary_params", None))
+        model.component_overrides = validate_component_overrides(data.get("component_overrides", None))
         if model.aging_model == "mechanistic_drivers" and model.state.aging is None:
             from longevity.model.aging import default_driver_state  # deferred
 
@@ -1265,6 +2232,33 @@ class OrganismModel:
         if model.organ_backed_model == "reduced_organ_proxies" and model.state.organ_backed is None:
             model.state.organ_backed = default_organ_backed_state()
             model.state.organ_backed["resources"]["budgets"] = dict(model.resource_budgets)
+        if model.organ_network_model == "reduced_network_feedback" and model.state.organ_network is None:
+            model.state.organ_network = default_organ_network_state()
+            model.state.organ_network["edges"] = [
+                {**dict(e), "utilization": 0.0, "failure_risk": 0.0, "failed": False}
+                for e in model.network_edges
+            ]
+            model.state.organ_network["hard_limits"] = dict(model.network_hard_limits)
+            model.state.organ_network["irreversible_thresholds"] = dict(model.irreversible_thresholds)
+        if model.reversibility_model == "split_reversible_irreversible" \
+                and model.state.reversibility is None:
+            model.state.reversibility = default_reversibility_state()
+            model.state.reversibility["repair_ceiling"] = float(
+                model.reversibility_params["repair_ceiling"])
+            model.state.reversibility["repair_remaining"] = float(
+                model.reversibility_params["repair_ceiling"])
+        if model.boundary_probe_model == "irreversibility_ablation" \
+                and model.state.boundary is None:
+            from longevity.model.boundary import _ablation_hash as _bh  # deferred
+
+            exploratory = bool(model.boundary_params.get("force_repair_ceiling_unlimited", False)
+                               or model.boundary_params.get("disable_repair_ceiling", False))
+            model.state.boundary = {
+                "params": dict(model.boundary_params),
+                "overrides": [dict(o) for o in model.component_overrides],
+                "exploratory": exploratory,
+                "ablation_flags_hash": _bh(model.boundary_params, model.component_overrides),
+            }
         return model
 
 

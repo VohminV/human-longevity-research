@@ -169,6 +169,21 @@ DEFAULT_FITNESS_WEIGHTS: dict[str, float] = {
     "w_organ_slope": 0.0,
     "w_resource_shortfall": 0.0,
     "w_bounded_v3_bonus": 0.0,
+    # Stage 6B network weights (all 0.0 by default: legacy fitness unchanged).
+    "w_fibrosis": 0.0,
+    "w_feedback_runaway": 0.0,
+    "w_cascade_risk": 0.0,
+    "w_mutation_load": 0.0,
+    "w_energy_shortfall": 0.0,
+    "w_bounded_v4_bonus": 0.0,
+    # Stage 6C reversibility weights (all 0.0 by default: legacy fitness unchanged).
+    "w_irreversible_slope": 0.0,
+    "w_conversion_runaway": 0.0,
+    "w_repair_ceiling_exhaustion": 0.0,
+    "w_information_debt": 0.0,
+    "w_niche_disorder": 0.0,
+    "w_entropy_production": 0.0,
+    "w_bounded_v5_bonus": 0.0,
 }
 
 
@@ -195,7 +210,8 @@ def validate_fitness_weights(weights: dict[str, Any]) -> dict[str, float]:
 def fitness(summary: dict[str, Any], weights: dict[str, float]) -> float:
     """Multi-objective fitness: lifespan/healthspan gains minus burden costs."""
     w = validate_fitness_weights(dict(weights))
-    return (
+    network = summary.get("organ_network", {})
+    base = (
         w["w_lifespan"] * float(summary["lifespan"])
         + w["w_healthspan"] * float(summary["healthspan"])
         + w["w_reserve"] * float(summary["functional_reserve_area"])
@@ -204,6 +220,33 @@ def fitness(summary: dict[str, Any], weights: dict[str, float]) -> float:
         - w["w_inflammation"] * float(summary["inflammation_auc"])
         - w["w_neural_loss"] * (1.0 - float(summary["neural_identity_preservation"]))
         + w["w_bounded_bonus"] * (1.0 if summary["bounded_degradation_indicator"] else 0.0)
+    )
+    if not network.get("has_network", False):
+        return base
+    reversibility = summary.get("reversibility", {})
+    extra = (
+        base
+        - w["w_fibrosis"] * float(summary.get("fibrosis_auc", 0.0))
+        - w["w_feedback_runaway"] * float(network.get("worst_feedback_gain", 0.0))
+        - w["w_cascade_risk"] * float(network.get("max_cascade_risk", 0.0))
+        - w["w_mutation_load"] * float(network.get("max_mutation_load", 0.0))
+        - w["w_energy_shortfall"] * max(
+            0.0, 30.0 - float(network.get("min_energy_budget", 30.0)))
+        + w["w_bounded_v4_bonus"] * 0.0  # v4 bonus applied at search level (needs multi-seed)
+    )
+    if not reversibility.get("has_reversibility", False):
+        return extra
+    return (
+        extra
+        - w["w_irreversible_slope"] * float(reversibility.get("worst_irreversible_slope", 0.0))
+        - w["w_conversion_runaway"] * float(reversibility.get("conversion_rate", 0.0))
+        - w["w_repair_ceiling_exhaustion"] * max(
+            0.0, float(reversibility.get("repair_ceiling", 0.0))
+            - float(reversibility.get("repair_remaining_min", 0.0)))
+        - w["w_information_debt"] * float(reversibility.get("information_debt_final", 0.0))
+        - w["w_niche_disorder"] * float(reversibility.get("niche_disorder_final", 0.0))
+        - w["w_entropy_production"] * float(reversibility.get("entropy_production_final", 0.0))
+        + w["w_bounded_v5_bonus"] * 0.0  # v5 bonus applied at search level (needs multi-seed)
     )
 
 
