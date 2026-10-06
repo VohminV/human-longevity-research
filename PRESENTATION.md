@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH — презентация прогресса
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%937_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-547_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%938_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-565_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -22,7 +22,8 @@
 [Compound wall](#слайд-13-compound-wall) · [Residual](#слайд-14-residual-drivers) ·
 [Audit](#слайд-15-audit) · [Цифры](#слайд-16-цифры) ·
 [HYP-0](#слайд-17-hyp-0) · [Дальше](#слайд-18-дальше) ·
-[Воспроизведение](#слайд-19-воспроизведение)
+[Воспроизведение](#слайд-19-воспроизведение) ·
+[Alignment](#слайд-20-alignment)
 
 ---
 
@@ -51,12 +52,12 @@ ML-библиотек в ядре — только stdlib.
 
 ## Слайд 2. Прогресс
 
-Этапы 1–7, детали — `docs/ROADMAP.md`.
+Этапы 1–8, детали — `docs/ROADMAP.md`.
 
 ```text
-Этапы 1–7:  ███████████████████ 21/21 завершены
+Этапы 1–8:  ████████████████████ 22/22 завершены
 HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:      547 passing (детерминизм, инварианты, checkpoint/restore)
+Тесты:      565 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Этап | Статус | Одним предложением |
@@ -82,7 +83,8 @@ HYP-0:      hypothesis_not_proven (честный статус во всех а�
 | 6E — Compound wall | ✅ | Knife sweep 8×3 без knife-edge + bio-age attribution + sensitivity stable; wall `compound_residual_wall` |
 | 6F — Residual drivers | ✅ | Heterogeneous probe 15×3 + sweep 14×3: v5 — нигде, flip нет, joint ablation −17%; wall `diffuse_residual_wall` |
 | 7 — Audit | ✅ | Parameter probe 23×3 + criterion variants: v5 — нигде, flip нет, оба драйвера identifiable; audit `robust_diffuse_wall` |
-| Дальше (7A+) | ⏳ | Следующий шаг по итогам аудита |
+| 8 — Alignment | ✅ | Манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` |
+| Дальше (9+) | ⏳ | Следующий шаг: Stage 9 prototype (P0 первым, отдельным решением) |
 
 ---
 
@@ -396,7 +398,7 @@ audit 7              69.5  █████████████████�
   reversibility v5): **0 везде** — ни одна политика, ни один сид,
   ни один стресс, ни одна аблация, ни один eps/dt, ни один
   гетерогенный режим, ни один audit-режим, ни один criterion variant.
-- Тесты: **547 passing**. Артефакты — в `experiments/output/`.
+- Тесты: **565 passing**. Артефакты — в `experiments/output/`.
 
 ---
 
@@ -427,6 +429,9 @@ HYP-0: hypothesis_not_proven
 12. Audit 7 (устойчивость критерия и параметров)? — v5=false в 23/23
     режимах и во всех criterion variants; flip нет; оба драйвера
     identifiable; audit `robust_diffuse_wall`.
+13. Alignment 8 (выравнивание с биологией)? — манифест + validator;
+    внешние направления `needs_verification`; классификация
+    `mechanistic_extension_required`; HYP-0 не доказана.
 
 > Candidate policy не найдена — это граница текущей абстрактной модели,
 > а не опровержение гипотезы в реальности. Даже найденный кандидат был бы
@@ -443,6 +448,7 @@ Stage 6D сказал: conversion подавим, но v5 всё равно не
 Stage 6E сказал: вторая стена составная (bio-age + info, ≥2 источников), стабильна по eps/dt/seed.
 Stage 6F сказал: точечное подавление top-драйверов v5 не снимает — остаточная стена диффузная.
 Stage 7 сказал: диффузная стена устойчива к вариациям критерия и параметров в проверенных диапазонах.
+Stage 8 сказал: модель не покрывает пластичность, системную коммуникацию, нишу и энергию — нужен Stage 9 prototype.
 ```
 
 - **Stage 6E** — done: knife-edge нет, attribution стабильна
@@ -455,9 +461,12 @@ Stage 7 сказал: диффузная стена устойчива к вар
 - **Stage 7** — done: parameter probe (23×3) и criterion variants не
   меняют вердикт — диффузная стена устойчива (`robust_diffuse_wall`,
   уверенность высокая), оба драйвера identifiable.
-- Следующий шаг — решить по итогам аудита: закрыть diagnostic ветку
-  6/7, calibration branch, criterion protocol (7A) или механистическая
-  ветка (energy-coupled conversion) только отдельным решением.
+- **Stage 8** — done: манифест выравнивания + pure validator;
+  классификация `mechanistic_extension_required` (уверенность
+  средняя); приоритеты Stage 9: P0 — пластичность + сплит
+  damage/adaptation; HYP-0 не доказана.
+- Следующий шаг — Stage 9 prototype (P0 первым) только отдельным
+  решением; либо закрытие ветки.
 
 ---
 
@@ -465,7 +474,7 @@ Stage 7 сказал: диффузная стена устойчива к вар
 
 ```bash
 python -m pip install -e ".[dev]"
-python -m pytest   # 547 passing
+python -m pytest   # 565 passing
 ```
 
 ```bash
@@ -487,10 +496,32 @@ $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_probe.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_probe
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_sweep
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_stage7_audit.json --out-prefix experiments/output/organism_reversibility_boundary_stage7_audit
+$env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from longevity.research.biological_alignment import load_and_validate_manifest; print(load_and_validate_manifest('experiments/configs/stage8_biological_alignment_manifest.json')['classification'])"
 ```
 
 Документы: `docs/ROADMAP.md` (план), `docs/AGING_MODEL.md` (Stage 5C),
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md` (Stage 6A),
 `docs/ORGAN_NETWORK_MODEL.md` (Stage 6B),
-`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7),
+`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 + alignment gate 8),
+`docs/BIOLOGICAL_ALIGNMENT.md` (Stage 8),
+`docs/MECHANISTIC_EXTENSION_ROADMAP.md` (кандидаты Stage 9),
 `docs/ORGANISM_MODEL.md` (§8–14), `docs/IMMORTALITY.md` (§6–12).
+
+---
+
+## Слайд 20. Alignment
+
+Этап 8: биологические направления 2022–2026 → модельные артефакты.
+Не новая биология в симуляции, динамика 6C–7 не меняется.
+
+- Манифест: 13 anchors, 9 mismatches, 8 candidate mechanisms
+  (P0–P6) + pure validator. Все внешние направления —
+  `needs_verification`: проверяемых источников в репозитории нет.
+- Главные пробелы: эпигенетическая пластичность, системная
+  коммуникация, ниша стволовых, энергия ремонта, сплит
+  damage/adaptation, нелинейность, классы агрегатов.
+- Классификация: `mechanistic_extension_required` (требуется
+  механистическое расширение), уверенность средняя.
+- Приоритеты Stage 9: P0 — пластичность + сплит; P1 — системный
+  пул; далее ниша, энергия, иерархия, волны, классы агрегатов.
+  HYP-0 остаётся `hypothesis_not_proven`.

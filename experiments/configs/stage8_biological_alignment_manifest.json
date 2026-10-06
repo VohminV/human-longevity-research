@@ -1,0 +1,458 @@
+{
+  "stage": "8",
+  "type": "biological_alignment_and_mechanistic_extension_feasibility_gate",
+  "type_ru": "биологическое выравнивание и гейт механистического расширения",
+  "model_scope": "abstract_organ_network_reversibility_boundary_probe",
+  "hypothesis_status": "hypothesis_not_proven",
+  "hypothesis_status_ru": "гипотеза не доказана",
+  "prior_result": {
+    "stage_7_classification": "robust_diffuse_wall",
+    "stage_7_classification_ru": "устойчивая диффузная стена",
+    "v5_operational_success": false,
+    "v5_operational_success_ru": "операционный критерий v5 не выполнен",
+    "scope": "tested_diagnostic_grid_only",
+    "scope_ru": "только проверенная диагностическая сетка"
+  },
+  "anchors": [
+    {
+      "name": "eight_mechanistic_drivers_present",
+      "model_construct": "mechanistic_drivers",
+      "biological_meaning": "Восемь абстрактных драйверов повреждения (dna_damage, epigenetic_drift, proteostasis_loss, mitochondrial_dysfunction, cellular_senescence, stem_exhaustion, chronic_inflammation, cancer_prone) как прокси основных направлений деградации.",
+      "anchor_type": "qualitative",
+      "source_status": "verified_in_repo",
+      "source_ref": "docs/AGING_MODEL.md; src/longevity/model/aging.py",
+      "calibration_possible": false,
+      "confidence": "expert-plausible",
+      "notes_ru": "Подтверждено наличие конструкта в репозитории. Веса вкладов порядковые, внешней калибровкой не подкреплены. Это не биологическая валидация."
+    },
+    {
+      "name": "weighted_bio_age_aggregation",
+      "model_construct": "biological_age_slope",
+      "biological_meaning": "Биологический возраст как взвешенная сумма повреждений драйверов с полом adult_age_setpoint.",
+      "anchor_type": "qualitative",
+      "source_status": "verified_in_repo",
+      "source_ref": "src/longevity/model/aging.py",
+      "calibration_possible": false,
+      "confidence": "expert-plausible",
+      "notes_ru": "Агрегация — модельное допущение. Разделение на повреждающий и адаптивный компоненты отсутствует (см. mismatch blended_bio_age_damage_adaptation)."
+    },
+    {
+      "name": "stage7_robust_diffuse_wall",
+      "model_construct": "robust_diffuse_wall",
+      "biological_meaning": "Итог Stage 7: v5=false во всех режимах и criterion variants, оба драйвера identifiable. Вычислительный результат внутри модели, не биологическое доказательство.",
+      "anchor_type": "qualitative",
+      "source_status": "verified_in_repo",
+      "source_ref": "experiments/configs/organism_reversibility_boundary_stage7_audit.json; docs/REVERSIBILITY_MODEL.md",
+      "calibration_possible": false,
+      "confidence": "expert-plausible",
+      "notes_ru": "Якорь фиксирует воспроизводимость вычислительного вывода, а не его биологическую истинность."
+    },
+    {
+      "name": "proteostasis_dominant_attribution",
+      "model_construct": "proteostasis_metabolic",
+      "biological_meaning": "Доминирующий вклад proteostasis/metabolic направления в biological_age_attribution модели (Stage 6E/6F).",
+      "anchor_type": "qualitative",
+      "source_status": "verified_in_repo",
+      "source_ref": "docs/REVERSIBILITY_MODEL.md",
+      "calibration_possible": false,
+      "confidence": "expert-plausible",
+      "notes_ru": "Доминирование — внутримодельное. Биологический вес протеостаза требует внешней проверки."
+    },
+    {
+      "name": "stem_exhaustion_significant_channel",
+      "model_construct": "stem_exhaustion",
+      "biological_meaning": "Значимый, но не единственно съёмный канал остаточной деградации в модели.",
+      "anchor_type": "qualitative",
+      "source_status": "verified_in_repo",
+      "source_ref": "docs/REVERSIBILITY_MODEL.md",
+      "calibration_possible": false,
+      "confidence": "expert-plausible",
+      "notes_ru": "Модель представляет истощение упрощённо, без качества ниши (см. mismatch stem_count_without_niche)."
+    },
+    {
+      "name": "hierarchical_hallmarks_literature",
+      "model_construct": "mechanistic_drivers",
+      "biological_meaning": "Направление: старение как иерархическая сеть (первичные повреждения, антагонистические ответы, интегративный сбой), а не набор независимых линейных повреждений.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "Направление известно из мировой литературы, в каталоге репозитория источник отсутствует. Требуется проверка."
+    },
+    {
+      "name": "epigenetic_plasticity_literature",
+      "model_construct": "epigenetic_drift",
+      "biological_meaning": "Направление: потеря эпигенетической информации и регуляторной пластичности; частичное репрограммирование в доклинических моделях восстанавливает молодые функции с рисками дедифференцировки и онкогенеза.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "В репозитории источник отсутствует. Это не доказательство применимости к человеку."
+    },
+    {
+      "name": "systemic_circulation_literature",
+      "model_construct": "organ_network",
+      "biological_meaning": "Направление: кровь, плазматические факторы, внеклеточные везикулы и иммунная система системно модулируют темп старения органов; органы стареют не автономно.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "В репозитории источник отсутствует. Не означает омоложения человека молодой кровью."
+    },
+    {
+      "name": "stem_niche_quality_literature",
+      "model_construct": "stem_exhaustion",
+      "biological_meaning": "Направление: истощение стволовых — это дисфункция ниши, выход из покоя, смещение дифференцировки и потеря регенеративной координации, а не только счёт клеток.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "В репозитории источник отсутствует. Требуется проверка."
+    },
+    {
+      "name": "proteostasis_energy_coupling_literature",
+      "model_construct": "proteostasis_metabolic",
+      "biological_meaning": "Направление: протеостаз связан с метаболизмом, энергией, аутофагией и осями mTOR/AMPK/SIRT/NAD, классы агрегатов различаются.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "В репозитории источник отсутствует. Требуется проверка."
+    },
+    {
+      "name": "damage_adaptation_split_literature",
+      "model_construct": "biological_age_slope",
+      "biological_meaning": "Направление: биологический возраст стоит делить на повреждающий и адаптивный/защитный компоненты; подавление адаптивных ответов может маскироваться под омоложение.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "В репозитории источник отсутствует. Требуется проверка."
+    },
+    {
+      "name": "nonlinear_age_waves_literature",
+      "model_construct": "biological_age_slope",
+      "biological_meaning": "Направление: возрастная динамика может быть нелинейной, с волнами и пороговыми переходами.",
+      "anchor_type": "qualitative",
+      "source_status": "needs_verification",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "literature-backed",
+      "notes_ru": "В репозитории источник отсутствует. Требуется проверка."
+    },
+    {
+      "name": "quantitative_rate_anchors",
+      "model_construct": "conversion_flux",
+      "biological_meaning": "Количественные внешние точки привязки скоростей (conversion, accrual, repair) отсутствуют.",
+      "anchor_type": "unavailable",
+      "source_status": "unavailable",
+      "source_ref": "",
+      "calibration_possible": false,
+      "confidence": "unavailable",
+      "notes_ru": "Якорь отсутствует. Количественная калибровка скоростей модели внешними данными невозможна."
+    }
+  ],
+  "mismatches": [
+    {
+      "name": "linear_slope_vs_age_waves",
+      "model_assumption": "Наклон biological_age после зрелости описывается линейным least-squares slope; v5 требует его удержания в допуске.",
+      "biological_evidence_summary": "Направление 2022–2026: возрастная динамика может содержать волны и пороговые переходы; линейный slope их сглаживает (needs_verification).",
+      "severity": "high",
+      "affects": ["v5_criterion", "attribution", "nonlinearity"],
+      "recommended_action": "add_mechanism_stage9",
+      "notes_ru": "Линейный критерий может пропускать пороговые переходы. Требуется prototype нелинейной динамики в Stage 9, а не подгонка порога."
+    },
+    {
+      "name": "missing_epigenetic_plasticity",
+      "model_assumption": "Эпигенетический дрейф — однонаправленное накопление без канала восстановления пластичности.",
+      "biological_evidence_summary": "Направление 2022–2026: частичное репрограммирование восстанавливает молодые функции в доклинических моделях с рисками дедифференцировки и онкогенеза (needs_verification).",
+      "severity": "high",
+      "affects": ["epigenetics", "attribution"],
+      "recommended_action": "add_mechanism_stage9",
+      "notes_ru": "В модели нет plasticity-канала. Это не утверждение об эффективности репрограммирования у человека."
+    },
+    {
+      "name": "autonomous_organs_no_systemic_pool",
+      "model_assumption": "Органы-прокси стареют через локальные повреждения и попарные рёбра сети, общего циркулирующего пула нет.",
+      "biological_evidence_summary": "Направление 2022–2026: системные факторы крови, везикул и иммунитета модулируют старение органов не локально (needs_verification).",
+      "severity": "high",
+      "affects": ["organ_network", "systemic_communication"],
+      "recommended_action": "add_mechanism_stage9",
+      "notes_ru": "Отсутствие системного пула может завышать автономность органов в модели."
+    },
+    {
+      "name": "stem_count_without_niche",
+      "model_assumption": "Истощение стволовых представлено пулом и его расходом.",
+      "biological_evidence_summary": "Направление 2022–2026: важны качество ниши, покой, смещение линий дифференцировки и регенеративная координация (needs_verification).",
+      "severity": "medium",
+      "affects": ["stem_cells"],
+      "recommended_action": "add_mechanism_stage9",
+      "notes_ru": "Счёт клеток без ниши упрощает канал сверх допустимого для калибровки."
+    },
+    {
+      "name": "repair_decoupled_from_energy",
+      "model_assumption": "Ремонт и потолок ремонта не связаны с энергетическим статусом и аутофагией.",
+      "biological_evidence_summary": "Направление 2022–2026: протеостаз, аутофагия и энергия связаны через mTOR/AMPK/SIRT/NAD-оси (needs_verification).",
+      "severity": "medium",
+      "affects": ["repair", "metabolism"],
+      "recommended_action": "add_mechanism_stage9",
+      "notes_ru": "Энергетический coupling отсутствует; потолок ремонта — свободный параметр без внешней привязки."
+    },
+    {
+      "name": "blended_bio_age_damage_adaptation",
+      "model_assumption": "Единый biological_age смешивает повреждение и адаптивные ответы.",
+      "biological_evidence_summary": "Направление 2022–2026: повреждающий и адаптивный компоненты стоит разделять, иначе подавление защиты маскируется под улучшение (needs_verification).",
+      "severity": "medium",
+      "affects": ["v5_criterion", "attribution"],
+      "recommended_action": "redefine_metric",
+      "notes_ru": "Сначала переопределить метрику (DamAge/AdaptAge-подобный сплит), затем решать о механике."
+    },
+    {
+      "name": "lumped_aggregate_classes",
+      "model_assumption": "Протеотоксическая нагрузка однородна.",
+      "biological_evidence_summary": "Направление 2022–2026: классы агрегатов различаются, включая LLPS-ассоциированные структуры (needs_verification).",
+      "severity": "medium",
+      "affects": ["attribution", "metabolism"],
+      "recommended_action": "collect_data",
+      "notes_ru": "Сначала нужны данные о классах агрегатов, затем prototype разделения."
+    },
+    {
+      "name": "flat_driver_hierarchy",
+      "model_assumption": "Восемь драйверов независимы и плоски, без иерархии первичных, антагонистических и интегративных уровней.",
+      "biological_evidence_summary": "Направление 2022–2026: иерархическая организация процессов старения (needs_verification).",
+      "severity": "medium",
+      "affects": ["attribution", "organ_network"],
+      "recommended_action": "add_mechanism_stage9",
+      "notes_ru": "Плоская структура драйверов может скрывать каскадные зависимости."
+    },
+    {
+      "name": "no_quantitative_calibration_anchors",
+      "model_assumption": "Порядковые скорости модели достаточны для диагностических выводов без внешней калибровки.",
+      "biological_evidence_summary": "Количественных внешних точек привязки скоростей в репозитории нет; все 2022–2026 направления помечены needs_verification.",
+      "severity": "high",
+      "affects": ["v5_criterion"],
+      "recommended_action": "collect_data",
+      "notes_ru": "Диагностические выводы устойчивы внутри модели, но внешняя калибровка отсутствует."
+    }
+  ],
+  "candidate_mechanisms": [
+    {
+      "id": "epigenetic_plasticity_restoration",
+      "name": "epigenetic_plasticity_restoration",
+      "name_ru": "Восстановление эпигенетической пластичности (epigenetic_plasticity_restoration)",
+      "biological_basis": "Потеря эпигенетической информации и снижение регуляторной пластичности; частичное репрограммирование в доклинических моделях (needs_verification).",
+      "targeted_model_gap": "missing_epigenetic_plasticity",
+      "proposed_abstract_representation": "Абстрактный plasticity-пул с reset-скоростью, ценой (онкориск) и diminishing returns; не биологическая терапия.",
+      "observable_proxy": "эпигенетический вклад в biological_age_attribution и information_debt при варьировании reset-скорости",
+      "expected_effect_on_wall": "Может сместить binding с biological_age_slope на plasticity-зависимый канал или показать его недостаточность.",
+      "risk": "Ложный вывод об обратимости: reset без цены даст тривиальный v5 внутри модели.",
+      "priority": "P0",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Кандидат на Stage 9 prototype. Не симулирован. Не путь к бессмертию."
+    },
+    {
+      "id": "damage_adaptation_split",
+      "name": "damage_adaptation_split",
+      "name_ru": "Разделение повреждения и адаптации (damage_adaptation_split)",
+      "biological_basis": "Разделение биологического возраста на повреждающий и адаптивный компоненты (needs_verification).",
+      "targeted_model_gap": "blended_bio_age_damage_adaptation",
+      "proposed_abstract_representation": "Два слагаемых biological_age: DamAge-подобное и AdaptAge-подобное, с раздельными slopes и критериями.",
+      "observable_proxy": "расхождение DamAge-slope и AdaptAge-slope при тех же политиках",
+      "expected_effect_on_wall": "Может показать, что v5-false держится адаптивным компонентом, а не повреждением.",
+      "risk": "Переопределение метрики без механики даст переименование, а не знание.",
+      "priority": "P0",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Начать с redefine_metric, затем решать о механике в Stage 9."
+    },
+    {
+      "id": "systemic_circulation_pool",
+      "name": "systemic_circulation_pool",
+      "name_ru": "Системный циркулирующий пул (systemic_circulation_pool)",
+      "biological_basis": "Кровь, плазматические факторы, везикулы/экзосомы и иммунные сигналы системно модулируют старение органов (needs_verification).",
+      "targeted_model_gap": "autonomous_organs_no_systemic_pool",
+      "proposed_abstract_representation": "Общий пул с продукцией/клиренсом и связью на все орган-прокси, отдельно от попарных рёбер.",
+      "observable_proxy": "корреляция органных повреждений при варьировании пула против локальных политик",
+      "expected_effect_on_wall": "Может показать системную компоненту стены, невидимую локальным аблациям.",
+      "risk": "Пул превратится в свободный подгоночный параметр без данных.",
+      "priority": "P1",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Кандидат на Stage 9 prototype. Не означает омоложения человека молодой кровью."
+    },
+    {
+      "id": "stem_cell_niche_quality",
+      "name": "stem_cell_niche_quality",
+      "name_ru": "Качество ниши стволовых клеток (stem_cell_niche_quality)",
+      "biological_basis": "Дисфункция ниши, покой, смещение дифференцировки и потеря регенеративной координации (needs_verification).",
+      "targeted_model_gap": "stem_count_without_niche",
+      "proposed_abstract_representation": "Замена счётчика пула на пару pool × niche_quality с сигналами окружения.",
+      "observable_proxy": "регенеративный ответ при варьировании niche_quality при фиксированном pool",
+      "expected_effect_on_wall": "Может показать, что стена держится качеством ниши, а не числом клеток.",
+      "risk": "Ниша без наблюдаемых прокси станет нефальсифицируемой.",
+      "priority": "P2",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Требует observable design до симуляции."
+    },
+    {
+      "id": "energy_coupled_repair_autophagy",
+      "name": "energy_coupled_repair_autophagy",
+      "name_ru": "Энергосвязанный ремонт и аутофагия (energy_coupled_repair_autophagy)",
+      "biological_basis": "Связь ремонта, аутофагии, протеостаза и энергии через mTOR/AMPK/SIRT/NAD-оси (needs_verification).",
+      "targeted_model_gap": "repair_decoupled_from_energy",
+      "proposed_abstract_representation": "Абстрактный энергетический budget, связывающий repair_ceiling, протеостазный клиренс и стоимость.",
+      "observable_proxy": "зависимость repair-отдачи от energy budget при фиксированном ceiling",
+      "expected_effect_on_wall": "Может показать, что потолок ремонта — следствие энергии, а не константа.",
+      "risk": "Budget скопирует поведение ceiling под новым именем.",
+      "priority": "P3",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Валидировать различимостью от текущего ceiling, иначе не добавлять."
+    },
+    {
+      "id": "hierarchical_hallmark_feedback",
+      "name": "hierarchical_hallmark_feedback",
+      "name_ru": "Иерархическая обратная связь hallmarks (hierarchical_hallmark_feedback)",
+      "biological_basis": "Иерархия: первичные повреждения, антагонистические ответы, интегративный сбой (needs_verification).",
+      "targeted_model_gap": "flat_driver_hierarchy",
+      "proposed_abstract_representation": "Три уровня драйверов с направленными связями вместо плоского набора.",
+      "observable_proxy": "каскадные сдвиги attribution при подавлении верхнего уровня",
+      "expected_effect_on_wall": "Может показать каскадную природу diffuse-стены.",
+      "risk": "Иерархия, нарисованная руками, подтвердит сама себя.",
+      "priority": "P4",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Требует критерий опровержения иерархии до симуляции."
+    },
+    {
+      "id": "nonlinear_age_waves",
+      "name": "nonlinear_age_waves",
+      "name_ru": "Нелинейные возрастные волны (nonlinear_age_waves)",
+      "biological_basis": "Волны и пороговые переходы возрастной динамики (needs_verification).",
+      "targeted_model_gap": "linear_slope_vs_age_waves",
+      "proposed_abstract_representation": "Пороговые переходы скоростей накопления по возрастным окнам вместо единого slope.",
+      "observable_proxy": "оконные slopes до/после порога при тех же политиках",
+      "expected_effect_on_wall": "Может показать, что v5-критерий слеп к пороговым переходам.",
+      "risk": "Пороги, подобранные под данные, переобучатся.",
+      "priority": "P5",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Пороги декларировать до симуляции, как criterion variants в Stage 7."
+    },
+    {
+      "id": "aggregate_class_partition",
+      "name": "aggregate_class_partition",
+      "name_ru": "Разделение классов агрегатов (aggregate_class_partition)",
+      "biological_basis": "Разные классы протеотоксической нагрузки, включая LLPS-ассоциированные структуры (needs_verification).",
+      "targeted_model_gap": "lumped_aggregate_classes",
+      "proposed_abstract_representation": "Два класса нагрузки: proteasome-sensitive и autophagy-sensitive/LLPS-like, с разными путями клиренса.",
+      "observable_proxy": "разная чувствительность классов к двум типам клиренса",
+      "expected_effect_on_wall": "Может показать класс-специфичную компоненту стены.",
+      "risk": "Классы без данных превратятся в свободные параметры.",
+      "priority": "P6",
+      "status": "candidate_only",
+      "not_claim": {
+        "not_proven_in_humans": true,
+        "not_simulated_yet": true,
+        "not_v5_success": true
+      },
+      "notes_ru": "Сначала данные о классах, затем prototype."
+    }
+  ],
+  "stage9_priorities": [
+    {
+      "priority": "P0",
+      "mechanism_id": "epigenetic_plasticity_restoration",
+      "rationale_ru": "Пластичность — крупнейший отсутствующий канал; адресует high mismatch missing_epigenetic_plasticity.",
+      "first_prototype_ru": "Plasticity-пул с reset-скоростью и онко-ценой; метрики: сдвиг binding и attribution при варьировании reset."
+    },
+    {
+      "priority": "P0",
+      "mechanism_id": "damage_adaptation_split",
+      "rationale_ru": "Дешёвый redefine_metric до механики; проверяет, не держится ли v5-false адаптивным компонентом.",
+      "first_prototype_ru": "Два слагаемых bio-age с раздельными slopes; метрики: расхождение компонент при тех же политиках."
+    },
+    {
+      "priority": "P1",
+      "mechanism_id": "systemic_circulation_pool",
+      "rationale_ru": "Системная коммуникация отсутствует полностью; адресует high mismatch автономных органов.",
+      "first_prototype_ru": "Общий пул с продукцией/клиренсом; метрики: системная vs локальная компонента повреждений."
+    },
+    {
+      "priority": "P2",
+      "mechanism_id": "stem_cell_niche_quality",
+      "rationale_ru": "Уточняет значимый stem-канал Stage 6F без смены остальной модели.",
+      "first_prototype_ru": "Пара pool × niche_quality; метрики: регенеративный ответ при фиксированном pool."
+    },
+    {
+      "priority": "P3",
+      "mechanism_id": "energy_coupled_repair_autophagy",
+      "rationale_ru": "Связывает свободный параметр ceiling с наблюдаемым budget.",
+      "first_prototype_ru": "Энергетический budget поверх ремонта; метрики: различимость от текущего ceiling."
+    },
+    {
+      "priority": "P4",
+      "mechanism_id": "hierarchical_hallmark_feedback",
+      "rationale_ru": "Проверяет каскадную гипотезу diffuse-стены.",
+      "first_prototype_ru": "Три уровня драйверов; метрики: каскадные сдвиги attribution."
+    },
+    {
+      "priority": "P5",
+      "mechanism_id": "nonlinear_age_waves",
+      "rationale_ru": "Проверяет слепоту линейного v5-критерия к переходам.",
+      "first_prototype_ru": "Оконные скорости с предекларированными порогами; метрики: оконные slopes."
+    },
+    {
+      "priority": "P6",
+      "mechanism_id": "aggregate_class_partition",
+      "rationale_ru": "Детализация протеостаза после данных о классах.",
+      "first_prototype_ru": "Два класса нагрузки; метрики: класс-специфичный клиренс. Только после данных."
+    }
+  ],
+  "classification": {},
+  "limitations": [
+    "Это не биологическая валидация модели.",
+    "Это не доказательство бессмертия и не доказательство омоложения человека.",
+    "Candidate mechanisms не симулированы на этом этапе.",
+    "Все направления 2022–2026 без источника в репозитории помечены needs_verification.",
+    "Количественная калибровка скоростей модели внешними данными отсутствует.",
+    "HYP-0 остаётся hypothesis_not_proven."
+  ],
+  "limitations_ru": "См. limitations: ограничения действуют в полном объёме, HYP-0 остаётся гипотеза не доказана."
+}

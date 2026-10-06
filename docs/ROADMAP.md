@@ -746,6 +746,46 @@ HYP-0: `hypothesis_not_proven`; audit — `robust_diffuse_wall`.
 unlimited ceiling exploratory; только abstract organ-network
 reversibility boundary-probe модель.
 
+## Этап 8 — Biological Alignment and Mechanistic Extension Feasibility Gate (готов ✅)
+
+Биологическое выравнивание модели и гейт механистического
+расширения: перевод биологических направлений 2022–2026 в
+модельно-ориентированные артефакты (что согласовано, где пробелы,
+что приоритетно для Stage 9). Не новая биология в симуляции, не
+попытка получить v5, динамика 6C–7 не меняется.
+
+- [x] инвентаризация 12 конструктов (conversion_flux,
+      independent_accrual, repair_ceiling, biological_age_slope,
+      information_debt, proteostasis_metabolic, stem_exhaustion,
+      abstract tissue/organ, organ network, reversibility boundary
+      probe, robust_diffuse_wall)
+- [x] манифест `experiments/configs/stage8_biological_alignment_manifest.json`:
+      13 anchors, 9 mismatches, 8 candidate mechanisms (P0–P6),
+      stage9_priorities, limitations; все внешние направления —
+      `needs_verification` (в репозитории источников нет)
+- [x] pure validator `src/longevity/research/biological_alignment.py`:
+      schema, запрет overclaims, source_status, candidate schema,
+      классификатор; симуляцию не запускает, модель не трогает
+- [x] классификация: `mechanistic_extension_required` (уверенность
+      средняя) — абстракция не покрывает пластичность, системную
+      коммуникацию, нишу, энергию, иерархию; HYP-0 остаётся
+      `hypothesis_not_proven`
+- [x] документы: `docs/BIOLOGICAL_ALIGNMENT.md`,
+      `docs/MECHANISTIC_EXTENSION_ROADMAP.md`,
+      `research/evidence/biological_alignment_2022_2026.md`,
+      `research/hypotheses/HYP-1_mechanistic_extension_candidates.md`
+      (HYP-1.1…HYP-1.8 с критериями опровержения)
+- [x] тесты (`test_stage8_biological_alignment.py`): manifest,
+      schema, source_status, overclaims, classifier (все 6 меток),
+      русские статусы; legacy 6/7 не сломаны
+
+Decision gate:
+- `mechanistic_extension_required` → Stage 9: Minimal Mechanistic
+  Extension Prototype (P0 первым, отдельным решением);
+- `calibration_data_insufficient` → сбор/описание внешних anchors;
+- `model_mismatch_critical` → пересмотр базовых допущений;
+- `inconclusive_alignment` → external review.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

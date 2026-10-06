@@ -270,6 +270,40 @@ shares — диагностические прокси; unlimited ceiling ост
 exploratory; вывод действует только внутри abstract organ-network
 reversibility boundary-probe модели.
 
+## Stage 8 result
+
+Biological Alignment and Mechanistic Extension Feasibility Gate
+добавлен поверх Stage 7. Это не новая биология в симуляции и не
+попытка получить v5: биологические направления 2022–2026 переведены
+в модельно-ориентированные артефакты.
+
+- Манифест `experiments/configs/stage8_biological_alignment_manifest.json`:
+  13 anchors, 9 mismatches, 8 candidate mechanisms (P0–P6),
+  stage9_priorities, limitations. Все внешние направления помечены
+  `needs_verification`: проверяемых источников в репозитории нет
+  (каталог S-1…S-20 покрывает счёт клеток и раннее развитие, а не
+  механизмы старения).
+- Pure validator `src/longevity/research/biological_alignment.py`:
+  schema, запрет overclaims, source_status, candidate schema,
+  классификатор из 6 меток. Симуляцию не запускает, модель не меняет.
+- Главные пробелы: эпигенетическая пластичность, системная
+  межорганная коммуникация, качество ниши стволовых клеток,
+  энергетическая координация ремонта, разделение damage/adaptation,
+  нелинейная возрастная динамика, классы агрегатов.
+- Классификация: `mechanistic_extension_required` (требуется
+  механистическое расширение), уверенность средняя.
+- Приоритеты Stage 9: P0 — epigenetic_plasticity_restoration +
+  damage_adaptation_split; P1 — systemic_circulation_pool; далее
+  ниша (P2), энергия (P3), иерархия (P4), волны (P5), классы
+  агрегатов (P6). Кандидаты не симулированы; реализация Stage 9 не
+  начата и требует отдельного решения.
+
+Статус остаётся `hypothesis_not_proven`. Это не биологическая
+валидация, не доказательство бессмертия и не доказательство
+омоложения человека. Ограничения: все 2022–2026 направления без
+источника помечены `needs_verification`; количественной калибровки
+скоростей нет; выводы действуют только внутри текущей абстракции.
+
 ## История статусов
 
 - Stage 5A (2026-10-04): hypothesis_not_proven, single-seed search, bounded 0/27.
@@ -298,3 +332,6 @@ reversibility boundary-probe модели.
 - Stage 7: hypothesis_not_proven, parameter probe (v5 false в 23/23)
   + criterion variants (flip нет) + identifiability (оба драйвера
   responsive); audit = robust_diffuse_wall.
+- Stage 8: hypothesis_not_proven, alignment manifest (13 anchors,
+  9 mismatches, 8 кандидатов P0–P6) + validator; внешние направления
+  needs_verification; classification = mechanistic_extension_required.

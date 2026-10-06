@@ -406,3 +406,47 @@ v5=true классифицируется как sensitivity, а не успех,
 attribution shares — диагностические прокси; unlimited ceiling
 остаётся exploratory; выводы действуют только внутри abstract
 organ-network reversibility boundary-probe модели.
+
+## 16. Stage 8 — Biological Alignment and Mechanistic Extension Feasibility Gate (кратко)
+
+Alignment-слой поверх Stage 7: биологические направления 2022–2026
+переведены в модельно-ориентированные артефакты (что согласовано,
+где пробелы, что приоритетно для Stage 9). Не новая биология в
+симуляции, не попытка получить v5, динамика 6C–7 не меняется.
+
+Что добавлено (документы, манифест, pure validator — без смены модели):
+
+- Манифест `experiments/configs/stage8_biological_alignment_manifest.json`:
+  13 anchors, 9 mismatches, 8 candidate mechanisms (P0–P6),
+  stage9_priorities, limitations. Все внешние направления —
+  `needs_verification`: проверяемых источников в репозитории нет.
+- Pure validator `src/longevity/research/biological_alignment.py`:
+  schema, запрет overclaims, source_status, candidate schema,
+  классификатор из 6 меток. Симуляцию не запускает.
+- `docs/BIOLOGICAL_ALIGNMENT.md` (конструкты, mismatches, anchors),
+  `docs/MECHANISTIC_EXTENSION_ROADMAP.md` (кандидаты P0–P6),
+  `research/evidence/biological_alignment_2022_2026.md` (evidence map
+  по типам данных), `research/hypotheses/HYP-1_mechanistic_extension_candidates.md`
+  (HYP-1.1…HYP-1.8 с критериями опровержения).
+
+Главный результат:
+
+- Классификация: `mechanistic_extension_required` (требуется
+  механистическое расширение), уверенность средняя. Текущая модель
+  полезно показала отсутствие однофакторного removable wall, но её
+  абстракция не покрывает ряд критичных механизмов:
+  эпигенетическую пластичность, системную межорганную коммуникацию,
+  качество ниши стволовых клеток, энергетическую координацию
+  ремонта, разделение damage/adaptation и нелинейную возрастную
+  динамику.
+- Приоритеты Stage 9: P0 — epigenetic_plasticity_restoration +
+  damage_adaptation_split; P1 — systemic_circulation_pool; далее
+  ниша (P2), энергия (P3), иерархия (P4), волны (P5), классы
+  агрегатов (P6). Реализация Stage 9 не начата.
+- HYP-0 остаётся `hypothesis_not_proven`. Это не биологическая
+  валидация, не доказательство бессмертия и не доказательство
+  омоложения человека; candidate mechanisms не симулированы.
+
+Ограничения: все 2022–2026 направления без источника в репозитории
+помечены `needs_verification`; количественной калибровки скоростей
+нет; выводы действуют только внутри текущей абстракции.

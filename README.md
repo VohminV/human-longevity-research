@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%937_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-547_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%938_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-565_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -64,9 +64,9 @@ LONGEVITY ANALYSIS
 ## Прогресс
 
 ```text
-Этапы 1–7:  ███████████████████ 21/21 завершены
+Этапы 1–8:  ████████████████████ 22/22 завершены
 HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:      547 passing (детерминизм, инварианты, checkpoint/restore)
+Тесты:      565 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Блок | Этапы | Статус | Главный вывод |
@@ -84,7 +84,8 @@ HYP-0:      hypothesis_not_proven (честный статус во всех а�
 | Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
 | Residual drivers | 6F | ✅ | Heterogeneous probe 15×3 + sweep 14×3 (v5 false везде, flip нет, joint ablation −17%); residual wall `diffuse_residual_wall` |
 | Robustness audit | 7 | ✅ | Parameter probe 23×3 + criterion variants (v5 false везде, flip нет, оба драйвера identifiable); audit `robust_diffuse_wall` |
-| Дальше | 7A+ | ⏳ | Следующий шаг по итогам аудита: calibration, criterion protocol или закрытие ветки |
+| Biological alignment | 8 | ✅ | Манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` |
+| Дальше | 9+ | ⏳ | Следующий шаг: Stage 9 prototype (P0 первым, отдельным решением) или закрытие ветки |
 
 Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
 
@@ -239,6 +240,12 @@ tests/         — тесты ключевых инвариантов
 - [x] v5=false везде, flip нет, оба драйвера identifiable; audit `robust_diffuse_wall` (уверенность высокая)
 - [x] во всех артефактах: `immortality_status = hypothesis_not_proven`
 
+**Этап 8 — biological alignment and mechanistic extension feasibility gate** — реализован:
+
+- [x] манифест выравнивания (13 anchors, 9 mismatches, 8 кандидатов P0–P6, stage9_priorities, limitations) + pure validator `longevity.research.biological_alignment` (без симуляции, без смены модели)
+- [x] все внешние направления 2022–2026 помечены `needs_verification`; классификация `mechanistic_extension_required` (уверенность средняя)
+- [x] во всех артефактах: `hypothesis_status = hypothesis_not_proven`
+
 Полный план и детали — в `docs/ROADMAP.md`, `docs/TISSUE_MODEL.md`,
 `docs/ORGAN_MODEL.md`, `docs/ORGANISM_MODEL.md`, `docs/AGING_MODEL.md`,
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md`, `docs/ORGAN_NETWORK_MODEL.md`,
@@ -358,6 +365,20 @@ HYP-0 остаётся "гипотеза не доказана".
 
 ```bash
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_stage7_audit.json --out-prefix experiments/output/organism_reversibility_boundary_stage7_audit
+```
+
+Stage 8 — Biological Alignment and Mechanistic Extension Feasibility Gate.
+
+Stage 8 сопоставляет текущую абстрактную модель с биологическими данными и гипотезами 2022–2026 годов. Цель — понять, где модель согласована с биологией, где есть критические пробелы и какие механистические расширения правдоподобны для следующего этапа.
+
+Stage 8 не добавляет новую биологию в симуляцию и не пытается достичь v5. Это выравнивающий и приоритизирующий гейт перед Stage 9.
+
+HYP-0 остаётся "гипотеза не доказана".
+
+Фактический итог: манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` (требуется механистическое расширение), уверенность средняя. Все внешние направления помечены `needs_verification`.
+
+```bash
+$env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from longevity.research.biological_alignment import load_and_validate_manifest; print(load_and_validate_manifest('experiments/configs/stage8_biological_alignment_manifest.json')['classification'])"
 ```
 
 <!--
