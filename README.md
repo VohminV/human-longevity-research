@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936E_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-499_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%936F_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-523_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -64,9 +64,9 @@ LONGEVITY ANALYSIS
 ## Прогресс
 
 ```text
-Этапы 1–6E:  ███████████████████ 19/19 завершены
+Этапы 1–6F:  ███████████████████ 20/20 завершены
 HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:       499 passing (детерминизм, инварианты, checkpoint/restore)
+Тесты:       523 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Блок | Этапы | Статус | Главный вывод |
@@ -82,7 +82,8 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | Reversibility | 6C | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
 | Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
 | Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
-| Дальше | 6F+ | ⏳ | Следующий шаг по итогам compound-классификации |
+| Residual drivers | 6F | ✅ | Heterogeneous probe 15×3 + sweep 14×3 (v5 false везде, flip нет, joint ablation −17%); residual wall `diffuse_residual_wall` |
+| Дальше | 6G+ | ⏳ | Следующий шаг по итогам residual-классификации |
 
 Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
 
@@ -111,7 +112,7 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | `AGING_MODEL.md` | Механистический слой старения и reversibility search (Stage 5C) |
 | `ORGAN_BACKED_ORGANISM_MODEL.md` | Organ-backed организм: прокси, ресурсы, координация (Stage 6A) |
 | `ORGAN_NETWORK_MODEL.md` | Organ-network: рёбра, feedback, hard limits, v4 (Stage 6B) |
-| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E |
+| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E + heterogeneous probe 6F |
 | `CALIBRATION.md` | Калибровка ранней динамики против данных (MODEL MISMATCH) |
 | `DEVELOPMENTAL_DYNAMICS.md` | Стадия-зависимый клеточный цикл (Этап 3.5) |
 | `ASSUMPTIONS.md` | Все принятые допущения |
@@ -298,6 +299,26 @@ $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config e
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_knife_edge_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_knife_edge_sweep
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_compound_attribution.json --out-prefix experiments/output/organism_reversibility_boundary_compound_attribution
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_sensitivity.json --out-prefix experiments/output/organism_reversibility_boundary_sensitivity
+```
+
+Stage 6F — Heterogeneous Residual Driver Probe.
+
+Stage 6F добавляет диагностический зонд поверх Stage 6E для проверки структуры составной остаточной стены. Цель — определить, является ли остаточный барьер диффузным, локализованным, смешанным или неоднозначным в текущей абстрактной модели.
+
+Stage 6F использует существующие attribution/override механизмы для целевого подавления top drivers biological_age_slope, таких как proteostasis/metabolic и stem-компонент. Это не новая биология и не механистическая extension.
+
+Ожидаемый статус после этапа:
+- операционный критерий v5 не выполнен, если не найден robust кандидат;
+- HYP-0 остаётся "гипотеза не доказана";
+- вывод ограничен текущей абстракцией и проверенной сеткой чувствительности;
+- attribution shares — операционные диагностические прокси, не законы сохранения;
+- unlimited ceiling остаётся exploratory.
+
+Фактический итог: v5=false в 29/29 режимах, residual wall `diffuse_residual_wall` (диффузная остаточная стена), уверенность средняя.
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_probe.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_probe
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_sweep
 ```
 
 <!--

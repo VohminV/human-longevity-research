@@ -606,6 +606,77 @@ HYP-0: `hypothesis_not_proven`; wall — `compound_residual_wall`.
 Ограничение: diagnostic proxies, не conservation laws; shares линейны;
 unlimited ceiling exploratory; n ≤ 5; dt ∈ {0.5, 0.25, 0.1}.
 
+## Этап 6F — Heterogeneous residual driver probe (готов ✅)
+
+Диагностический extension поверх Stage 6E: проверяет структуру
+составной остаточной стены — диффузная, локализованная, смешанная или
+неоднозначная. Новая биология не добавляется, базовая динамика
+6C/6D/6E не меняется.
+
+- [x] инвентаризация: per-component overrides покрывают только
+      reversibility-ledger (conversion/independent); `weight_override` /
+      `repair_ceiling_override` валидируются, но не заведены в модель;
+      per-source overrides отсутствуют. Точечное ослабление bio-age
+      драйверов реализовано без изменения модели — через существующий
+      конфиг-слой `aging_drivers` (`base_aging_rate` × driver_scale) плюс
+      matching driver-type `component_overrides`
+      (conversion/independent × scale). `driver_scale=1.0` не добавляет
+      записей и воспроизводит baseline бит-в-бит
+- [x] top drivers из Stage 6E: `proteostasis_metabolic`
+      (`proteostasis_loss` + `mitochondrial_dysfunction`) и
+      `stem_exhaustion`; имена валидируются против 8 драйверов + 6
+      source-групп + алиасы (`stem`, `proteostasis`, …); неизвестные
+      отклоняются; пересекающиеся targets отклоняются
+- [x] `heterogeneous_probe`-kind в `organism_boundary.py`:
+      `HeterogeneousProbeConfig`, детерминированная таблица режимов
+      (control → singles → combos), `_run_hetero_one`, writer
+      (`*_summary.json`, `*_regimes.csv`,
+      `*_residual_classification.json`); loader/main расширены, старые
+      kinds работают
+- [x] `classify_residual_wall` (pure) + русские статусы
+      (`wall_classification_ru`, `binding_constraint_ru`,
+      `bio_age_source_ru`, `confidence_ru`, `hypothesis_ru`,
+      `v5_operational_success_ru`, `exploratory_ru`,
+      `sensitivity_stable_ru`); английские enum не переименованы;
+      4 labels: `diffuse_residual_wall`, `localized_residual_wall`,
+      `mixed_residual_wall`, `inconclusive_residual_probe`
+- [x] 2 конфига `organism_reversibility_boundary_heterogeneous_{probe,
+      sweep}.json` (probe: 15 режимов × 3 seeds; sweep: все 6 групп +
+      joint ablation, 14 режимов × 3 seeds)
+- [x] наблюдение (в рамках модели, seeds 42/7/99): v5=false во всех
+      29 режимах; binding везде `biological_age_slope`; dominant
+      источник везде `proteostasis_metabolic`; source flip нет;
+      максимальное снижение bio slope — joint ablation всех групп
+      17% (1.33 → 1.10), ниже порога substantial 20%; поодиночке ≤8.5%
+- [x] residual wall в probe и sweep независимо:
+      `diffuse_residual_wall` (уверенность средняя) — остаточная стена
+      распределена по нескольким каналам в текущей абстракции;
+      локализованный removable driver не найден (`stem_exhaustion`
+      значим, но не единственно съёмен); смешанный residual transition
+      не найден (flip нет)
+- [x] тесты (`test_reversibility_boundary_heterogeneous_probe.py`,
+      24 шт.): backward compatibility (none/нейтраль/legacy-конфиги,
+      control == scale-1.0), валидация имён/шкал/комбинаций,
+      детерминизм, finite outputs, немутация входов и global random,
+      attribution (suppression снижает вклад), classifier (все 4
+      labels, insufficient data, нестабильность), русские статусы,
+      exploratory-флаги, guard от новой биологии в конфигах
+- [x] legacy перепроверены прогоном: `legacy_none` (67.0/58.2),
+      knife 1e-4 (69.5/60.8), compound → `compound_residual_wall`,
+      sensitivity → `compound_residual_wall`, eps/dt/seed stable
+
+Новое: `classify_residual_wall`, RU-хелперы, валидация/экспансия
+гетерогенных драйверов (`boundary_metrics`); `HeterogeneousProbeConfig`,
+`run_heterogeneous_probe`, `heterogeneous_regimes`
+(`organism_boundary`); § Stage 6F в `docs/REVERSIBILITY_MODEL.md`,
+статус в `research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; residual wall — `diffuse_residual_wall`.
+Ограничение: ослабление частично нивелируется repair/coupling
+динамикой текущей абстракции (операционный диагностический эффект,
+не биологическое утверждение); stability покрывает seeds
+(eps/dt/horizon — сетка 6E); attribution shares — диагностические
+прокси; unlimited ceiling остаётся exploratory.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

@@ -57,6 +57,287 @@ COMPOUND_WALL_LABELS = (
     "inconclusive_sensitivity_failure",
 )
 
+# Stage 6F residual-wall labels (diagnostic only; see classify_residual_wall).
+RESIDUAL_WALL_LABELS = (
+    "diffuse_residual_wall",
+    "localized_residual_wall",
+    "mixed_residual_wall",
+    "inconclusive_residual_probe",
+)
+
+# Stage 6F: heterogeneous driver names accepted by the probe. Canonical
+# names are the 8 mechanistic drivers plus the 6 bio-age source groups;
+# short aliases map to their canonical group (rejected when ambiguous
+# only by being unknown — see canonical_heterogeneous_driver).
+HETEROGENEOUS_DRIVER_ALIASES: dict[str, str] = {
+    "stem": "stem_exhaustion",
+    "proteostasis": "proteostasis_metabolic",
+    "metabolic": "proteostasis_metabolic",
+    "inflammatory": "inflammatory_senescent",
+    "senescence": "inflammatory_senescent",
+    "genomic": "genomic_integrity",
+}
+
+# Single-driver bio-age slope reduction that counts as a "substantial"
+# targeted effect (diagnostic threshold, not a biological constant).
+SUBSTANTIAL_BIO_SLOPE_REDUCTION = 0.20
+
+# Human-readable Russian statuses (Stage 6F contract): English identifiers
+# stay untouched; *_ru fields carry the human-readable translation.
+WALL_CLASSIFICATION_RU: dict[str, str] = {
+    "no_wall": "стена не обнаружена",
+    "single_channel_parametric_wall": "параметрическая стена одного канала",
+    "knife_edge_parametric_wall": "параметрическая стена эффекта ножевого края",
+    "compound_residual_wall": "составная остаточная стена",
+    "structural_under_current_abstraction_wall": "структурная стена текущей абстракции",
+    "ceiling_mediated_wall": "стена, опосредованная потолком ремонта",
+    "inconclusive_sensitivity_failure": "неоднозначно из-за чувствительности",
+    "insufficient_data": "недостаточно данных",
+    "diffuse_residual_wall": "диффузная остаточная стена",
+    "localized_residual_wall": "локализованная остаточная стена",
+    "mixed_residual_wall": "смешанная остаточная стена",
+    "inconclusive_residual_probe": "неоднозначный зонд остаточной стены",
+    "parametric_irreversibility_wall": "параметрическая стена необратимости",
+    "structural_conversion_wall": "структурная стена конверсии",
+    "structural_independent_accrual_wall": "структурная стена независимого накопления",
+    "structural_repair_ceiling_wall": "структурная стена потолка ремонта",
+    "structural_information_wall": "структурная информационная стена",
+    "structural_mutation_wall": "структурная мутационная стена",
+    "structural_niche_wall": "структурная нишевая стена",
+    "structural_entropy_wall": "структурная энтропийная стена",
+    "structural_other_wall": "структурная стена другого канала",
+    "mixed_wall": "смешанная стена",
+    "inconclusive": "неоднозначно",
+}
+
+BINDING_CONSTRAINT_RU: dict[str, str] = {
+    "none": "нет (ограничение не выявлено)",
+    "irreversible_net_slope": "чистый наклон необратимости",
+    "biological_age_slope": "наклон биологического возраста",
+    "biological_age_network_slope": "наклон сетевого биологического возраста",
+    "biological_age_reversibility_slope": "наклон обратимостного биологического возраста",
+    "driver_slope": "наклон драйверов",
+    "reversible_burden": "обратимая нагрузка",
+    "irreversible_accumulation": "необратимое накопление",
+    "conversion_runaway": "неконтролируемая конверсия",
+    "conversion_flux": "конверсионный поток",
+    "independent_accrual": "независимое накопление",
+    "independent_irreversible_accrual": "независимое необратимое накопление",
+    "repair_ceiling": "потолок ремонта",
+    "repair_ceiling_exhaustion": "исчерпание потолка ремонта",
+    "repair_ceiling_limitation": "ограничение потолка ремонта",
+    "insufficient_repair_offset": "недостаточная компенсация ремонтом",
+    "information_debt": "информационный долг",
+    "mutation_fixation": "фиксация мутаций",
+    "niche_disorder": "разупорядочивание ниши",
+    "entropy_production": "производство энтропии",
+    "conversion": "конверсия",
+    "mixed": "смешанный источник",
+    "other_binding_wall": "другая связывающая стена",
+}
+
+BIO_AGE_SOURCE_RU: dict[str, str] = {
+    "none": "нет",
+    "genomic_integrity": "целостность генома (genomic_integrity)",
+    "epigenetic": "эпигенетика (epigenetic)",
+    "proteostasis_metabolic": "протеостаз/метаболизм (proteostasis_metabolic)",
+    "inflammatory_senescent": "воспаление/сенесцентность (inflammatory_senescent)",
+    "stem_exhaustion": "истощение стволовых пулов (stem_exhaustion)",
+    "oncogenic": "онкогенный риск (oncogenic)",
+}
+
+CONFIDENCE_RU: dict[str, str] = {
+    "low": "низкая",
+    "medium": "средняя",
+    "high": "высокая",
+}
+
+HYPOTHESIS_RU: dict[str, str] = {
+    "hypothesis_not_proven": "гипотеза не доказана",
+    "candidate_found": "кандидат найден",
+    "candidate_not_found": "кандидат не найден",
+}
+
+
+def wall_classification_ru(label: str) -> str:
+    """Russian human-readable wall label (pure, 6F).
+
+    English identifiers are never renamed; unknown labels raise instead
+    of guessing a translation.
+    """
+    if label not in WALL_CLASSIFICATION_RU:
+        raise ValueError(f"unknown wall classification {label!r}")
+    return WALL_CLASSIFICATION_RU[label]
+
+
+def binding_constraint_ru(name: str) -> str:
+    """Russian human-readable binding-constraint name (pure, 6F).
+
+    Unknown codes fall back to the English code itself (forward
+    compatible with future model constraints).
+    """
+    return BINDING_CONSTRAINT_RU.get(name, name)
+
+
+def bio_age_source_ru(name: str) -> str:
+    """Russian human-readable bio-age source-group name (pure, 6F)."""
+    return BIO_AGE_SOURCE_RU.get(name, name)
+
+
+def confidence_ru(level: str) -> str:
+    """Russian human-readable confidence level (pure, 6F)."""
+    if level not in CONFIDENCE_RU:
+        raise ValueError(f"unknown confidence {level!r}")
+    return CONFIDENCE_RU[level]
+
+
+def hypothesis_ru(status: str) -> str:
+    """Russian human-readable hypothesis status (pure, 6F)."""
+    if status not in HYPOTHESIS_RU:
+        raise ValueError(f"unknown hypothesis status {status!r}")
+    return HYPOTHESIS_RU[status]
+
+
+def v5_operational_success_ru(v5: bool) -> str:
+    """Russian human-readable v5 verdict (pure, 6F)."""
+    if not isinstance(v5, bool):
+        raise ValueError(f"v5 verdict must be a bool, got {v5!r}")
+    return ("операционный критерий v5 выполнен"
+            if v5 else "операционный критерий v5 не выполнен")
+
+
+def exploratory_ru(exploratory: bool) -> str:
+    """Russian human-readable exploratory flag (pure, 6F)."""
+    if not isinstance(exploratory, bool):
+        raise ValueError(f"exploratory flag must be a bool, got {exploratory!r}")
+    return ("exploratory-режим, не калиброван как биологическая модель"
+            if exploratory else "номинальный (не exploratory) режим")
+
+
+def sensitivity_stable_ru(all_stable: bool, any_stable: bool) -> str:
+    """Russian human-readable sensitivity stability (pure, 6F)."""
+    if not isinstance(all_stable, bool) or not isinstance(any_stable, bool):
+        raise ValueError("stability flags must be bools")
+    if all_stable:
+        return "устойчиво"
+    if any_stable:
+        return "частично"
+    return "неустойчиво"
+
+
+def canonical_heterogeneous_driver(name: Any) -> str:
+    """Canonical heterogeneous driver/group name (pure, 6F).
+
+    Accepts the 8 mechanistic drivers, the 6 bio-age source groups and
+    the documented short aliases. Unknown names raise (never guessed).
+    """
+    if not isinstance(name, str) or not name:
+        raise ValueError(f"heterogeneous driver name must be a non-empty string, got {name!r}")
+    canonical = HETEROGENEOUS_DRIVER_ALIASES.get(name, name)
+    known = set(AGING_DRIVERS) | set(BIO_AGE_SOURCE_GROUPS)
+    if canonical not in known:
+        raise ValueError(
+            f"unknown heterogeneous driver {name!r}; known drivers: {sorted(AGING_DRIVERS)}, "
+            f"known source groups: {sorted(BIO_AGE_SOURCE_GROUPS)}, "
+            f"known aliases: {sorted(HETEROGENEOUS_DRIVER_ALIASES)}")
+    return canonical
+
+
+def expand_heterogeneous_driver(name: Any) -> tuple[str, ...]:
+    """Mechanistic drivers covered by one heterogeneous target (pure, 6F)."""
+    canonical = canonical_heterogeneous_driver(name)
+    if canonical in BIO_AGE_SOURCE_GROUPS:
+        return tuple(BIO_AGE_SOURCE_GROUPS[canonical])
+    return (canonical,)
+
+
+def validate_heterogeneous_driver_scale(value: Any, path: str) -> float:
+    """Validate one driver attenuation scale (pure, 6F)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{path} must be a number, got {value!r}")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{path} must be finite, got {value!r}")
+    if result < 0.0:
+        raise ValueError(f"{path} must be >= 0")
+    return result
+
+
+def classify_residual_wall(*,
+                           v5_robust_non_exploratory: bool = False,
+                           v5_narrow_only: bool = False,
+                           substantial_single_driver_effect: bool = False,
+                           binding_or_source_flip: bool = False,
+                           n_drivers_tested: int = 0,
+                           stability: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Heterogeneous residual-wall classification over 6F evidence (pure, 6F).
+
+    Pure diagnostic homunculus over already-computed regime evidence;
+    never touches the simulation. Precedence: insufficient data ->
+    instability -> robust non-exploratory v5 (localized, audit required)
+    -> narrow-only v5 (inconclusive) -> channel flip (mixed) ->
+    substantial single-driver effect (localized) -> diffuse. Missing
+    evidence is never guessed: incomplete data yields
+    ``inconclusive_residual_probe``.
+    """
+    for flag_name, flag in (
+            ("v5_robust_non_exploratory", v5_robust_non_exploratory),
+            ("v5_narrow_only", v5_narrow_only),
+            ("substantial_single_driver_effect", substantial_single_driver_effect),
+            ("binding_or_source_flip", binding_or_source_flip)):
+        if not isinstance(flag, bool):
+            raise ValueError(f"{flag_name} must be a bool, got {flag!r}")
+    if isinstance(n_drivers_tested, bool) or not isinstance(n_drivers_tested, int) \
+            or n_drivers_tested < 0:
+        raise ValueError(f"n_drivers_tested must be an int >= 0, got {n_drivers_tested!r}")
+    stability = dict(stability or {})
+    data_complete = bool(stability.get("data_complete", False))
+    if not data_complete or n_drivers_tested == 0:
+        return {"stage_6f_residual_classification": "inconclusive_residual_probe",
+                "stage_6f_residual_classification_reason":
+                    "insufficient data: refusing to guess a residual-wall label",
+                "confidence": "low"}
+    unstable = sorted(k for k, v in stability.items()
+                      if k != "data_complete" and not v)
+    if unstable:
+        return {"stage_6f_residual_classification": "inconclusive_residual_probe",
+                "stage_6f_residual_classification_reason":
+                    f"verdict unstable across {', '.join(unstable)}; no strong residual claim",
+                "confidence": "low"}
+    if v5_robust_non_exploratory:
+        return {"stage_6f_residual_classification": "localized_residual_wall",
+                "stage_6f_residual_classification_reason":
+                    "targeted suppression reaches robust v5 in a non-exploratory regime; "
+                    "requires a Stage 6G robustness audit before any claim; "
+                    "HYP-0 stays hypothesis_not_proven",
+                "confidence": "medium"}
+    if v5_narrow_only:
+        return {"stage_6f_residual_classification": "inconclusive_residual_probe",
+                "stage_6f_residual_classification_reason":
+                    "v5 true only in narrow/exploratory regimes; not a robust localized wall",
+                "confidence": "low"}
+    if binding_or_source_flip:
+        return {"stage_6f_residual_classification": "mixed_residual_wall",
+                "stage_6f_residual_classification_reason":
+                    "targeted suppression shifts the binding constraint or the dominant "
+                    "residual source to another channel while v5 stays false; "
+                    "diagnostic transition, not a biological change of cause",
+                "confidence": "medium"}
+    if substantial_single_driver_effect:
+        return {"stage_6f_residual_classification": "localized_residual_wall",
+                "stage_6f_residual_classification_reason":
+                    "targeted suppression of one driver substantially lowers "
+                    "biological_age_slope or moves the binding constraint, "
+                    "yet v5 stays false: significant diagnostic constraint, "
+                    "not solely removable for v5",
+                "confidence": "medium"}
+    return {"stage_6f_residual_classification": "diffuse_residual_wall",
+            "stage_6f_residual_classification_reason":
+                "targeted suppression of top drivers leaves the binding constraint "
+                "and v5 substantially unchanged; residual wall spread across channels "
+                "in the current abstraction",
+            "confidence": "medium"}
+
 # Stage 6E: driver-family grouping for biological_age_slope attribution.
 # Grounded in the mechanistic aggregation
 # (bio = setpoint + sum(contribution_i * damage_i / reference_i));

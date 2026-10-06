@@ -205,6 +205,39 @@ diagnostic proxy, не conservation law; unlimited ceiling exploratory.
 операциональные пороги, dt ∈ {0.5, 0.25, 0.1}, n ≤ 5, нет биологической
 валидации.
 
+## Stage 6F result
+
+Heterogeneous residual driver probe добавлен поверх Stage 6E,
+candidate robust bounded degradation v5 **не найден** ни в одном
+гетерогенном режиме:
+
+- probe (15 режимов × 3 seeds: control + `proteostasis_metabolic` /
+  `stem_exhaustion` по 1.0/0.5/0.25/0.0 + combos): v5=false везде;
+  binding везде `biological_age_slope`; dominant bio-age источник
+  везде `proteostasis_metabolic`; source flip нет; снижение bio slope
+  ≤0.6% (ослабление частично нивелируется repair/coupling динамикой
+  текущей абстракции — операционный диагностический эффект, не
+  биологическое утверждение);
+- sweep (14 режимов × 3 seeds: все 6 source-групп по 1.0/0.0 + joint
+  ablation): v5=false везде; joint suppression всех групп снижает bio
+  slope лишь на 17% (1.33 → 1.10) — ниже substantial-порога 20%;
+  поодиночке ≤8.5%; binding и dominant источник не меняются;
+- residual wall в probe и sweep независимо: `diffuse_residual_wall`
+  (диффузная остаточная стена), уверенность средняя — в текущей
+  абстрактной модели остаточная стена сохраняется при целевом
+  гетерогенном подавлении;
+- `candidate_robust_bounded_degradation_v5_found = false` везде;
+- driver не является единственно съёмным ограничением при текущем
+  операционном v5; это диагностический вывод внутри модели, а не
+  биологическая смена причины.
+
+Статус остаётся `hypothesis_not_proven`. Это не биологическая
+валидация, не доказательство бессмертия и не доказательство
+необратимости старения. Ограничения: stability покрывает seeds
+(eps/dt/horizon — сеткой 6E); attribution shares — диагностические
+прокси; вывод действует только внутри abstract organ-network
+reversibility boundary-probe модели.
+
 ## История статусов
 
 - Stage 5A (2026-10-04): hypothesis_not_proven, single-seed search, bounded 0/27.
@@ -227,3 +260,6 @@ diagnostic proxy, не conservation law; unlimited ceiling exploratory.
   knife-edge нет) + bio-age attribution (dominant proteostasis_metabolic)
   + sensitivity (eps/dt/seed stable, v5 false в 36/36);
   wall = compound_residual_wall.
+- Stage 6F: hypothesis_not_proven, heterogeneous probe (v5 false в
+  15/15) + sweep всех групп (v5 false в 14/14, joint ablation −17%);
+  residual wall = diffuse_residual_wall.

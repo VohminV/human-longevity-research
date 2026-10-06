@@ -255,3 +255,83 @@ binding wall`. HYP-0 остаётся `hypothesis_not_proven`;
 - HYP-0 остаётся `hypothesis_not_proven`. Это diagnostic classification
   внутри abstract organ-network reversibility boundary-probe модели, а не
   биологический закон и не доказательство (не)возможности бессмертия.
+
+## 14. Stage 6F — Heterogeneous residual driver probe (кратко)
+
+Диагностический extension поверх Stage 6E: проверяет структуру
+составной остаточной стены — является ли она диффузной,
+локализованной, смешанной или неоднозначной в текущей абстрактной
+модели. Новая биология не добавляется, базовая динамика 6C/6D/6E не
+меняется, `boundary_probe_model=none` по-прежнему эквивалентен 6C.
+
+Инвентаризация показала: существующие per-component overrides
+покрывают только reversibility-ledger (conversion/independent
+на драйвер/орган); `weight_override` и `repair_ceiling_override`
+валидируются, но не заведены в модель; per-source overrides
+отсутствуют. Поэтому точечное ослабление bio-age драйверов
+реализовано без изменения модели — через существующий конфиг-слой
+`aging_drivers` (`base_aging_rate` × driver_scale) плюс matching
+driver-type `component_overrides`. `driver_scale=1.0` не добавляет
+записей и воспроизводит baseline бит-в-бит (покрыто тестом).
+
+Что добавлено (всё additive):
+
+- `heterogeneous_probe`-kind в `organism_boundary.py`:
+  `HeterogeneousProbeConfig` (drivers с именами и шкалами, combos,
+  `combination_scales`, seeds; имена валидируются против 8 драйверов +
+  6 source-групп + алиасы, неизвестные и пересекающиеся targets
+  отклоняются), детерминированная таблица режимов (control → singles
+  1.0/0.5/0.25/0.0 → combos), `_run_hetero_one`, writer
+  (`*_summary.json`, `*_regimes.csv`,
+  `*_residual_classification.json`).
+- `classify_residual_wall` (pure): 4 labels —
+  `diffuse_residual_wall`, `localized_residual_wall`,
+  `mixed_residual_wall`, `inconclusive_residual_probe`. Неполные данные
+  или нестабильность по seed → всегда `inconclusive`, угадывания нет.
+  Robust v5 в не-exploratory режиме даёт `localized` с пометкой
+  «требуется Stage 6G audit», HYP-0 при этом остаётся
+  `hypothesis_not_proven`.
+- Русские человекочитаемые статусы (`*_ru`): английские enum,
+  JSON-ключи и имена файлов не переименованы; переводы —
+  `wall_classification_ru`, `binding_constraint_ru`,
+  `bio_age_source_ru`, `confidence_ru`, `hypothesis_ru`,
+  `v5_operational_success_ru`, `exploratory_ru`,
+  `sensitivity_stable_ru`.
+- Порог substantial-эффекта: снижение bio slope ≥ 20% против control
+  или смена binding (диагностический порог, не биологическая
+  константа).
+
+Главный результат (в рамках модели, seeds 42/7/99):
+
+- Probe (15 режимов): v5=false везде; binding везде
+  `biological_age_slope` (наклон биологического возраста); dominant
+  источник везде `proteostasis_metabolic`; source flip нет;
+  максимальное снижение bio slope ≤0.6%.
+- Sweep (все 6 групп + joint ablation, 14 режимов): v5=false везде;
+  joint suppression всех групп снижает bio slope лишь на 17%
+  (1.33 → 1.10) — ниже порога 20%; поодиночке ≤8.5%.
+- Residual wall в обоих независимо: `diffuse_residual_wall`
+  (диффузная остаточная стена), уверенность средняя. В текущей
+  абстрактной модели остаточная стена сохраняется при целевом
+  гетерогенном подавлении: ослабление частично нивелируется
+  repair/coupling динамикой текущей абстракции — операционный
+  диагностический эффект, не биологическое утверждение; стена
+  распределена по нескольким каналам.
+- Binding constraint, source attribution, wall classification и Stage 6F
+  residual classification разделены: per-regime wall —
+  `parametric_irreversibility_wall` (6D-классификатор поверх вердикта
+  режима), итог зонда — `diffuse_residual_wall`.
+- Явные вердикты зонда: локализованный removable driver не найден
+  (`stem_exhaustion` значим, но не единственно съёмен для v5);
+  смешанный residual transition не найден (flip binding/source
+  отсутствует); эффект ножевого края отсутствует (результат 6E,
+  область 6F его подтверждает: порогового поведения нет и при
+  гетерогенном подавлении).
+- HYP-0 остаётся `hypothesis_not_proven`. Это computational
+  exploration внутри abstract organ-network reversibility
+  boundary-probe модели, не биологическая валидация.
+
+Ограничения: stability покрывает seeds (eps/dt/horizon — сеткой 6E);
+attribution shares — диагностические прокси, не законы сохранения;
+unlimited ceiling остаётся exploratory; вывод действует только внутри
+текущей абстракции и проверенной сетки чувствительности.
