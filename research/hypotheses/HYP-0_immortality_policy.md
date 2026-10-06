@@ -238,6 +238,38 @@ candidate robust bounded degradation v5 **не найден** ни в одном
 прокси; вывод действует только внутри abstract organ-network
 reversibility boundary-probe модели.
 
+## Stage 7 result
+
+Criterion and Parameter Robustness Audit добавлен поверх Stage 6F,
+candidate robust bounded degradation v5 **не найден** ни в одном
+параметрическом режиме и ни в одном criterion variant:
+
+- parameter probe (23 режима × 3 seeds: веса top drivers 0.5/1.0/2.0,
+  ledger scales 0.75/1.0/1.25/1.5, explicit combos): v5=false везде;
+  binding везде `biological_age_slope`; dominant bio-age источник
+  везде `proteostasis_metabolic`; flip нет;
+- criterion probe (всё задекларировано до прогона): horizons
+  100/150/200, thresholds ±10/±20%, aggregations
+  global/network/reversibility, estimators
+  least_squares/endpoint/trailing_window — вердикт v5, binding и
+  dominant source не меняются ни в одном variant при той же динамике;
+- identifiability: оба драйвера responsive (proteostasis +51%, stem
+  +17% наблюдаемого отклика при ×2) — каналы различимы,
+  `identifiable`;
+- audit classification: `robust_diffuse_wall` (устойчивая диффузная
+  стена), уверенность высокая — в текущей абстрактной модели
+  проверена устойчивость диагностического вывода;
+- `candidate_robust_bounded_degradation_v5_found = false`;
+  audit-режим: возможный v5=true классифицировался бы как sensitivity
+  (criterion/parameter), а не как кандидат.
+
+Статус остаётся `hypothesis_not_proven`. Это проверка качества самой
+диагностики, а не поиск успеха. Ограничения: сетка (веса 0.5–2.0,
+ledger 0.75–1.5, горизонты 100–200, пороги ±20%); attribution
+shares — диагностические прокси; unlimited ceiling остаётся
+exploratory; вывод действует только внутри abstract organ-network
+reversibility boundary-probe модели.
+
 ## История статусов
 
 - Stage 5A (2026-10-04): hypothesis_not_proven, single-seed search, bounded 0/27.
@@ -263,3 +295,6 @@ reversibility boundary-probe модели.
 - Stage 6F: hypothesis_not_proven, heterogeneous probe (v5 false в
   15/15) + sweep всех групп (v5 false в 14/14, joint ablation −17%);
   residual wall = diffuse_residual_wall.
+- Stage 7: hypothesis_not_proven, parameter probe (v5 false в 23/23)
+  + criterion variants (flip нет) + identifiability (оба драйвера
+  responsive); audit = robust_diffuse_wall.

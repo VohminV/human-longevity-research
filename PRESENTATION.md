@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH — презентация прогресса
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936F_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-523_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%937_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-547_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -20,8 +20,9 @@
 [Organ-backed](#слайд-9-organ-backed) · [Network](#слайд-10-organ-network) ·
 [Reversibility](#слайд-11-reversibility) · [Boundary](#слайд-12-boundary) ·
 [Compound wall](#слайд-13-compound-wall) · [Residual](#слайд-14-residual-drivers) ·
-[Цифры](#слайд-15-цифры) · [HYP-0](#слайд-16-hyp-0) ·
-[Дальше](#слайд-17-дальше) · [Воспроизведение](#слайд-18-воспроизведение)
+[Audit](#слайд-15-audit) · [Цифры](#слайд-16-цифры) ·
+[HYP-0](#слайд-17-hyp-0) · [Дальше](#слайд-18-дальше) ·
+[Воспроизведение](#слайд-19-воспроизведение)
 
 ---
 
@@ -50,12 +51,12 @@ ML-библиотек в ядре — только stdlib.
 
 ## Слайд 2. Прогресс
 
-Этапы 1–6F, детали — `docs/ROADMAP.md`.
+Этапы 1–7, детали — `docs/ROADMAP.md`.
 
 ```text
-Этапы 1–6F:  ███████████████████ 20/20 завершены
-HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:       523 passing (детерминизм, инварианты, checkpoint/restore)
+Этапы 1–7:  ███████████████████ 21/21 завершены
+HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
+Тесты:      547 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Этап | Статус | Одним предложением |
@@ -80,7 +81,8 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | 6D — Boundary probe | ✅ | Аблации conversion/accrual/ceiling; conversion=0 даёт slope в допуске, но v5 — нигде (открывается bio age) |
 | 6E — Compound wall | ✅ | Knife sweep 8×3 без knife-edge + bio-age attribution + sensitivity stable; wall `compound_residual_wall` |
 | 6F — Residual drivers | ✅ | Heterogeneous probe 15×3 + sweep 14×3: v5 — нигде, flip нет, joint ablation −17%; wall `diffuse_residual_wall` |
-| Дальше (6G+) | ⏳ | Следующий шаг по итогам residual-классификации |
+| 7 — Audit | ✅ | Parameter probe 23×3 + criterion variants: v5 — нигде, flip нет, оба драйвера identifiable; audit `robust_diffuse_wall` |
+| Дальше (7A+) | ⏳ | Следующий шаг по итогам аудита |
 
 ---
 
@@ -350,7 +352,26 @@ pie title Binding drivers, sweep 27x3
 
 ---
 
-## Слайд 15. Цифры
+## Слайд 15. Audit
+
+Этап 7: audit устойчивости диффузной стены к вариациям критерия v5
+и параметров — проверка качества самой диагностики, не поиск v5.
+
+- Parameter probe 23×3: веса top drivers 0.5/1.0/2.0, ledger scales
+  0.75/1.0/1.25/1.5, explicit combos; mult 1.0 бит-в-бит равен control.
+- Criterion probe (всё задекларировано до прогона, без реранов):
+  горизонты 100/150/200, пороги ±10/±20%, агрегации
+  global/network/reversibility, estimators
+  least_squares/endpoint/trailing_window.
+- v5=false в 23/23 режимах и во всех criterion variants; binding и
+  dominant источник не меняются нигде; оба драйвера responsive
+  (proteostasis +51%, stem +17%) — `identifiable`.
+- Audit: `robust_diffuse_wall` (устойчивая диффузная стена),
+  уверенность высокая. HYP-0 остаётся `hypothesis_not_proven`.
+
+---
+
+## Слайд 16. Цифры
 
 Lifespan лучших политик (масштаб: 30 символов = 117.8 лет):
 
@@ -367,18 +388,19 @@ combined revers 6C     69.5  █████████████████
 boundary 6D            69.5  ██████████████████
 compound 6E            69.5  ██████████████████
 hetero 6F             69.5  ██████████████████
+audit 7              69.5  ██████████████████
 ```
 
 - Healthspan ≤ lifespan — всегда (инвариант, покрыт тестами).
 - Bounded degradation (v1, строгий v2, organ-backed v3, network v4,
   reversibility v5): **0 везде** — ни одна политика, ни один сид,
   ни один стресс, ни одна аблация, ни один eps/dt, ни один
-  гетерогенный режим.
-- Тесты: **523 passing**. Артефакты — в `experiments/output/`.
+  гетерогенный режим, ни один audit-режим, ни один criterion variant.
+- Тесты: **547 passing**. Артефакты — в `experiments/output/`.
 
 ---
 
-## Слайд 16. HYP-0
+## Слайд 17. HYP-0
 
 ```text
 HYP-0: hypothesis_not_proven
@@ -402,6 +424,9 @@ HYP-0: hypothesis_not_proven
     29/29 режимах; binding везде `biological_age_slope`; flip нет;
     joint ablation всех групп −17% (ниже порога 20%); wall
     `diffuse_residual_wall`.
+12. Audit 7 (устойчивость критерия и параметров)? — v5=false в 23/23
+    режимах и во всех criterion variants; flip нет; оба драйвера
+    identifiable; audit `robust_diffuse_wall`.
 
 > Candidate policy не найдена — это граница текущей абстрактной модели,
 > а не опровержение гипотезы в реальности. Даже найденный кандидат был бы
@@ -411,12 +436,13 @@ HYP-0: hypothesis_not_proven
 
 ---
 
-## Слайд 17. Дальше
+## Слайд 18. Дальше
 
 ```text
 Stage 6D сказал: conversion подавим, но v5 всё равно нет — за стеной вторая стена.
 Stage 6E сказал: вторая стена составная (bio-age + info, ≥2 источников), стабильна по eps/dt/seed.
 Stage 6F сказал: точечное подавление top-драйверов v5 не снимает — остаточная стена диффузная.
+Stage 7 сказал: диффузная стена устойчива к вариациям критерия и параметров в проверенных диапазонах.
 ```
 
 - **Stage 6E** — done: knife-edge нет, attribution стабильна
@@ -426,18 +452,20 @@ Stage 6F сказал: точечное подавление top-драйвер�
   групп (14×3) не снимает v5 и не смещает binding — остаточная стена
   диффузная (`diffuse_residual_wall`), attenuation частично поглощается
   repair/coupling текущей абстракции.
-- Следующий шаг — решить по residual-классификации: закрыть ветку
-  честным diffuse verdict, Map переходов каналов (6G) при смешанной
-  стене или механистическая ветка (Stage 7, energy-coupled
-  conversion) только отдельным решением.
+- **Stage 7** — done: parameter probe (23×3) и criterion variants не
+  меняют вердикт — диффузная стена устойчива (`robust_diffuse_wall`,
+  уверенность высокая), оба драйвера identifiable.
+- Следующий шаг — решить по итогам аудита: закрыть diagnostic ветку
+  6/7, calibration branch, criterion protocol (7A) или механистическая
+  ветка (energy-coupled conversion) только отдельным решением.
 
 ---
 
-## Слайд 18. Воспроизведение
+## Слайд 19. Воспроизведение
 
 ```bash
 python -m pip install -e ".[dev]"
-python -m pytest   # 523 passing
+python -m pytest   # 547 passing
 ```
 
 ```bash
@@ -458,10 +486,11 @@ $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_sensitivity.json --out-prefix experiments/output/organism_reversibility_boundary_sensitivity
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_probe.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_probe
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_sweep
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_stage7_audit.json --out-prefix experiments/output/organism_reversibility_boundary_stage7_audit
 ```
 
 Документы: `docs/ROADMAP.md` (план), `docs/AGING_MODEL.md` (Stage 5C),
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md` (Stage 6A),
 `docs/ORGAN_NETWORK_MODEL.md` (Stage 6B),
-`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E + heterogeneous probe 6F),
+`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7),
 `docs/ORGANISM_MODEL.md` (§8–14), `docs/IMMORTALITY.md` (§6–12).

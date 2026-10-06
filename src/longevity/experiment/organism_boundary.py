@@ -40,19 +40,30 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from longevity.analysis.boundary_metrics import (
+    AGGREGATION_CHANNELS,
+    SLOPE_ESTIMATORS,
     SUBSTANTIAL_BIO_SLOPE_REDUCTION,
+    assess_identifiability,
     bio_age_source_ru,
     binding_constraint_ru,
     canonical_heterogeneous_driver,
     classify_residual_wall,
+    classify_stage7_audit,
     classify_wall,
     confidence_ru,
+    criterion_variant_ru,
     decompose_biological_age_slope,
+    estimate_bio_slope,
     expand_heterogeneous_driver,
     exploratory_ru,
     hypothesis_ru,
+    identifiability_ru,
+    is_nominal_audit_multiplier,
+    relativize_slope_criteria,
     sensitivity_stable_ru,
+    truncate_trajectory,
     v5_operational_success_ru,
+    validate_audit_multiplier,
     validate_heterogeneous_driver_scale,
     wall_classification_ru,
     summarize_boundary_run,
@@ -1097,6 +1108,299 @@ def run_heterogeneous_probe(config: HeterogeneousProbeConfig) -> dict[str, Any]:
     }
 
 
+LEDGER_SCALE_PARAMS = ("conversion_scale", "independent_accrual_scale",
+                         "repair_ceiling_scale")
+
+
+def _require_audit_drivers(drivers: Any) -> tuple[dict[str, Any], ...]:
+    """Validate the audit driver-weight table (pure, 7).
+
+    Entries are ``{"name": canonical-or-alias, "mults": [...]}``;
+    multipliers must be finite and >= 0. Unknown names, duplicates and
+    overlapping member coverage are rejected like in Stage 6F.
+    """
+    if not isinstance(drivers, (list, tuple)) or not drivers:
+        raise ValueError("audit driver_weights must be a non-empty list")
+    cleaned: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for i, entry in enumerate(drivers):
+        if not isinstance(entry, dict):
+            raise ValueError(f"driver_weights[{i}] must be a dict, got {entry!r}")
+        canonical = canonical_heterogeneous_driver(entry.get("name", ""))
+        if canonical in seen:
+            raise ValueError(f"duplicate audit driver {canonical!r}")
+        seen.add(canonical)
+        mults = entry.get("mults", None)
+        if not isinstance(mults, (list, tuple)) or not mults:
+            raise ValueError(f"driver_weights[{i}].mults must be a non-empty list")
+        validated = [validate_audit_multiplier(m, f"driver_weights[{i}].mults")
+                     for m in mults]
+        if len(set(validated)) != len(validated):
+            raise ValueError(f"driver_weights[{i}].mults must be unique")
+        cleaned.append({"name": canonical, "mults": validated})
+    covered: set[str] = set()
+    for entry in cleaned:
+        for member in expand_heterogeneous_driver(entry["name"]):
+            if member in covered:
+                raise ValueError(
+                    f"audit driver {entry['name']!r} overlaps another driver "
+                    f"on member {member!r}; targets must be disjoint")
+            covered.add(member)
+    return tuple(cleaned)
+
+
+def _require_ledger_scales(scales: Any) -> tuple[dict[str, Any], ...]:
+    """Validate the audit ledger-scale table (pure, 7)."""
+    if scales is None:
+        return ()
+    if not isinstance(scales, (list, tuple)):
+        raise ValueError(f"ledger_scales must be a list, got {scales!r}")
+    cleaned: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for i, entry in enumerate(scales):
+        if not isinstance(entry, dict):
+            raise ValueError(f"ledger_scales[{i}] must be a dict, got {entry!r}")
+        param = entry.get("param", "")
+        if param not in LEDGER_SCALE_PARAMS:
+            raise ValueError(
+                f"ledger_scales[{i}].param must be one of {list(LEDGER_SCALE_PARAMS)}, "
+                f"got {param!r}")
+        if param in seen:
+            raise ValueError(f"duplicate ledger param {param!r}")
+        seen.add(param)
+        values = entry.get("values", None)
+        if not isinstance(values, (list, tuple)) or not values:
+            raise ValueError(f"ledger_scales[{i}].values must be a non-empty list")
+        validated = [validate_audit_multiplier(v, f"ledger_scales[{i}].values")
+                     for v in values]
+        if len(set(validated)) != len(validated):
+            raise ValueError(f"ledger_scales[{i}].values must be unique")
+        cleaned.append({"param": param, "values": validated})
+    return tuple(cleaned)
+
+
+def _require_audit_combinations(combinations: Any) -> tuple[dict[str, Any], ...]:
+    """Validate explicit audit combination declarations (pure, 7).
+
+    Each entry is ``{"name": ..., "driver_weights": {canonical: mult},
+    "ledger_scales": {param: value}}`` with at least one perturbation.
+    """
+    if combinations is None:
+        return ()
+    if not isinstance(combinations, (list, tuple)):
+        raise ValueError(f"combinations must be a list, got {combinations!r}")
+    cleaned: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for i, entry in enumerate(combinations):
+        if not isinstance(entry, dict):
+            raise ValueError(f"combinations[{i}] must be a dict, got {entry!r}")
+        name = entry.get("name", "")
+        if not isinstance(name, str) or not name:
+            raise ValueError(f"combinations[{i}].name must be a non-empty string")
+        if name in seen:
+            raise ValueError(f"duplicate combination {name!r}")
+        seen.add(name)
+        raw_drivers = entry.get("driver_weights", {})
+        raw_ledger = entry.get("ledger_scales", {})
+        if not isinstance(raw_drivers, dict) or not isinstance(raw_ledger, dict):
+            raise ValueError(f"combinations[{i}] weights/scales must be dicts")
+        drivers = {canonical_heterogeneous_driver(k):
+                   validate_audit_multiplier(v, f"combinations[{i}].driver_weights")
+                   for k, v in raw_drivers.items()}
+        ledger = {}
+        for k, v in raw_ledger.items():
+            if k not in LEDGER_SCALE_PARAMS:
+                raise ValueError(
+                    f"combinations[{i}].ledger_scales param must be one of "
+                    f"{list(LEDGER_SCALE_PARAMS)}, got {k!r}")
+            ledger[k] = validate_audit_multiplier(v, f"combinations[{i}].ledger_scales")
+        if not drivers and not ledger:
+            raise ValueError(f"combinations[{i}] must perturb at least one knob")
+        cleaned.append({"name": name, "driver_weights": drivers, "ledger_scales": ledger})
+    return tuple(cleaned)
+
+
+def _require_horizons(horizons: Any) -> tuple[float, ...]:
+    if not isinstance(horizons, (list, tuple)) or not horizons:
+        raise ValueError("criterion_horizons must be a non-empty list")
+    validated = []
+    for h in horizons:
+        if isinstance(h, bool) or not isinstance(h, (int, float)) \
+                or not math.isfinite(float(h)) or float(h) <= 0.0:
+            raise ValueError(f"criterion horizon must be finite and > 0, got {h!r}")
+        validated.append(float(h))
+    if len(set(validated)) != len(validated):
+        raise ValueError("criterion_horizons must be unique")
+    return tuple(validated)
+
+
+def _require_relativities(relativities: Any) -> tuple[float, ...]:
+    if not isinstance(relativities, (list, tuple)) or not relativities:
+        raise ValueError("criterion_threshold_relativities must be a non-empty list")
+    validated = []
+    for r in relativities:
+        if isinstance(r, bool) or not isinstance(r, (int, float)) \
+                or not math.isfinite(float(r)) or float(r) < -1.0:
+            raise ValueError(f"threshold relativity must be finite and >= -1, got {r!r}")
+        validated.append(float(r))
+    if len(set(validated)) != len(validated):
+        raise ValueError("criterion_threshold_relativities must be unique")
+    return tuple(validated)
+
+
+def _require_names(values: Any, known: tuple[str, ...], field: str) -> tuple[str, ...]:
+    if not isinstance(values, (list, tuple)) or not values:
+        raise ValueError(f"{field} must be a non-empty list")
+    for v in values:
+        if v not in known:
+            raise ValueError(f"{field} entry must be one of {list(known)}, got {v!r}")
+    if len(set(values)) != len(values):
+        raise ValueError(f"{field} must be unique")
+    return tuple(values)
+
+
+def audit_parameter_regimes(drivers: tuple[dict[str, Any], ...],
+                            ledger_scales: tuple[dict[str, Any], ...],
+                            combinations: tuple[dict[str, Any], ...]) -> list[dict[str, Any]]:
+    """Deterministic parameter-regime table for a robustness audit (pure, 7).
+
+    ``control`` first (no perturbation), then driver-weight singles,
+    ledger singles, then explicit combos. A regime is exploratory when
+    any multiplier leaves its nominal audit range (wider perturbation).
+    """
+    regimes: list[dict[str, Any]] = [{"name": "control", "kind": "control",
+                                     "driver_mults": {}, "ledger": {},
+                                     "exploratory_wide_range": False}]
+    seen_names = {"control"}
+
+    def _add(name: str, kind: str, driver_mults: dict[str, float],
+             ledger: dict[str, float]) -> None:
+        if name in seen_names:
+            raise ValueError(f"duplicate audit regime {name!r}")
+        seen_names.add(name)
+        wide = any(not is_nominal_audit_multiplier(m, "driver")
+                   for m in driver_mults.values()) \
+            or any(not is_nominal_audit_multiplier(v, "ledger")
+                   for v in ledger.values())
+        regimes.append({"name": name, "kind": kind,
+                        "driver_mults": dict(driver_mults), "ledger": dict(ledger),
+                        "exploratory_wide_range": bool(wide)})
+
+    for entry in drivers:
+        for mult in entry["mults"]:
+            members = {m: mult for m in expand_heterogeneous_driver(entry["name"])}
+            _add(f"driver_w:{entry['name']}@{mult:g}", "single", members, {})
+    for entry in ledger_scales:
+        for value in entry["values"]:
+            _add(f"ledger:{entry['param']}@{value:g}", "single", {},
+                 {entry["param"]: value})
+    for combo in combinations:
+        members: dict[str, float] = {}
+        for canonical in sorted(combo["driver_weights"]):
+            for member in expand_heterogeneous_driver(canonical):
+                if member in members and members[member] != combo["driver_weights"][canonical]:
+                    raise ValueError(
+                        f"combination {combo['name']!r} assigns conflicting mults "
+                        f"to member {member!r}")
+                members[member] = combo["driver_weights"][canonical]
+        _add(f"combo:{combo['name']}", "combo", members, dict(combo["ledger_scales"]))
+    return regimes
+
+
+@dataclass(frozen=True)
+class RobustnessAuditConfig:
+    kind: str = "robustness_audit"
+    experiment_id: str = ""
+    seeds: tuple[int, ...] = ()
+    driver_weights: tuple[dict[str, Any], ...] = ()
+    ledger_scales: tuple[dict[str, Any], ...] = ()
+    combinations: tuple[dict[str, Any], ...] = ()
+    criterion_horizons: tuple[float, ...] = ()
+    criterion_threshold_relativities: tuple[float, ...] = (0.0,)
+    criterion_aggregations: tuple[str, ...] = ("global",)
+    criterion_estimators: tuple[str, ...] = ("least_squares",)
+    identifiability_min_change: float = 0.05
+    base_organism_config: dict[str, Any] = field(default_factory=dict)
+    v5_criteria: dict[str, Any] = field(default_factory=dict)
+    output_prefix: str = ""
+    notes: str = ""
+
+    def __post_init__(self) -> None:
+        if self.kind != "robustness_audit":
+            raise ValueError(f"robustness audit kind mismatch, got {self.kind!r}")
+        if not self.experiment_id:
+            raise ValueError("experiment_id must be non-empty")
+        _require_seeds(list(self.seeds))
+        _require_audit_drivers(list(self.driver_weights))
+        _require_ledger_scales(list(self.ledger_scales) if self.ledger_scales else [])
+        _require_audit_combinations(
+            list(self.combinations) if self.combinations else [])
+        _require_horizons(list(self.criterion_horizons))
+        _require_relativities(list(self.criterion_threshold_relativities))
+        _require_names(list(self.criterion_aggregations), AGGREGATION_CHANNELS,
+                       "criterion_aggregations")
+        _require_names(list(self.criterion_estimators), SLOPE_ESTIMATORS,
+                       "criterion_estimators")
+        if isinstance(self.identifiability_min_change, bool) \
+                or not isinstance(self.identifiability_min_change, (int, float)) \
+                or not math.isfinite(float(self.identifiability_min_change)) \
+                or float(self.identifiability_min_change) < 0.0:
+            raise ValueError("identifiability_min_change must be finite and >= 0")
+        _require_boundary_base(copy.deepcopy(self.base_organism_config))
+        validate_v5_criteria(dict(self.v5_criteria))
+
+    def to_config_dict(self) -> dict[str, Any]:
+        return {
+            "kind": "robustness_audit",
+            "experiment_id": self.experiment_id,
+            "seeds": list(self.seeds),
+            "driver_weights": [{"name": e["name"], "mults": list(e["mults"])}
+                               for e in self.driver_weights],
+            "ledger_scales": [{"param": e["param"], "values": list(e["values"])}
+                              for e in self.ledger_scales],
+            "combinations": [{"name": c["name"], "driver_weights": dict(c["driver_weights"]),
+                              "ledger_scales": dict(c["ledger_scales"])}
+                             for c in self.combinations],
+            "criterion_horizons": list(self.criterion_horizons),
+            "criterion_threshold_relativities":
+                list(self.criterion_threshold_relativities),
+            "criterion_aggregations": list(self.criterion_aggregations),
+            "criterion_estimators": list(self.criterion_estimators),
+            "identifiability_min_change": float(self.identifiability_min_change),
+            "base_organism_config": copy.deepcopy(self.base_organism_config),
+            "v5_criteria": copy.deepcopy(dict(self.v5_criteria)),
+            "output_prefix": self.output_prefix,
+            "notes": self.notes,
+        }
+
+    @classmethod
+    def from_config_dict(cls, data: dict[str, Any]) -> "RobustnessAuditConfig":
+        if data.get("kind", "") != "robustness_audit":
+            raise ValueError(f"robustness audit kind mismatch, got {data.get('kind')!r}")
+        return cls(
+            kind="robustness_audit",
+            experiment_id=data["experiment_id"],
+            seeds=tuple(data.get("seeds", ())),
+            driver_weights=_require_audit_drivers(data.get("driver_weights", [])),
+            ledger_scales=_require_ledger_scales(data.get("ledger_scales", [])),
+            combinations=_require_audit_combinations(data.get("combinations", [])),
+            criterion_horizons=_require_horizons(data.get("criterion_horizons", [])),
+            criterion_threshold_relativities=_require_relativities(
+                data.get("criterion_threshold_relativities", [0.0])),
+            criterion_aggregations=_require_names(
+                data.get("criterion_aggregations", ["global"]),
+                AGGREGATION_CHANNELS, "criterion_aggregations"),
+            criterion_estimators=_require_names(
+                data.get("criterion_estimators", ["least_squares"]),
+                SLOPE_ESTIMATORS, "criterion_estimators"),
+            identifiability_min_change=float(data.get("identifiability_min_change", 0.05)),
+            base_organism_config=copy.deepcopy(data.get("base_organism_config", {})),
+            v5_criteria=copy.deepcopy(data.get("v5_criteria", {})),
+            output_prefix=data.get("output_prefix", ""),
+            notes=data.get("notes", ""),
+        )
+
+
 def _round6(value: Any) -> Any:
     if isinstance(value, float):
         return round(value, 6)
@@ -1253,6 +1557,454 @@ def write_sensitivity_outputs(result: dict[str, Any], out_prefix: str) -> dict[s
             "sensitivity_json": sensitivity_path}
 
 
+def _run_audit_one(base: dict[str, Any], seed: int,
+                   driver_mults: dict[str, float], ledger: dict[str, float],
+                   criteria: dict[str, float]) -> dict[str, Any]:
+    """One audit regime x seed run (Stage 7, no model change).
+
+    Driver perturbation rescales ``contribution`` weights in the existing
+    ``aging_drivers`` config; ledger perturbation rescales existing
+    ``boundary_params``. Multipliers of exactly 1.0 add no entries, so
+    the control trajectory is bit-identical to the unmodified base.
+    Never mutates ``base``, ``driver_mults`` or ``ledger``.
+    """
+    from longevity.model.aging import validate_aging_drivers  # local: model-layer reuse
+
+    data = copy.deepcopy(base)
+    data["seed"] = seed
+    if data.get("boundary_probe_model", "none") == "none":
+        data["boundary_probe_model"] = "irreversibility_ablation"
+    if driver_mults:
+        validated = validate_aging_drivers(
+            copy.deepcopy(data.get("aging_drivers", {}) or {}))
+        for member in sorted(driver_mults):
+            mult = float(driver_mults[member])
+            if member not in validated:
+                raise ValueError(f"audit member {member!r} is not a known driver")
+            if mult == 1.0:
+                continue
+            aging = copy.deepcopy(data.get("aging_drivers", {}) or {})
+            entry = dict(aging.get(member, {}))
+            entry["contribution"] = float(validated[member]["contribution"]) * mult
+            aging[member] = entry
+            data["aging_drivers"] = aging
+    if ledger:
+        params = copy.deepcopy(data.get("boundary_params", {}) or {})
+        for param in sorted(ledger):
+            if float(ledger[param]) == 1.0:
+                continue
+            params[param] = float(ledger[param])
+        data["boundary_params"] = params
+    experiment = OrganismExperimentConfig.from_config_dict(data)
+    result = run_organism_experiment(experiment, out_path=None)
+    summary = result["metrics"]["final"]
+    binding = reversibility_binding(result["trajectory"], dict(criteria))
+    boundary = summarize_boundary_run(result["trajectory"])
+    driver_params = validate_aging_drivers(dict(data.get("aging_drivers", {}) or {}))
+    bio_age_attribution = decompose_biological_age_slope(result["trajectory"], driver_params)
+    estimator_slopes = {name: float(estimate_bio_slope(result["trajectory"], name))
+                        for name in SLOPE_ESTIMATORS}
+    return {"summary": summary, "binding": binding, "boundary": boundary,
+            "bio_age_attribution": bio_age_attribution,
+            "estimator_slopes": estimator_slopes,
+            "trajectory": result["trajectory"]}
+
+
+def _merged_summary_at_horizon(trajectory: list[dict[str, Any]], horizon: float,
+                               dt: float, thresholds: dict[str, Any],
+                               epsilon: float) -> dict[str, Any] | None:
+    """Merged v5-ready summary for a truncated trajectory (pure, 7).
+
+    Reuses the same analysis functions as the organism runner over the
+    horizon-truncated trajectory (no reruns). Returns None when the
+    horizon keeps fewer than 2 adult rows (degenerate variant).
+    """
+    from longevity.analysis.organ_network_metrics import summarize_organ_network_run
+    from longevity.analysis.organism_metrics import compute_organism_summary
+    from longevity.analysis.reversibility_metrics import summarize_reversibility_run
+
+    truncated = truncate_trajectory(trajectory, horizon)
+    adult = [row for row in truncated[1:]
+             if row["developmental_stage"] not in
+             ("embryo", "fetal", "infancy", "childhood", "adolescence")]
+    if len(adult) < 2:
+        return None
+    summary = compute_organism_summary(truncated, dt, dict(thresholds), float(epsilon))
+    summary["organ_network"] = summarize_organ_network_run(truncated, dt)["organ_network"]
+    summary["reversibility"] = summarize_reversibility_run(truncated, dt)["reversibility"]
+    return summary
+
+
+def run_robustness_audit(config: RobustnessAuditConfig) -> dict[str, Any]:
+    """Run parameter regimes + pre-declared criterion variants (Stage 7)."""
+    from longevity.analysis.reversibility_metrics import robust_bounded_degradation_v5
+
+    wall_start = time.perf_counter()
+    criteria = validate_v5_criteria(dict(config.v5_criteria))
+    regimes = audit_parameter_regimes(tuple(config.driver_weights),
+                                      tuple(config.ledger_scales),
+                                      tuple(config.combinations))
+    base = copy.deepcopy(config.base_organism_config)
+    base_duration = float(base.get("duration_years", 150.0))
+    base_dt = float(base.get("dt", 0.25))
+    entries: dict[str, Any] = {}
+    for regime in regimes:
+        seed_rows: dict[str, Any] = {}
+        for seed in config.seeds:
+            seed_rows[str(seed)] = _run_audit_one(
+                copy.deepcopy(base), seed, dict(regime["driver_mults"]),
+                dict(regime["ledger"]), dict(criteria))
+        summaries = [row["summary"] for row in seed_rows.values()]
+        v5 = robust_bounded_degradation_v5(summaries, dict(criteria))
+        seed_v5 = {str(seed): bool(robust_bounded_degradation_v5(
+            [row["summary"]], dict(criteria))["robust_bounded_degradation_v5"])
+            for seed, row in seed_rows.items()}
+        binding_votes: dict[str, int] = {}
+        source_votes: dict[str, int] = {}
+        bio_comp_votes: dict[str, int] = {}
+        bio_source_votes: dict[str, int] = {}
+        bio_totals: list[float] = []
+        bio_slopes: list[float] = []
+        irr_slopes: list[float] = []
+        exploratory = bool(regime["exploratory_wide_range"])
+        for row in seed_rows.values():
+            binding = row["binding"]["first_reversibility_constraint_violated"]
+            binding_votes[binding] = binding_votes.get(binding, 0) + 1
+            source = row["boundary"]["attribution"]["dominant_irreversibility_source"]
+            source_votes[source] = source_votes.get(source, 0) + 1
+            bio = row["bio_age_attribution"]
+            bio_comp_votes[bio.get("dominant_component", "none")] = \
+                bio_comp_votes.get(bio.get("dominant_component", "none"), 0) + 1
+            bio_source_votes[bio.get("dominant_source", "none")] = \
+                bio_source_votes.get(bio.get("dominant_source", "none"), 0) + 1
+            bio_totals.append(float(bio.get("total_slope", 0.0)))
+            bio_slopes.append(float(row["summary"].get(
+                "biological_age_slope_after_adulthood", 0.0)))
+            irr_slopes.append(float(row["summary"].get("reversibility", {})
+                                    .get("worst_irreversible_slope", 0.0)))
+            exploratory = exploratory or bool(
+                row["boundary"]["boundary"].get("exploratory", False))
+        for values in (bio_totals, bio_slopes, irr_slopes):
+            if not all(math.isfinite(v) for v in values):
+                raise ValueError("non-finite audit output")
+        for row in seed_rows.values():
+            for value in row["estimator_slopes"].values():
+                if not math.isfinite(float(value)):
+                    raise ValueError("non-finite estimator slope")
+        binding_majority = _majority(binding_votes)
+        bio_source_majority = _majority(bio_source_votes)
+        wall = classify_wall(bool(v5["robust_bounded_degradation_v5"]), {},
+                             dominant_source=_majority(source_votes))
+        entries[regime["name"]] = {
+            "kind": regime["kind"],
+            "driver_mults": dict(regime["driver_mults"]),
+            "ledger": dict(regime["ledger"]),
+            "n_seeds": len(config.seeds),
+            "robust_v5": bool(v5["robust_bounded_degradation_v5"]),
+            "v5_operational_success_ru": v5_operational_success_ru(
+                bool(v5["robust_bounded_degradation_v5"])),
+            "seed_v5": seed_v5,
+            "seed_stable": len(set(seed_v5.values())) == 1,
+            "mean_bio_age_slope": _mean(bio_slopes),
+            "mean_bio_attribution_total_slope": _mean(bio_totals),
+            "mean_irreversible_slope": _mean(irr_slopes),
+            "binding_majority": binding_majority,
+            "binding_majority_ru": binding_constraint_ru(binding_majority),
+            "binding_votes": binding_votes,
+            "dominant_bio_component_majority": _majority(bio_comp_votes),
+            "dominant_bio_source_majority": bio_source_majority,
+            "dominant_bio_source_majority_ru": bio_age_source_ru(bio_source_majority),
+            "bio_source_votes": bio_source_votes,
+            "dominant_attribution_source_majority": _majority(source_votes),
+            "attribution_source_votes": source_votes,
+            "wall_classification": wall["wall_classification"],
+            "wall_classification_ru": wall_classification_ru(
+                wall["wall_classification"]),
+            "exploratory": bool(exploratory),
+            "exploratory_ru": exploratory_ru(bool(exploratory)),
+            "exploratory_wide_range": bool(regime["exploratory_wide_range"]),
+            "bio_age_attribution": {str(seed): row["bio_age_attribution"]
+                                    for seed, row in seed_rows.items()},
+            "estimator_slopes": {str(seed): dict(row["estimator_slopes"])
+                                 for seed, row in seed_rows.items()},
+            "seeds": {str(seed): {k: row[k] for k in
+                                  ("summary", "binding", "boundary",
+                                   "bio_age_attribution", "estimator_slopes")}
+                      for seed, row in seed_rows.items()},
+        }
+        entries[regime["name"]]["_trajectories"] = {
+            str(seed): row["trajectory"] for seed, row in seed_rows.items()}
+    control = entries["control"]
+    control_bio = float(control["mean_bio_attribution_total_slope"])
+    perturbed = [n for n, e in entries.items() if n != "control"
+                 and (any(m != 1.0 for m in e["driver_mults"].values())
+                      or any(v != 1.0 for v in e["ledger"].values()))]
+    for name in perturbed:
+        entry = entries[name]
+        regime_bio = float(entry["mean_bio_attribution_total_slope"])
+        entry["observable_response_vs_control"] = float(
+            (regime_bio - control_bio) / abs(control_bio)
+            if abs(control_bio) > 1e-12 else 0.0)
+        entry["binding_changed_vs_control"] = \
+            entry["binding_majority"] != control["binding_majority"]
+        entry["source_changed_vs_control"] = \
+            entry["dominant_bio_source_majority"] != \
+            control["dominant_bio_source_majority"]
+    for name, entry in entries.items():
+        if name == "control" or name not in perturbed:
+            entry["observable_response_vs_control"] = 0.0
+            entry["binding_changed_vs_control"] = False
+            entry["source_changed_vs_control"] = False
+    nominal_perturbed = [n for n in perturbed if not entries[n]["exploratory"]]
+    v5_any = any(e["robust_v5"] for e in entries.values())
+    v5_non_exploratory = any(e["robust_v5"] and not e["exploratory"]
+                             for e in entries.values())
+    param_v5_flip = any(entries[n]["robust_v5"] != control["robust_v5"]
+                        for n in nominal_perturbed)
+    param_attr_flip = any(entries[n]["binding_changed_vs_control"]
+                          or entries[n]["source_changed_vs_control"]
+                          for n in nominal_perturbed)
+    seed_stable_all = all(e["seed_stable"] for e in entries.values())
+    # Identifiability over driver-weight singles (ledger scales are
+    # global knobs, not channel dials).
+    responses: dict[str, dict[str, Any]] = {}
+    for entry in config.driver_weights:
+        canonical = entry["name"]
+        singles = [r for r in perturbed
+                   if entries[r]["kind"] == "single"
+                   and not entries[r]["exploratory"]
+                   and set(entries[r]["driver_mults"])
+                   <= set(expand_heterogeneous_driver(canonical))
+                   and entries[r]["driver_mults"]
+                   and not entries[r]["ledger"]]
+        changes = [abs(entries[r]["observable_response_vs_control"]) for r in singles]
+        responses[canonical] = {
+            "relative_observable_change": max(changes) if changes else 0.0,
+            "binding_changed": any(entries[r]["binding_changed_vs_control"]
+                                   for r in singles),
+            "source_changed": any(entries[r]["source_changed_vs_control"]
+                                  for r in singles),
+        }
+    identifiability = assess_identifiability(
+        control_observable=control_bio, driver_responses=responses,
+        min_relative_change=float(config.identifiability_min_change),
+        seed_stable=bool(seed_stable_all), data_complete=True)
+    # Criterion probe: threshold / aggregation / estimator reuse stored
+    # summaries; horizons reuse (possibly extended) control trajectories.
+    criterion: dict[str, Any] = {"threshold_variants": {}, "aggregation": {},
+                                 "estimator_variants": {}, "horizon_variants": {},
+                                 "horizon_extended_duration": base_duration,
+                                 "criterion_flip": False, "flip_notes": []}
+    flip_notes: list[str] = []
+    for r in config.criterion_threshold_relativities:
+        per_regime = {}
+        for name, entry in entries.items():
+            summaries = [entries[name]["seeds"][str(s)]["summary"]
+                         for s in config.seeds]
+            verdict = bool(robust_bounded_degradation_v5(
+                summaries, relativize_slope_criteria(dict(criteria), float(r))
+            )["robust_bounded_degradation_v5"])
+            per_regime[name] = verdict
+        key = f"threshold_{r}"
+        criterion["threshold_variants"][key] = {
+            "relativity": float(r),
+            "variant_ru": criterion_variant_ru("threshold", float(r)),
+            "verdict_by_regime": per_regime,
+        }
+        if float(r) != 0.0 and any(
+                per_regime[n] != entries[n]["robust_v5"] for n in nominal_perturbed + ["control"]):
+            criterion["criterion_flip"] = True
+            flip_notes.append(
+                f"вариант {key}: вердикт v5 отличается от базового при той же динамике")
+    channel_slopes = {
+        "global": lambda s: float(s.get("biological_age_slope_after_adulthood", 9e9)),
+        "network": lambda s: float(s.get("organ_network", {})
+                                   .get("biological_age_network_slope", 9e9)),
+        "reversibility": lambda s: float(s.get("reversibility", {})
+                                        .get("biological_age_reversibility_slope", 9e9)),
+    }
+    channel_eps = {"global": float(criteria["eps_bio"]),
+                   "network": float(criteria["eps_bio_network"]),
+                   "reversibility": float(criteria["eps_bio_rev"])}
+    for ch in config.criterion_aggregations:
+        per_regime = {}
+        for name, entry in entries.items():
+            passes = [channel_slopes[ch](entries[name]["seeds"][str(s)]["summary"])
+                      <= channel_eps[ch] for s in config.seeds]
+            per_regime[name] = bool(all(passes))
+        criterion["aggregation"][f"aggregation_{ch}"] = {
+            "channel": ch,
+            "variant_ru": criterion_variant_ru("aggregation", ch),
+            "robust_pass_by_regime": per_regime,
+        }
+    disagree = [n for n in entries
+                if len({criterion["aggregation"][f"aggregation_{ch}"]
+                         ["robust_pass_by_regime"][n]
+                         for ch in config.criterion_aggregations}) > 1]
+    if disagree:
+        criterion["criterion_flip"] = True
+        flip_notes.append(
+            f"агрегации расходятся в режимах {sorted(disagree)}: вердикт зависит "
+            f"от того, какой агрегат рассматривается")
+    for est in config.criterion_estimators:
+        per_regime = {}
+        for name, entry in entries.items():
+            modified = [dict(entries[name]["seeds"][str(s)]["summary"],
+                             biological_age_slope_after_adulthood=float(
+                                 entries[name]["estimator_slopes"][str(s)][est]))
+                        for s in config.seeds]
+            per_regime[name] = bool(robust_bounded_degradation_v5(
+                modified, dict(criteria))["robust_bounded_degradation_v5"])
+        criterion["estimator_variants"][f"estimator_{est}"] = {
+            "estimator": est,
+            "variant_ru": criterion_variant_ru("estimator", est),
+            "verdict_by_regime": per_regime,
+        }
+        if any(per_regime[n] != entries[n]["robust_v5"]
+               for n in nominal_perturbed + ["control"]):
+            criterion["criterion_flip"] = True
+            flip_notes.append(
+                f"вариант estimator_{est}: вердикт v5 отличается от базового "
+                f"при той же динамике")
+    max_horizon = max(float(h) for h in config.criterion_horizons)
+    ext_duration = max(base_duration, max_horizon)
+    criterion["horizon_extended_duration"] = float(ext_duration)
+    ext_trajectories: dict[str, Any] = {}
+    if ext_duration > base_duration:
+        # Extended control runs at the longer horizon (fresh runs, same seed).
+        ext_trajectories = {}
+        for seed in config.seeds:
+            ext_data = copy.deepcopy(base)
+            ext_data["duration_years"] = float(ext_duration)
+            ext_trajectories[str(seed)] = _run_audit_one(
+                ext_data, seed, {}, {}, dict(criteria))["trajectory"]
+    else:
+        ext_trajectories = dict(entries["control"]["_trajectories"])
+    baseline_ext = control["robust_v5"] if ext_duration == base_duration else None
+    if baseline_ext is None:
+        ext_summaries_full = [
+            _merged_summary_at_horizon(
+                ext_trajectories[str(s)], ext_duration, base_dt,
+                OrganismExperimentConfig.from_config_dict(
+                    copy.deepcopy(base)).effective_thresholds(),
+                float(copy.deepcopy(base).get("bounded_epsilon", 0.01)))
+            for s in config.seeds]
+        baseline_ext = bool(robust_bounded_degradation_v5(
+            [s for s in ext_summaries_full if s is not None],
+            dict(criteria))["robust_bounded_degradation_v5"]) \
+            if all(s is not None for s in ext_summaries_full) else False
+    for h in config.criterion_horizons:
+        horizon = float(h)
+        degenerate = horizon > ext_duration + 1e-9
+        per_seed: dict[str, Any] = {}
+        verdict: bool | None = None
+        binding: str | None = None
+        source: str | None = None
+        if not degenerate:
+            thresholds = OrganismExperimentConfig.from_config_dict(
+                copy.deepcopy(base)).effective_thresholds()
+            epsilon = float(copy.deepcopy(base).get("bounded_epsilon", 0.01))
+            merged = [_merged_summary_at_horizon(
+                ext_trajectories[str(s)], horizon, base_dt, thresholds, epsilon)
+                for s in config.seeds]
+            if any(m is None for m in merged):
+                degenerate = True
+            else:
+                verdict = bool(robust_bounded_degradation_v5(
+                    merged, dict(criteria))["robust_bounded_degradation_v5"])
+                bindings: dict[str, int] = {}
+                sources: dict[str, int] = {}
+                for s, m in zip(config.seeds, merged):
+                    truncated = truncate_trajectory(ext_trajectories[str(s)], horizon)
+                    violated = reversibility_binding(
+                        truncated, dict(criteria)
+                    )["first_reversibility_constraint_violated"]
+                    bindings[violated] = bindings.get(violated, 0) + 1
+                    src = summarize_boundary_run(truncated)["attribution"][
+                        "dominant_irreversibility_source"]
+                    sources[src] = sources.get(src, 0) + 1
+                binding = _majority(bindings)
+                source = _majority(sources)
+        key = f"horizon_{horizon:g}"
+        criterion["horizon_variants"][key] = {
+            "horizon_years": horizon,
+            "variant_ru": criterion_variant_ru("horizon", horizon),
+            "degenerate": bool(degenerate),
+            "robust_v5": verdict,
+            "binding_majority": binding,
+            "binding_majority_ru": binding_constraint_ru(binding) if binding else None,
+            "dominant_source": source,
+        }
+        if not degenerate and (verdict != baseline_ext
+                               or binding != control["binding_majority"]):
+            criterion["criterion_flip"] = True
+            flip_notes.append(
+                f"вариант {key}: вердикт/binding отличается от полно-горизонтного "
+                f"базового при той же динамике")
+    criterion["flip_notes"] = flip_notes
+    criterion["flip_notes_ru"] = list(flip_notes)
+    audit = classify_stage7_audit(
+        v5_any_non_exploratory=bool(v5_non_exploratory),
+        criterion_flip=bool(criterion["criterion_flip"]),
+        parameter_v5_flip=bool(param_v5_flip),
+        parameter_attribution_flip=bool(param_attr_flip),
+        identifiability=str(identifiability["identifiability"]),
+        n_regimes_tested=len(entries),
+        stability={"data_complete": True, "seed_stable": bool(seed_stable_all)})
+    stage_7 = {
+        **audit,
+        "stage_7_audit_classification_ru": wall_classification_ru(
+            audit["stage_7_audit_classification"]),
+        "confidence_ru": confidence_ru(audit["confidence"]),
+        "identifiability": identifiability,
+        "identifiability_ru": identifiability_ru(
+            str(identifiability["identifiability"])),
+        "evidence": {
+            "n_regimes": len(entries),
+            "n_drivers_tested": len(config.driver_weights),
+            "v5_any_regime": bool(v5_any),
+            "v5_robust_non_exploratory": bool(v5_non_exploratory),
+            "parameter_v5_flip": bool(param_v5_flip),
+            "parameter_attribution_flip": bool(param_attr_flip),
+            "criterion_flip": bool(criterion["criterion_flip"]),
+            "seed_stable_all_regimes": bool(seed_stable_all),
+            "control_binding": control["binding_majority"],
+            "control_binding_ru": control["binding_majority_ru"],
+            "control_dominant_bio_source": control["dominant_bio_source_majority"],
+            "control_dominant_bio_source_ru":
+                control["dominant_bio_source_majority_ru"],
+        },
+        "attribution_proxy_note": ("Attribution shares являются операционными "
+                                   "диагностическими прокси, не законами сохранения."),
+    }
+    wall_seconds = round(time.perf_counter() - wall_start, 4)
+    for entry in entries.values():
+        entry.pop("_trajectories", None)
+    return {
+        "kind": "robustness_audit",
+        "experiment_id": config.experiment_id,
+        "format": BOUNDARY_EXPERIMENT_VERSION,
+        "config": config.to_config_dict(),
+        "config_hash": _config_hash(config.to_config_dict()),
+        "model_scope": BOUNDARY_SCOPE,
+        "immortality_status": "hypothesis_not_proven",
+        "immortality_status_ru": hypothesis_ru("hypothesis_not_proven"),
+        "candidate_robust_bounded_degradation_v5_found": False,
+        "candidate_ru": hypothesis_ru("candidate_not_found"),
+        "candidate_note_ru": ("audit-режим: возможный v5=true классифицируется как "
+                              "sensitivity (criterion/parameter), а не как кандидат; "
+                              "HYP-0 остаётся hypothesis_not_proven"),
+        "v5_any_non_exploratory_regime": bool(v5_non_exploratory),
+        "seed_stable_all_regimes": bool(seed_stable_all),
+        "stage_7": stage_7,
+        "criterion_probe": criterion,
+        "seeds": list(config.seeds),
+        "entries": entries,
+        "runtime": {"engine": "organism-boundary/v0", "python": platform.python_version(),
+                    "platform": platform.platform(), "wall_seconds": wall_seconds},
+    }
+
+
 def write_heterogeneous_outputs(result: dict[str, Any], out_prefix: str) -> dict[str, str]:
     parent = os.path.dirname(os.path.abspath(out_prefix))
     os.makedirs(parent, exist_ok=True)
@@ -1316,7 +2068,76 @@ def write_heterogeneous_outputs(result: dict[str, Any], out_prefix: str) -> dict
             "residual_classification_json": residual_path}
 
 
-def load_boundary_config(path: str) -> BoundarySweepConfig | ComponentAttributionConfig | SensitivityConfig | HeterogeneousProbeConfig:
+def write_robustness_outputs(result: dict[str, Any], out_prefix: str) -> dict[str, str]:
+    parent = os.path.dirname(os.path.abspath(out_prefix))
+    os.makedirs(parent, exist_ok=True)
+    summary_json_path = f"{out_prefix}_summary.json"
+    regimes_path = f"{out_prefix}_regimes.csv"
+    audit_path = f"{out_prefix}_audit_classification.json"
+    with open(regimes_path, "w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=[
+            "regime", "kind", "perturbations", "n_seeds", "robust_v5", "v5_ru",
+            "mean_bio_age_slope", "mean_bio_attribution_total_slope",
+            "observable_response_vs_control", "mean_irreversible_slope",
+            "binding_majority", "binding_ru", "dominant_bio_source",
+            "dominant_bio_source_ru", "binding_changed", "source_changed",
+            "wall_classification", "wall_ru", "exploratory", "seed_stable"])
+        writer.writeheader()
+        for name in result["entries"]:
+            entry = result["entries"][name]
+            perturbations = json.dumps({"driver_mults": entry["driver_mults"],
+                                        "ledger": entry["ledger"]}, sort_keys=True)
+            writer.writerow({
+                "regime": name, "kind": entry["kind"], "perturbations": perturbations,
+                "n_seeds": entry["n_seeds"], "robust_v5": entry["robust_v5"],
+                "v5_ru": entry["v5_operational_success_ru"],
+                "mean_bio_age_slope": _round6(entry["mean_bio_age_slope"]),
+                "mean_bio_attribution_total_slope": _round6(
+                    entry["mean_bio_attribution_total_slope"]),
+                "observable_response_vs_control": _round6(
+                    entry.get("observable_response_vs_control", 0.0)),
+                "mean_irreversible_slope": _round6(entry["mean_irreversible_slope"]),
+                "binding_majority": entry["binding_majority"],
+                "binding_ru": entry["binding_majority_ru"],
+                "dominant_bio_source": entry["dominant_bio_source_majority"],
+                "dominant_bio_source_ru": entry["dominant_bio_source_majority_ru"],
+                "binding_changed": entry.get("binding_changed_vs_control", False),
+                "source_changed": entry.get("source_changed_vs_control", False),
+                "wall_classification": entry["wall_classification"],
+                "wall_ru": entry["wall_classification_ru"],
+                "exploratory": entry["exploratory"],
+                "seed_stable": entry["seed_stable"],
+            })
+    payload = _round6(result)
+    with open(summary_json_path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, indent=2, allow_nan=False)
+    with open(audit_path, "w", encoding="utf-8") as fh:
+        json.dump({"experiment_id": result["experiment_id"],
+                   "config_hash": result["config_hash"],
+                   "model_scope": result["model_scope"],
+                   "immortality_status": result["immortality_status"],
+                   "immortality_status_ru": result["immortality_status_ru"],
+                   "candidate_robust_bounded_degradation_v5_found":
+                       result["candidate_robust_bounded_degradation_v5_found"],
+                   "candidate_ru": result["candidate_ru"],
+                   "candidate_note_ru": result["candidate_note_ru"],
+                   "v5_any_non_exploratory_regime":
+                       result["v5_any_non_exploratory_regime"],
+                   "seed_stable_all_regimes": result["seed_stable_all_regimes"],
+                   "stage_7": _round6(result["stage_7"]),
+                   "criterion_probe": _round6(result["criterion_probe"])},
+                  fh, ensure_ascii=False, indent=2, allow_nan=False)
+    for entry in result["entries"].values():
+        for value in (entry["mean_bio_age_slope"],
+                      entry["mean_bio_attribution_total_slope"],
+                      entry["mean_irreversible_slope"]):
+            if not math.isfinite(float(value)):
+                raise ValueError("non-finite robustness audit output")
+    return {"summary_json": summary_json_path, "regimes_csv": regimes_path,
+            "audit_classification_json": audit_path}
+
+
+def load_boundary_config(path: str) -> BoundarySweepConfig | ComponentAttributionConfig | SensitivityConfig | HeterogeneousProbeConfig | RobustnessAuditConfig:
     with open(path, encoding="utf-8") as fh:
         data = json.load(fh)
     kind = data.get("kind", "")
@@ -1328,7 +2149,9 @@ def load_boundary_config(path: str) -> BoundarySweepConfig | ComponentAttributio
         return SensitivityConfig.from_config_dict(data)
     if kind == "heterogeneous_probe":
         return HeterogeneousProbeConfig.from_config_dict(data)
-    raise ValueError(f"boundary config kind must be one of {sorted(KIND_TO_PARAM) + ['component_attribution', 'sensitivity', 'heterogeneous_probe']}, "
+    if kind == "robustness_audit":
+        return RobustnessAuditConfig.from_config_dict(data)
+    raise ValueError(f"boundary config kind must be one of {sorted(KIND_TO_PARAM) + ['component_attribution', 'sensitivity', 'heterogeneous_probe', 'robustness_audit']}, "
                      f"got {kind!r}")
 
 
@@ -1353,6 +2176,11 @@ def main() -> None:
         result = run_heterogeneous_probe(config)
         paths = write_heterogeneous_outputs(result, out_prefix)
         print(f"[heterogeneous_probe {config.experiment_id}] "
+              f"{len(result['entries'])} regimes x {len(config.seeds)} seeds")
+    elif isinstance(config, RobustnessAuditConfig):
+        result = run_robustness_audit(config)
+        paths = write_robustness_outputs(result, out_prefix)
+        print(f"[robustness_audit {config.experiment_id}] "
               f"{len(result['entries'])} regimes x {len(config.seeds)} seeds")
     else:
         result = run_component_attribution(config)

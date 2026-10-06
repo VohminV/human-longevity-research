@@ -677,6 +677,75 @@ HYP-0: `hypothesis_not_proven`; residual wall — `diffuse_residual_wall`.
 (eps/dt/horizon — сетка 6E); attribution shares — диагностические
 прокси; unlimited ceiling остаётся exploratory.
 
+## Этап 7 — Criterion and Parameter Robustness Audit (готов ✅)
+
+Audit layer поверх Stage 6F: проверяет, устойчива ли диффузная
+остаточная стена к вариациям операционного критерия v5 и параметров
+модели. Не новая биология, не mechanistic extension, не поиск v5:
+аудитный v5=true — это sensitivity, а не успех. Базовая динамика
+6C/6D/6E/6F не меняется.
+
+- [x] инвентаризация: все механизмы есть — `aging_drivers.contribution`
+      веса, `boundary_params` scales, `robust_bounded_degradation_v5`
+      + `validate_v5_criteria`, переиспользование trajectories
+      (переоценка summaries, усечение горизонтов, существующие
+      агрегатные наклоны); estimators кроме least_squares
+      отсутствуют — добавлены два тривиальных pure estimators
+      (endpoint, trailing_window) в analysis-слое без смены динамики
+- [x] `robustness_audit`-kind в `organism_boundary.py`:
+      `RobustnessAuditConfig`, детерминированная таблица режимов
+      (control → driver singles → ledger singles → explicit combos),
+      `_run_audit_one` (mult 1.0 бит-в-бит равен control),
+      writer (`*_summary.json`, `*_regimes.csv`,
+      `*_audit_classification.json`); loader/main расширены, старые
+      kinds работают
+- [x] parameter probe (23 режима × 3 seeds): веса top drivers
+      0.5/1.0/2.0, ledger 0.75/1.0/1.25/1.5, combos top±conversion и
+      all significant ±; wide-range вне [0.5,2.0]/[0.75,1.5]
+      авто-маркируется exploratory (в штатном конфиге таких нет)
+- [x] criterion probe (всё задекларировано до прогона): horizons
+      100/150/200 (усечение + полный пересчёт саммари; extended
+      control 200 лет), thresholds ±10/±20% (девять slope-eps,
+      worst-gates фиксированы), aggregations global/network/
+      reversibility, estimators least_squares/endpoint/trailing_window
+- [x] identifiability probe (pure): оба драйвера responsive
+      (proteostasis +51%, stem +17%) — `identifiable`
+- [x] `classify_stage7_audit` (pure) + русские статусы пяти меток;
+      английские enum не переименованы
+- [x] 1 конфиг `organism_reversibility_boundary_stage7_audit.json`
+- [x] наблюдение (в рамках модели, seeds 42/7/99): v5=false в 23/23
+      режимах и во всех criterion variants; binding везде
+      `biological_age_slope`; dominant везде `proteostasis_metabolic`;
+      flip нет нигде
+- [x] audit classification: `robust_diffuse_wall` (устойчивая
+      диффузная стена), уверенность высокая — diffuse residual wall
+      стабильна в проверенных диапазонах
+- [x] тесты (`test_reversibility_boundary_stage7_audit.py`, 24 шт.):
+      backward compatibility (none/нейтраль/legacy 6D/6E/6F конфиги,
+      control == mult-1.0), валидация имён/мультипликаторов/variants,
+      детерминизм, finite outputs, немутация входов и global random,
+      criterion sensitivity (r=0 и full-horizon воспроизводят baseline,
+      least_squares совпадает с summary), identifiability (все 4
+      флага), classifier (все 5 labels, insufficient, unstable,
+      v5-в-аудите-не-успех), русские статусы, exploratory-флаги,
+      guard от новой биологии
+- [x] legacy перепроверены прогоном: `legacy_none` (67.0/58.2),
+      compound → `compound_residual_wall`, hetero probe →
+      `diffuse_residual_wall`
+
+Новое: `classify_stage7_audit`, `assess_identifiability`,
+`estimate_bio_slope`, `truncate_trajectory`,
+`relativize_slope_criteria`, RU-хелперы (`boundary_metrics`);
+`RobustnessAuditConfig`, `run_robustness_audit`,
+`audit_parameter_regimes` (`organism_boundary`); § Stage 7 в
+`docs/REVERSIBILITY_MODEL.md`, статус в
+`research/hypotheses/HYP-0_immortality_policy.md`.
+HYP-0: `hypothesis_not_proven`; audit — `robust_diffuse_wall`.
+Ограничение: сетка (веса 0.5–2.0, ledger 0.75–1.5, горизонты
+100–200, пороги ±20%); attribution shares — диагностические прокси;
+unlimited ceiling exploratory; только abstract organ-network
+reversibility boundary-probe модель.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

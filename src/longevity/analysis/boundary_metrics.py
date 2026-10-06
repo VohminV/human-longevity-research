@@ -108,6 +108,11 @@ WALL_CLASSIFICATION_RU: dict[str, str] = {
     "structural_other_wall": "структурная стена другого канала",
     "mixed_wall": "смешанная стена",
     "inconclusive": "неоднозначно",
+    "robust_diffuse_wall": "устойчивая диффузная стена",
+    "criterion_sensitive_wall": "стена, чувствительная к критерию",
+    "parameter_sensitive_wall": "стена, чувствительная к параметрам",
+    "non_identifiable_abstraction": "неидентифицируемая абстракция",
+    "inconclusive_insufficient_calibration": "неоднозначно: недостаточно калибровки",
 }
 
 BINDING_CONSTRAINT_RU: dict[str, str] = {
@@ -803,3 +808,332 @@ def compute_eps_sensitivity(summaries: list[dict[str, Any]],
         "reason": ("verdict identical across eps" if all(v == values[0] for v in values)
                    else "verdict changes across eps"),
     }
+
+
+# Stage 7 audit labels (diagnostic only; see classify_stage7_audit).
+STAGE7_AUDIT_LABELS = (
+    "robust_diffuse_wall",
+    "criterion_sensitive_wall",
+    "parameter_sensitive_wall",
+    "non_identifiable_abstraction",
+    "inconclusive_insufficient_calibration",
+)
+
+# Stage 7: identifiability flags for driver channels (diagnostic only).
+IDENTIFIABILITY_FLAGS = (
+    "identifiable",
+    "weakly_identifiable",
+    "non_identifiable",
+    "insufficient_data",
+)
+
+# Stage 7: slope estimator names for the criterion probe (pure analysis,
+# no simulation change; see estimate_bio_slope).
+SLOPE_ESTIMATORS = (
+    "least_squares",
+    "endpoint",
+    "trailing_window",
+)
+
+# Trailing window width for the trailing_window estimator (years).
+TRAILING_WINDOW_YEARS = 30.0
+
+# Aggregation channels for the criterion probe (existing summary slopes).
+AGGREGATION_CHANNELS = (
+    "global",
+    "network",
+    "reversibility",
+)
+
+# Slope-eps criterion keys scaled by threshold relativity (same nine as
+# the Stage 6E eps-sensitivity probe; worst-case gates stay fixed).
+SLOPE_EPS_KEYS_7 = ("eps_bio", "eps_bio_network", "eps_bio_rev", "eps_driver",
+                    "eps_reversible", "eps_irreversible", "eps_information",
+                    "eps_mutation", "eps_niche")
+
+# Multipliers inside these closed ranges are nominal audit perturbations;
+# wider ones are auto-marked exploratory (see is_nominal_audit_multiplier).
+NOMINAL_DRIVER_MULT_RANGE = (0.5, 2.0)
+NOMINAL_LEDGER_SCALE_RANGE = (0.75, 1.5)
+
+IDENTIFIABILITY_RU: dict[str, str] = {
+    "identifiable": "идентифицируем",
+    "weakly_identifiable": "слабо идентифицируем",
+    "non_identifiable": "неидентифицируем",
+    "insufficient_data": "недостаточно данных",
+}
+
+
+def identifiability_ru(flag: str) -> str:
+    """Russian human-readable identifiability flag (pure, 7)."""
+    if flag not in IDENTIFIABILITY_RU:
+        raise ValueError(f"unknown identifiability flag {flag!r}")
+    return IDENTIFIABILITY_RU[flag]
+
+
+def criterion_variant_ru(kind: str, value: Any) -> str:
+    """Russian human-readable criterion variant name (pure, 7).
+
+    Technical variant ids stay English; this helper only builds the
+    human-readable companion string (e.g. threshold_-0.2).
+    """
+    if kind == "threshold":
+        return f"порог {float(value):+.0%} (threshold_{value})"
+    if kind == "horizon":
+        return f"горизонт {float(value):g} лет (horizon_{value})"
+    if kind == "aggregation":
+        return f"агрегация {value} (aggregation_{value})"
+    if kind == "estimator":
+        return f"оценка наклона {value} (estimator_{value})"
+    raise ValueError(f"unknown criterion variant kind {kind!r}")
+
+
+def validate_audit_multiplier(value: Any, path: str) -> float:
+    """Validate one audit perturbation multiplier (pure, 7)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{path} must be a number, got {value!r}")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{path} must be finite, got {value!r}")
+    if result < 0.0:
+        raise ValueError(f"{path} must be >= 0")
+    return result
+
+
+def is_nominal_audit_multiplier(value: float, family: str) -> bool:
+    """True when a multiplier is inside the nominal audit range (pure, 7).
+
+    ``family`` is ``"driver"`` (weight multipliers) or ``"ledger"``
+    (boundary scales). Wider perturbations are legitimate audit points
+    but auto-marked exploratory by the runner.
+    """
+    if family == "driver":
+        lo, hi = NOMINAL_DRIVER_MULT_RANGE
+    elif family == "ledger":
+        lo, hi = NOMINAL_LEDGER_SCALE_RANGE
+    else:
+        raise ValueError(f"unknown audit family {family!r}")
+    return bool(lo <= float(value) <= hi)
+
+
+def relativize_slope_criteria(criteria: dict[str, Any], relativity: float) -> dict[str, float]:
+    """Scale the nine slope-eps thresholds by (1 + relativity) (pure, 7).
+
+    Worst-case gates stay fixed, like in the Stage 6E eps-sensitivity
+    probe. ``relativity`` must keep every eps >= 0.
+    """
+    if isinstance(relativity, bool) or not isinstance(relativity, (int, float)) \
+            or not math.isfinite(float(relativity)) or float(relativity) < -1.0:
+        raise ValueError(f"threshold relativity must be finite and >= -1, got {relativity!r}")
+    scaled = dict(criteria)
+    for key in SLOPE_EPS_KEYS_7:
+        scaled[key] = float(criteria[key]) * (1.0 + float(relativity))
+    return scaled
+
+
+def estimate_bio_slope(trajectory: list[dict[str, Any]], estimator: str) -> float:
+    """Adult biological-age slope under one estimator (pure, 7).
+
+    ``least_squares`` is the baseline estimator used by every summary;
+    ``endpoint`` and ``trailing_window`` are trivial diagnostic
+    alternatives (no new dynamics, no refits). Never mutates the
+    trajectory.
+    """
+    if estimator not in SLOPE_ESTIMATORS:
+        raise ValueError(f"unknown slope estimator {estimator!r}; "
+                         f"known: {list(SLOPE_ESTIMATORS)}")
+    if not trajectory or len(trajectory) < 2:
+        raise ValueError("estimate_bio_slope of empty trajectory")
+    adult = _adult_rows(trajectory)
+    if not adult:
+        raise ValueError("estimate_bio_slope with no adult rows")
+    times = [float(row["chronological_age"]) for row in adult]
+    values = [float(row["biological_age"]) for row in adult]
+    if estimator == "least_squares":
+        return float(_slope(times, values))
+    if estimator == "endpoint":
+        span = times[-1] - times[0]
+        if span <= 0.0:
+            return 0.0
+        return float((values[-1] - values[0]) / span)
+    window = [(t, v) for t, v in zip(times, values)
+              if t >= times[-1] - TRAILING_WINDOW_YEARS]
+    if len(window) < 2:
+        window = list(zip(times, values))
+    wtimes = [t for t, _ in window]
+    wvalues = [v for _, v in window]
+    return float(_slope(wtimes, wvalues))
+
+
+def truncate_trajectory(trajectory: list[dict[str, Any]],
+                        horizon_years: float) -> list[dict[str, Any]]:
+    """Truncate a trajectory to a horizon without rerunning (pure, 7).
+
+    Keeps the initial row plus every row with
+    ``chronological_age <= horizon``. Never mutates the input.
+    Horizons with fewer than 2 adult rows are degenerate for slope
+    metrics; the runner marks such variants instead of failing.
+    """
+    if isinstance(horizon_years, bool) or not isinstance(horizon_years, (int, float)) \
+            or not math.isfinite(float(horizon_years)) or float(horizon_years) <= 0.0:
+        raise ValueError(f"horizon_years must be finite and > 0, got {horizon_years!r}")
+    if not trajectory or len(trajectory) < 2:
+        raise ValueError("truncate_trajectory of empty trajectory")
+    horizon = float(horizon_years)
+    kept = [trajectory[0]] + [row for row in trajectory[1:]
+                              if float(row["chronological_age"]) <= horizon + 1e-9]
+    if len(kept) < 2:
+        raise ValueError(f"horizon {horizon} keeps fewer than 2 rows")
+    return [dict(row) for row in kept]
+
+
+def assess_identifiability(*,
+                           control_observable: float,
+                           driver_responses: dict[str, dict[str, Any]] | None = None,
+                           min_relative_change: float = 0.05,
+                           seed_stable: bool = True,
+                           data_complete: bool = True) -> dict[str, Any]:
+    """Driver-channel identifiability over audit evidence (pure, 7).
+
+    ``driver_responses`` maps a tested driver group to
+    ``relative_observable_change`` (fraction vs control),
+    ``binding_changed`` and ``source_changed`` bools. A channel is
+    responsive when the observable moves by at least
+    ``min_relative_change`` or the binding/source flips: the dial is
+    connected to something the metrics can see. Pure diagnostic over
+    already-computed numbers; never touches the simulation.
+    """
+    driver_responses = dict(driver_responses or {})
+    if isinstance(min_relative_change, bool) or not isinstance(min_relative_change, (int, float)) \
+            or not math.isfinite(float(min_relative_change)) \
+            or float(min_relative_change) < 0.0:
+        raise ValueError(f"min_relative_change must be finite and >= 0, "
+                         f"got {min_relative_change!r}")
+    for flag_name, flag in (("seed_stable", seed_stable),
+                            ("data_complete", data_complete)):
+        if not isinstance(flag, bool):
+            raise ValueError(f"{flag_name} must be a bool, got {flag!r}")
+    if not data_complete or not driver_responses:
+        return {"identifiability": "insufficient_data",
+                "identifiability_reason":
+                    "insufficient data: refusing to judge identifiability",
+                "per_driver": {}}
+    if not seed_stable:
+        return {"identifiability": "insufficient_data",
+                "identifiability_reason":
+                    "seed-unstable responses cannot support identifiability",
+                "per_driver": {}}
+    per_driver: dict[str, Any] = {}
+    for name in sorted(driver_responses):
+        info = driver_responses[name]
+        change = info.get("relative_observable_change", 0.0)
+        if isinstance(change, bool) or not isinstance(change, (int, float)) \
+                or not math.isfinite(float(change)):
+            raise ValueError(f"driver response {name!r} change must be finite, "
+                             f"got {change!r}")
+        for key in ("binding_changed", "source_changed"):
+            if not isinstance(info.get(key), bool):
+                raise ValueError(f"driver response {name!r}.{key} must be a bool")
+        responsive = bool(float(change) >= float(min_relative_change)
+                          or info["binding_changed"] or info["source_changed"])
+        per_driver[name] = {
+            "relative_observable_change": float(change),
+            "binding_changed": bool(info["binding_changed"]),
+            "source_changed": bool(info["source_changed"]),
+            "channel": "identifiable" if responsive else "weakly_identifiable",
+        }
+    responsive = sum(1 for v in per_driver.values() if v["channel"] == "identifiable")
+    if responsive == len(per_driver):
+        flag, reason = ("identifiable",
+                        "every tested driver moves the observable or flips "
+                        "binding/source; channels distinguishable")
+    elif responsive == 0:
+        flag, reason = ("non_identifiable",
+                        "no tested driver moves the observable or flips "
+                        "binding/source; perturbations indistinguishable "
+                        "in the current abstraction")
+    else:
+        weak = sorted(n for n, v in per_driver.items() if v["channel"] != "identifiable")
+        flag, reason = ("weakly_identifiable",
+                        f"channels {weak} do not respond to perturbation; "
+                        f"remaining channels distinguishable")
+    return {"identifiability": flag, "identifiability_reason": reason,
+            "per_driver": per_driver}
+
+
+def classify_stage7_audit(*,
+                          v5_any_non_exploratory: bool = False,
+                          criterion_flip: bool = False,
+                          parameter_v5_flip: bool = False,
+                          parameter_attribution_flip: bool = False,
+                          identifiability: str = "insufficient_data",
+                          n_regimes_tested: int = 0,
+                          stability: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Criterion/parameter robustness audit classification (pure, 7).
+
+    Pure diagnostic homunculus over already-computed audit evidence;
+    never touches the simulation. A ``v5=true`` inside the audit is
+    never success: with unchanged dynamics it means the criterion is
+    unstable (``criterion_sensitive_wall``), with perturbed parameters
+    it means calibration is missing (``parameter_sensitive_wall``).
+    HYP-0 stays ``hypothesis_not_proven`` in every branch. Missing
+    evidence is never guessed.
+    """
+    for flag_name, flag in (
+            ("v5_any_non_exploratory", v5_any_non_exploratory),
+            ("criterion_flip", criterion_flip),
+            ("parameter_v5_flip", parameter_v5_flip),
+            ("parameter_attribution_flip", parameter_attribution_flip)):
+        if not isinstance(flag, bool):
+            raise ValueError(f"{flag_name} must be a bool, got {flag!r}")
+    if identifiability not in IDENTIFIABILITY_FLAGS:
+        raise ValueError(f"unknown identifiability flag {identifiability!r}")
+    if isinstance(n_regimes_tested, bool) or not isinstance(n_regimes_tested, int) \
+            or n_regimes_tested < 0:
+        raise ValueError(f"n_regimes_tested must be an int >= 0, got {n_regimes_tested!r}")
+    stability = dict(stability or {})
+    data_complete = bool(stability.get("data_complete", False))
+    if not data_complete or n_regimes_tested == 0:
+        return {"stage_7_audit_classification": "inconclusive_insufficient_calibration",
+                "stage_7_audit_classification_reason":
+                    "insufficient data: refusing to judge robustness",
+                "confidence": "low"}
+    unstable = sorted(k for k, v in stability.items()
+                      if k != "data_complete" and not v)
+    if unstable:
+        return {"stage_7_audit_classification": "inconclusive_insufficient_calibration",
+                "stage_7_audit_classification_reason":
+                    f"verdict unstable across {', '.join(unstable)}; no strong audit claim",
+                "confidence": "low"}
+    if criterion_flip:
+        return {"stage_7_audit_classification": "criterion_sensitive_wall",
+                "stage_7_audit_classification_reason":
+                    "same dynamics, different v5 verdict/binding/source under a "
+                    "pre-declared criterion variant; the operationalization is "
+                    "unstable, not the biology; HYP-0 stays hypothesis_not_proven",
+                "confidence": "medium"}
+    if parameter_v5_flip or parameter_attribution_flip:
+        return {"stage_7_audit_classification": "parameter_sensitive_wall",
+                "stage_7_audit_classification_reason":
+                    "reasonable parameter perturbation changes the v5 verdict or "
+                    "the dominant attribution while dynamics stay nominal; "
+                    "calibration is missing before any strong claim, not "
+                    "removability of the wall; HYP-0 stays hypothesis_not_proven",
+                "confidence": "medium"}
+    if identifiability == "non_identifiable":
+        return {"stage_7_audit_classification": "non_identifiable_abstraction",
+                "stage_7_audit_classification_reason":
+                    "perturbations are indistinguishable in the metrics; no "
+                    "reliable channel holds the wall in the current abstraction",
+                "confidence": "medium"}
+    if identifiability == "insufficient_data":
+        return {"stage_7_audit_classification": "inconclusive_insufficient_calibration",
+                "stage_7_audit_classification_reason":
+                    "identifiability could not be judged; withholding a robustness claim",
+                "confidence": "low"}
+    return {"stage_7_audit_classification": "robust_diffuse_wall",
+            "stage_7_audit_classification_reason":
+                "v5 false in every non-exploratory regime, no criterion or "
+                "parameter flip, binding stays biological_age_slope; diffuse "
+                "residual wall stable inside the audited ranges",
+            "confidence": "high" if identifiability == "identifiable" else "medium"}

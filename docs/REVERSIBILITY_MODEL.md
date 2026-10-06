@@ -335,3 +335,74 @@ driver-type `component_overrides`. `driver_scale=1.0` не добавляет
 attribution shares — диагностические прокси, не законы сохранения;
 unlimited ceiling остаётся exploratory; вывод действует только внутри
 текущей абстракции и проверенной сетки чувствительности.
+
+## 15. Stage 7 — Criterion and Parameter Robustness Audit (кратко)
+
+Audit layer поверх Stage 6F: проверяет, является ли диффузная
+остаточная стена устойчивой в пределах разумных вариаций
+операционного критерия v5 и параметров модели — или она зависит от
+текущей операционализации и некалиброванной параметризации. Новая
+биология не добавляется, базовая динамика не меняется,
+`boundary_probe_model=none` по-прежнему эквивалентен 6C. Это проверка
+качества самой диагностики, а не поиск v5=true: появившийся в аудите
+v5=true классифицируется как sensitivity, а не успех, HYP-0 при любом
+исходе остаётся `hypothesis_not_proven`.
+
+Что добавлено (всё additive):
+
+- `robustness_audit`-kind в `organism_boundary.py`:
+  `RobustnessAuditConfig` (driver weights, ledger scales, explicit
+  combos, pre-declared criterion variants, seeds), `_run_audit_one`,
+  `run_robustness_audit`, writer (`*_summary.json`, `*_regimes.csv`,
+  `*_audit_classification.json`). Perturbation использует только
+  существующие слои: `contribution` весов `aging_drivers` и
+  `boundary_params`; множитель 1.0 не добавляет записей и
+  воспроизводит baseline бит-в-бит. Множители вне номинальных
+  диапазонов (веса вне [0.5, 2.0], ledger вне [0.75, 1.5])
+  автоматически помечаются exploratory.
+- Parameter probe: веса top drivers (0.5/1.0/2.0), ledger scales
+  (0.75/1.0/1.25/1.5), explicit combos (top±conversion, all
+  significant ±) — 23 режима × 3 seeds.
+- Criterion probe без повторного моделирования (кроме extended
+  control 200 лет для горизонта): horizons 100/150/200 через
+  усечение траекторий и полный пересчёт саммари существующими
+  функциями; thresholds ±10/±20% через масштабирование девяти
+  slope-eps (worst-gates фиксированы, как в 6E); aggregations
+  global/network/reversibility по существующим наклонам; estimators
+  least_squares/endpoint/trailing_window (два последних — тривиальные
+  диагностические альтернативы, не новая динамика). Все variants
+  задекларированы в конфиге до прогона.
+- Identifiability probe (pure): канал responsive, если наблюдаемый
+  bio slope сдвигается ≥5% или flip binding/source; флаги
+  identifiable/weakly_identifiable/non_identifiable/insufficient_data.
+- `classify_stage7_audit` (pure): 5 labels — `robust_diffuse_wall`,
+  `criterion_sensitive_wall`, `parameter_sensitive_wall`,
+  `non_identifiable_abstraction`,
+  `inconclusive_insufficient_calibration`. Приоритет: insufficient →
+  unstable → criterion flip → parameter flip → non-identifiable →
+  robust (high только при identifiable, иначе medium).
+- Русские статусы: пять меток добавлены в `wall_classification_ru`,
+  английские enum не переименованы.
+
+Главный результат (в рамках модели, seeds 42/7/99):
+
+- v5=false во всех 23 режимах и во всех criterion variants;
+  binding везде `biological_age_slope`, dominant источник везде
+  `proteostasis_metabolic`; flip нет нигде (пороги ±20%,
+  агрегации согласны, estimators согласны, горизонты 100/150/200
+  согласны).
+- Identifiability: оба драйвера responsive (proteostasis +51%,
+  stem +17% наблюдаемого отклика при ×2) — каналы различимы.
+- Итог: `robust_diffuse_wall` (устойчивая диффузная стена),
+  уверенность высокая. В текущей абстрактной модели проверена
+  устойчивость диагностического вывода: diffuse residual wall может
+  быть устойчивой — здесь она устойчива в проверенных диапазонах.
+- HYP-0 остаётся `hypothesis_not_proven`. Это не биологическая
+  валидация, не доказательство бессмертия и не доказательство
+  необратимости старения.
+
+Ограничения: стабильность ограничена проверенной сеткой (веса
+0.5–2.0, ledger 0.75–1.5, горизонты 100–200, пороги ±20%);
+attribution shares — диагностические прокси; unlimited ceiling
+остаётся exploratory; выводы действуют только внутри abstract
+organ-network reversibility boundary-probe модели.

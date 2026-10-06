@@ -1,7 +1,7 @@
 # HUMAN LONGEVITY RESEARCH
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%936F_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-523_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%937_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-547_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
@@ -64,9 +64,9 @@ LONGEVITY ANALYSIS
 ## Прогресс
 
 ```text
-Этапы 1–6F:  ███████████████████ 20/20 завершены
-HYP-0:       hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:       523 passing (детерминизм, инварианты, checkpoint/restore)
+Этапы 1–7:  ███████████████████ 21/21 завершены
+HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
+Тесты:      547 passing (детерминизм, инварианты, checkpoint/restore)
 ```
 
 | Блок | Этапы | Статус | Главный вывод |
@@ -83,7 +83,8 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
 | Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
 | Residual drivers | 6F | ✅ | Heterogeneous probe 15×3 + sweep 14×3 (v5 false везде, flip нет, joint ablation −17%); residual wall `diffuse_residual_wall` |
-| Дальше | 6G+ | ⏳ | Следующий шаг по итогам residual-классификации |
+| Robustness audit | 7 | ✅ | Parameter probe 23×3 + criterion variants (v5 false везде, flip нет, оба драйвера identifiable); audit `robust_diffuse_wall` |
+| Дальше | 7A+ | ⏳ | Следующий шаг по итогам аудита: calibration, criterion protocol или закрытие ветки |
 
 Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
 
@@ -112,7 +113,7 @@ HYP-0:       hypothesis_not_proven (честный статус во всех а
 | `AGING_MODEL.md` | Механистический слой старения и reversibility search (Stage 5C) |
 | `ORGAN_BACKED_ORGANISM_MODEL.md` | Organ-backed организм: прокси, ресурсы, координация (Stage 6A) |
 | `ORGAN_NETWORK_MODEL.md` | Organ-network: рёбра, feedback, hard limits, v4 (Stage 6B) |
-| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E + heterogeneous probe 6F |
+| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 |
 | `CALIBRATION.md` | Калибровка ранней динамики против данных (MODEL MISMATCH) |
 | `DEVELOPMENTAL_DYNAMICS.md` | Стадия-зависимый клеточный цикл (Этап 3.5) |
 | `ASSUMPTIONS.md` | Все принятые допущения |
@@ -221,6 +222,23 @@ tests/         — тесты ключевых инвариантов
 - [x] conversion_scale=0 снижает irreversible slope в допуск, но v5 false везде — открывается `biological_age_slope` (исход 2)
 - [x] attribution: source `conversion` / `driver:stem_exhaustion`; wall `parametric_irreversibility_wall`
 
+**Этап 6E — compound wall attribution и knife-edge probe** — реализован:
+
+- [x] knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде, knife-edge нет, порога нет
+- [x] bio-age attribution: dominant `proteostasis_metabolic` (total slope ≈ 1.33), стабильна по аблациям
+- [x] sensitivity eps×dt×seed: стабильно false везде; compound wall `compound_residual_wall`
+
+**Этап 6F — heterogeneous residual driver probe** — реализован:
+
+- [x] точечное подавление top drivers (`proteostasis_metabolic`, `stem_exhaustion`) существующими механизмами, без новой биологии
+- [x] probe 15×3 + sweep всех групп 14×3: v5=false в 29/29 режимах, flip нет; residual wall `diffuse_residual_wall` (уверенность средняя)
+
+**Этап 7 — criterion and parameter robustness audit** — реализован:
+
+- [x] parameter probe 23×3 (веса драйверов, ledger scales, combos) + pre-declared criterion variants (horizon/threshold/aggregation/estimator)
+- [x] v5=false везде, flip нет, оба драйвера identifiable; audit `robust_diffuse_wall` (уверенность высокая)
+- [x] во всех артефактах: `immortality_status = hypothesis_not_proven`
+
 Полный план и детали — в `docs/ROADMAP.md`, `docs/TISSUE_MODEL.md`,
 `docs/ORGAN_MODEL.md`, `docs/ORGANISM_MODEL.md`, `docs/AGING_MODEL.md`,
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md`, `docs/ORGAN_NETWORK_MODEL.md`,
@@ -319,6 +337,27 @@ Stage 6F использует существующие attribution/override ме
 ```bash
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_probe.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_probe
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_sweep
+```
+
+Stage 7 — Criterion and Parameter Robustness Audit.
+
+Stage 7 добавляет диагностический audit слой поверх Stage 6F. Цель — проверить, является ли диффузная остаточная стена устойчивой в пределах разумных вариаций операционного критерия v5 и параметров модели, или она зависит от текущей операционализации и некалиброванной параметризации.
+
+Stage 7 не добавляет новую биологию и не является mechanistic extension. Это проверка качества самой диагностики.
+
+Ожидаемые классификации:
+- устойчивая диффузная стена (robust_diffuse_wall);
+- стена, чувствительная к критерию (criterion_sensitive_wall);
+- стена, чувствительная к параметрам (parameter_sensitive_wall);
+- неидентифицируемая абстракция (non_identifiable_abstraction);
+- неоднозначно: недостаточно калибровки (inconclusive_insufficient_calibration).
+
+HYP-0 остаётся "гипотеза не доказана".
+
+Фактический итог: v5=false в 23/23 режимах и во всех criterion variants, audit `robust_diffuse_wall` (устойчивая диффузная стена), уверенность высокая.
+
+```bash
+$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_stage7_audit.json --out-prefix experiments/output/organism_reversibility_boundary_stage7_audit
 ```
 
 <!--
