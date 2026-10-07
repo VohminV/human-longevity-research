@@ -304,6 +304,34 @@ Biological Alignment and Mechanistic Extension Feasibility Gate
 источника помечены `needs_verification`; количественной калибровки
 скоростей нет; выводы действуют только внутри текущей абстракции.
 
+## Strategic Pivot (2026-10-07)
+
+Решением 2026-10-07 вместо немедленного прототипа (прежний план
+Stage 9 из `docs/MECHANISTIC_EXTENSION_ROADMAP.md` — **отложен**,
+не отменён) открыт docs-only гейт
+`Immortality Master Switch Discovery Gate` (Stage 8.5). Pivot
+заменяет нумерацию этапов после Stage 8; код модели, конфиги
+экспериментов и симуляция не менялись.
+
+- Уровни цели: `docs/IMMORTALITY_TARGET_DEFINITION.md`
+  (7 уровней; проект проверял только уровни 1–3 и отрицательно — 5).
+- Программа, 10 критериев master switch, kill criteria, карта
+  Stage 8.5 → 16: `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`.
+- Реестр кандидатов и контуров A–E: в
+  `docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md` — все
+  `candidate_only`, внешние основания `needs_verification`.
+- Внешние anchors: `docs/EXTERNAL_EVIDENCE_ANCHORS.md`
+  (5 `verified_in_repo` — только модельные; 7 `needs_verification`;
+  1 `unavailable`).
+- Модель безопасности/онкориска (проект, fail-closed): в
+  `docs/SAFETY_AND_CANCER_RISK_MODEL.md`; реализация — Stage 11.
+- Гипотезы HYP-2.1…HYP-2.5: в
+  `research/hypotheses/HYP-2_master_switch_candidates.md`.
+
+**Статус HYP-0 не меняется: `hypothesis_not_proven`.** Ни один
+мастер-свитч не найден, не доказан, не заявлен возможным или
+близким. Решение на гейте — `review` (не `proceed`).
+
 ## История статусов
 
 - Stage 5A (2026-10-04): hypothesis_not_proven, single-seed search, bounded 0/27.
@@ -335,3 +363,6 @@ Biological Alignment and Mechanistic Extension Feasibility Gate
 - Stage 8: hypothesis_not_proven, alignment manifest (13 anchors,
   9 mismatches, 8 кандидатов P0–P6) + validator; внешние направления
   needs_verification; classification = mechanistic_extension_required.
+- Stage 8.5 (2026-10-07): hypothesis_not_proven, docs-only Discovery
+  Gate (6 документов, без кода/симуляции); pivot заменяет нумерацию
+  после Stage 8; решение = review, не proceed.

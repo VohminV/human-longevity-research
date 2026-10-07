@@ -1,8 +1,9 @@
 # HUMAN LONGEVITY RESEARCH
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%938_done-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%938.5_done-brightgreen)
 ![tests](https://img.shields.io/badge/tests-565_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
+[![CI](https://github.com/VohminV/human-longevity-research/actions/workflows/ci.yml/badge.svg)](https://github.com/VohminV/human-longevity-research/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
 **Вычислительная исследовательская платформа для изучения человеческого развития,
@@ -21,6 +22,49 @@
 > исследовательская гипотеза, а не утверждение.
 
 ---
+
+## Прогресс
+
+```text
+Этапы 1–8:  ████████████████████████████████████████ 22/22 завершены
+Stage 8.5:  ████████████████████████████████ docs-only (6 документов) · решение = review
+HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
+Тесты:      565 passing (детерминизм, инварианты, checkpoint/restore)
+CI:         GitHub Actions — pytest на каждый push / pull request
+```
+
+| Блок | Этапы | Статус | Главный вывод |
+|---|---|---|---|
+| Клетка и развитие | 1, 2, 3, 3.5 | ✅ | Калибровка против данных → **MODEL MISMATCH**, частичное закрытие (модель C) |
+| Ткань | 3A–3C | ✅ | Устойчивые политики замены существуют; агрессивная замена истощает stem pool |
+| Орган | 4A–4D | ✅ | `non-interference is optimal` — координация не бьёт independent execution |
+| Организм | 5A | ✅ | Adaptive control: lifespan 117.8; bounded degradation — нигде |
+| Robust | 5B | ✅ | Binding constraint везде одно: `biological_age_slope` (70/70) |
+| Mechanistic | 5C | ✅ | Драйверы разложены; доминируют `cellular_senescence` / `epigenetic_drift`; v2 — нигде |
+| Organ-backed | 6A | ✅ | Прокси + ресурсы + координация; лучший 104.8; v3 — нигде, binding везде `biological_age` |
+| Organ-network | 6B | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
+| Reversibility | 6C | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
+| Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
+| Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
+| Residual drivers | 6F | ✅ | Heterogeneous probe 15×3 + sweep 14×3 (v5 false везде, flip нет, joint ablation −17%); residual wall `diffuse_residual_wall` |
+| Robustness audit | 7 | ✅ | Parameter probe 23×3 + criterion variants (v5 false везде, flip нет, оба драйвера identifiable); audit `robust_diffuse_wall` |
+| Biological alignment | 8 | ✅ | Манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` |
+| Master-switch gate | 8.5 | ✅ docs-only | 6 документов: уровни цели, 10 критериев, реестр ~19 кандидатов + 5 контуров, внешние anchors (5 verified / 7 needs_verification / 1 unavailable), safety-проект; **ничего не найдено и не доказано** |
+| Дальше | 9–16 | ⏳ | Следующий шаг: решение `review` по гейту Stage 8.5 (внешний anchor + safety-прокси) или отложенная ветка Stage 9 prototype; всё — отдельным решением |
+
+Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
+
+## Содержание
+
+- [Прогресс](#прогресс)
+- [Принцип](#принцип)
+- [Уровни модели](#уровни-модели)
+- [Понятия](#понятия)
+- [Документация (`docs/`)](#документация-docs)
+- [Структура репозитория](#структура-репозитория)
+- [Статус проекта](#статус-проекта)
+- [Как начать](#как-начать)
+- [Лицензия и статус](#лицензия-и-статус)
 
 ## Принцип
 
@@ -61,34 +105,6 @@ LONGEVITY ANALYSIS
 
 Симулятор — инструмент исследования, а не игровая симуляция человека.
 
-## Прогресс
-
-```text
-Этапы 1–8:  ████████████████████ 22/22 завершены
-HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:      565 passing (детерминизм, инварианты, checkpoint/restore)
-```
-
-| Блок | Этапы | Статус | Главный вывод |
-|---|---|---|---|
-| Клетка и развитие | 1, 2, 3, 3.5 | ✅ | Калибровка против данных → **MODEL MISMATCH**, частичное закрытие (модель C) |
-| Ткань | 3A–3C | ✅ | Устойчивые политики замены существуют; агрессивная замена истощает stem pool |
-| Орган | 4A–4D | ✅ | `non-interference is optimal` — координация не бьёт independent execution |
-| Организм | 5A | ✅ | Adaptive control: lifespan 117.8; bounded degradation — нигде |
-| Robust | 5B | ✅ | Binding constraint везде одно: `biological_age_slope` (70/70) |
-| Mechanistic | 5C | ✅ | Драйверы разложены; доминируют `cellular_senescence` / `epigenetic_drift`; v2 — нигде |
-| Organ-backed | 6A | ✅ | Прокси + ресурсы + координация; лучший 104.8; v3 — нигде, binding везде `biological_age` |
-| Organ-network | 6B | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
-| Reversibility | 6C | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
-| Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
-| Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
-| Residual drivers | 6F | ✅ | Heterogeneous probe 15×3 + sweep 14×3 (v5 false везде, flip нет, joint ablation −17%); residual wall `diffuse_residual_wall` |
-| Robustness audit | 7 | ✅ | Parameter probe 23×3 + criterion variants (v5 false везде, flip нет, оба драйвера identifiable); audit `robust_diffuse_wall` |
-| Biological alignment | 8 | ✅ | Манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` |
-| Дальше | 9+ | ⏳ | Следующий шаг: Stage 9 prototype (P0 первым, отдельным решением) или закрытие ветки |
-
-Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
-
 ## Понятия
 
 - **LIFESPAN** — сколько времени организм существует.
@@ -123,6 +139,13 @@ HYP-0:      hypothesis_not_proven (честный статус во всех а�
 | `EXPERIMENTS.md` | Формат контролируемых вычислительных экспериментов |
 | `ROADMAP.md` | Этапы развития проекта |
 | `DATA_SOURCES.md` | Каталог научных источников (source / DOI / PMID / метод) |
+| `BIOLOGICAL_ALIGNMENT.md` | Биологическое выравнивание и гейт расширения (Stage 8) |
+| `MECHANISTIC_EXTENSION_ROADMAP.md` | Отложенная прототипная ветка механистических расширений (P0–P6) |
+| `IMMORTALITY_TARGET_DEFINITION.md` | 7 уровней цели «бессмертие» и что из них проверялось (Stage 8.5) |
+| `MASTER_SWITCH_DISCOVERY_PROGRAM.md` | Программа поиска master switch: 10 критериев, kill criteria, Stage 8.5–16 |
+| `CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md` | Реестр ~19 кандидатов × 13 полей + 5 контуров A–E (все `candidate_only`) |
+| `EXTERNAL_EVIDENCE_ANCHORS.md` | Карта внешних anchors: `verified_in_repo` / `needs_verification` / `unavailable` |
+| `SAFETY_AND_CANCER_RISK_MODEL.md` | Модель безопасности и онкориска (проект, fail-closed; реализация — Stage 11) |
 
 ## Структура репозитория
 
@@ -226,8 +249,8 @@ tests/         — тесты ключевых инвариантов
 **Этап 6E — compound wall attribution и knife-edge probe** — реализован:
 
 - [x] knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде, knife-edge нет, порога нет
-- [x] bio-age attribution: dominant `proteostasis_metabolic` (total slope ≈ 1.33), стабильна по аблациям
-- [x] sensitivity eps×dt×seed: стабильно false везде; compound wall `compound_residual_wall`
+- [x] bio-age attribution: dominant `proteostasis_metabolic` (total slope ≈ 1.33, residual −0.014, 3 значимых источника), стабильна по аблациям
+- [x] sensitivity eps×dt×seed (60 прогонов): стабильно false везде; compound wall `compound_residual_wall`
 
 **Этап 6F — heterogeneous residual driver probe** — реализован:
 
@@ -253,6 +276,9 @@ tests/         — тесты ключевых инвариантов
 
 ## Как начать
 
+Команды ниже — PowerShell (Windows). В bash/zsh замените `$env:PYTHONPATH='src';`
+на `PYTHONPATH=src`.
+
 ```bash
 python -m pip install -e ".[dev]"
 python -m pytest
@@ -271,55 +297,49 @@ out_path='experiments/output/demo.json')"
 
 Жизненный цикл организма (Stage 5A):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_life_course_baseline.json --out experiments/output/organism_baseline.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_policy_search --config experiments/configs/organism_policy_search_mini.json --out-prefix experiments/output/organism_policy_search_mini
 ```
 
 Механистическое старение (Stage 5C):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_aging_combined_mechanistic.json --out experiments/output/organism_aging_combined_mechanistic.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_policy_search --config experiments/configs/organism_aging_robust_search_mini.json --out-prefix experiments/output/organism_aging_robust_search_mini
 ```
 
 Organ-backed организм (Stage 6A):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_backed_combined.json --out experiments/output/organism_organ_backed_combined.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_backed --config experiments/configs/organism_organ_backed_coordination_compare.json --out-prefix experiments/output/organism_organ_backed_coordination_compare
 ```
 
 Organ-network организм (Stage 6B):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_network_combined.json --out experiments/output/organism_organ_network_combined.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_network --config experiments/configs/organism_organ_network_coordination_compare.json --out-prefix experiments/output/organism_organ_network_coordination_compare
 ```
 
 Reversibility организм (Stage 6C):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_combined_preventive_clearance.json --out experiments/output/organism_reversibility_combined_preventive_clearance.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_reversibility --config experiments/configs/organism_reversibility_coordination_compare.json --out-prefix experiments/output/organism_reversibility_coordination_compare
 ```
 
 Boundary probe (Stage 6D):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_both_suppressed.json --out experiments/output/organism_reversibility_boundary_both_suppressed.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_conversion_ultra_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_conversion_ultra_sweep
 ```
 
-**Этап 6E — compound wall attribution и knife-edge probe** — реализован:
-
-- [x] knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде, knife-edge нет, порога нет
-- [x] bio-age attribution: dominant `proteostasis_metabolic` (total slope ≈ 1.33, residual −0.014, 3 значимых источника), стабильна по аблациям
-- [x] sensitivity eps×dt×seed (60 прогонов): стабильно false везде; compound wall `compound_residual_wall`
-
 Compound wall (Stage 6E):
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_knife_edge_conversion_1e-4.json --out experiments/output/organism_reversibility_boundary_knife_edge_conversion_1e-4.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_knife_edge_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_knife_edge_sweep
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_compound_attribution.json --out-prefix experiments/output/organism_reversibility_boundary_compound_attribution
@@ -341,7 +361,7 @@ Stage 6F использует существующие attribution/override ме
 
 Фактический итог: v5=false в 29/29 режимах, residual wall `diffuse_residual_wall` (диффузная остаточная стена), уверенность средняя.
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_probe.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_probe
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_sweep
 ```
@@ -363,7 +383,7 @@ HYP-0 остаётся "гипотеза не доказана".
 
 Фактический итог: v5=false в 23/23 режимах и во всех criterion variants, audit `robust_diffuse_wall` (устойчивая диффузная стена), уверенность высокая.
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_stage7_audit.json --out-prefix experiments/output/organism_reversibility_boundary_stage7_audit
 ```
 
@@ -377,9 +397,15 @@ HYP-0 остаётся "гипотеза не доказана".
 
 Фактический итог: манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` (требуется механистическое расширение), уверенность средняя. Все внешние направления помечены `needs_verification`.
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from longevity.research.biological_alignment import load_and_validate_manifest; print(load_and_validate_manifest('experiments/configs/stage8_biological_alignment_manifest.json')['classification'])"
 ```
+
+Stage 8.5 — Immortality Master Switch Discovery Gate (docs-only, 2026-10-07).
+
+Стратегический pivot: вместо немедленного прототипа — docs-only гейт поиска master switch / minimal circuit. Рождаются 6 документов: уровни цели (`docs/IMMORTALITY_TARGET_DEFINITION.md`, 7 уровней), программа с 10 критериями и kill criteria (`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`, Stage 8.5→16), реестр кандидатов и контуров (`docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`), карта внешних anchors (`docs/EXTERNAL_EVIDENCE_ANCHORS.md`), проект модели безопасности (`docs/SAFETY_AND_CANCER_RISK_MODEL.md`), гипотезы HYP-2 (`research/hypotheses/HYP-2_master_switch_candidates.md`). Прежний план Stage 9 prototype отложен, не отменён. Код модели и симуляция не менялись. Решение на гейте: `review`.
+
+HYP-0 остаётся "гипотеза не доказана": ни один мастер-свитч не найден, не доказан и не заявлен возможным или близким.
 
 <!--
 Секции ниже появятся на следующих этапах.

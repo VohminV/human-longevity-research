@@ -786,6 +786,64 @@ Decision gate:
 - `model_mismatch_critical` → пересмотр базовых допущений;
 - `inconclusive_alignment` → external review.
 
+## Этап 8.5 — Immortality Master Switch Discovery Gate (docs-only, готов ✅)
+
+Стратегический pivot: вместо немедленного прототипа (прежний план
+«Stage 9 prototype» из `docs/MECHANISTIC_EXTENSION_ROADMAP.md` —
+**отложен**, P0-заявка сохранена в HYP-1/HYP-2) — docs-only гейт
+поиска master switch / minimal circuit. **Pivot заменяет нумерацию
+после Stage 8**: следующие этапы идут по гейту, прежний план остаётся
+отложенной веткой, а не отменённым.
+
+- [x] уровни цели: `docs/IMMORTALITY_TARGET_DEFINITION.md`
+      (7 уровней: `lifespan_extension` … `literal_immortality`;
+      уровни 4–6 не достигнуты; уровень 7 — вне проверяемости)
+- [x] программа + 10 критериев + kill criteria + дорожная карта:
+      `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`
+      (Stage 8.5 → 9 Candidate Circuit Formalization →
+      10 Prototype → 11 Safety Layer → 12 External Anchor
+      Calibration → 13 Portfolio Screening → 14 Adversarial
+      Audit → 15 Wet-lab Package → 16 External Review)
+- [x] реестр ~19 кандидатов × 13 полей + 5 контуров A–E:
+      `docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`
+      (все `candidate_only` / `needs_verification`; MYC прямой —
+      `rejected_for_now`)
+- [x] карта внешних anchors: `docs/EXTERNAL_EVIDENCE_ANCHORS.md`
+      (13 модельных: 5 `verified_in_repo`, 7 `needs_verification`,
+      1 `unavailable`; 13 внешних направлений Stage 12 — все без
+      проверенного источника в репо)
+- [x] модель безопасности/онкориска (проект, fail-closed):
+      `docs/SAFETY_AND_CANCER_RISK_MODEL.md` (10 рисков,
+      net-effect штраф, budget-правила; реализация — Stage 11)
+- [x] гипотезы: `research/hypotheses/HYP-2_master_switch_candidates.md`
+      (HYP-2.1…HYP-2.5 по контурам с критериями опровержения)
+- [x] минорно: HYP-0 — раздел Strategic Pivot, статус не трогать
+      (`hypothesis_not_proven`); шапки в
+      `docs/MECHANISTIC_EXTENSION_ROADMAP.md` и HYP-1 — «отложено
+      решением pivot»
+
+Код модели, конфиги экспериментов и симуляция Stage 9+ на этом этапе
+не менялись. Решение на гейте: `review` (не `proceed`) — перед кодом
+нужен хотя бы один внешний anchor `verified_in_repo` и проектная
+safety-модель с наблюдаемыми прокси
+(`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` §7).
+
+## Этап 9 — Candidate Circuit Formalization (не начат)
+
+Формализация 1–2 лучших контуров: observable design, критерии
+опровержения, модельные прокси. Отдельное явное решение —
+переход Stage 8.5 → 9 не автоматичен.
+
+## Этапы 10–16 — по `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` §6
+
+Prototype (10) → Safety Layer (11) → External Anchor Calibration (12)
+→ Portfolio Screening (13) → Adversarial Audit (14) → Wet-lab
+Hypothesis Package (15) → External Review/Freeze (16). Условия
+прекращения — kill criteria §5 того же документа.
+
+Прежние `Этап 4–5` ниже — историческая нумерация базовых блоков,
+не часть pivot-нумерации.
+
 ## Этап 4 — Базовое эмерджентное старение
 
 - [ ] минимальный набор механизмов (теломеры + ДНК-повреждения + сенесценция)

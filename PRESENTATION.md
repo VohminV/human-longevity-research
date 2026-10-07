@@ -1,8 +1,9 @@
 # HUMAN LONGEVITY RESEARCH — презентация прогресса
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%938_done-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%938.5_done-brightgreen)
 ![tests](https://img.shields.io/badge/tests-565_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
+[![CI](https://github.com/VohminV/human-longevity-research/actions/workflows/ci.yml/badge.svg)](https://github.com/VohminV/human-longevity-research/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
 > **Вопрос проекта:** можно ли построить вычислительную модель человека, достаточно
@@ -21,9 +22,8 @@
 [Reversibility](#слайд-11-reversibility) · [Boundary](#слайд-12-boundary) ·
 [Compound wall](#слайд-13-compound-wall) · [Residual](#слайд-14-residual-drivers) ·
 [Audit](#слайд-15-audit) · [Цифры](#слайд-16-цифры) ·
-[HYP-0](#слайд-17-hyp-0) · [Дальше](#слайд-18-дальше) ·
-[Воспроизведение](#слайд-19-воспроизведение) ·
-[Alignment](#слайд-20-alignment)
+[Alignment](#слайд-17-alignment) · [HYP-0](#слайд-18-hyp-0) ·
+[Дальше](#слайд-19-дальше) · [Воспроизведение](#слайд-20-воспроизведение)
 
 ---
 
@@ -31,11 +31,11 @@
 
 ```mermaid
 flowchart LR
-    DATA["Научные данные\nresearch/"] --> BIO["Биомодель\nCell / Tissue / Organ"]
-    BIO --> SIM["Симулятор\ndeterministic, seeded"]
-    SIM --> EXP["Эксперименты\nconfigs + runners"]
-    EXP --> AN["Анализ\nmetrics, sweeps, Pareto"]
-    AN --> HYP["Проверка HYP-0\nhypothesis_not_proven"]
+    DATA["Научные данные<br/>research/"] --> BIO["Биомодель<br/>Cell / Tissue / Organ"]
+    BIO --> SIM["Симулятор<br/>deterministic, seeded"]
+    SIM --> EXP["Эксперименты<br/>configs + runners"]
+    EXP --> AN["Анализ<br/>metrics, sweeps, Pareto"]
+    AN --> HYP["Проверка HYP-0<br/>hypothesis_not_proven"]
 ```
 
 ```text
@@ -56,6 +56,7 @@ ML-библиотек в ядре — только stdlib.
 
 ```text
 Этапы 1–8:  ████████████████████ 22/22 завершены
+Stage 8.5:  ✅ docs-only Discovery Gate (master switch); решение = review
 HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
 Тесты:      565 passing (детерминизм, инварианты, checkpoint/restore)
 ```
@@ -84,7 +85,8 @@ HYP-0:      hypothesis_not_proven (честный статус во всех а�
 | 6F — Residual drivers | ✅ | Heterogeneous probe 15×3 + sweep 14×3: v5 — нигде, flip нет, joint ablation −17%; wall `diffuse_residual_wall` |
 | 7 — Audit | ✅ | Parameter probe 23×3 + criterion variants: v5 — нигде, flip нет, оба драйвера identifiable; audit `robust_diffuse_wall` |
 | 8 — Alignment | ✅ | Манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` |
-| Дальше (9+) | ⏳ | Следующий шаг: Stage 9 prototype (P0 первым, отдельным решением) |
+| 8.5 — Master-switch gate | ✅ docs-only | 6 документов: уровни цели, 10 критериев, реестр ~19 кандидатов + 5 контуров, anchors (5 verified / 7 needs_verification / 1 unavailable), safety-проект; ничего не найдено |
+| Дальше (9–16) | ⏳ | Решение `review` по гейту Stage 8.5 (внешний anchor + safety-прокси) или отложенная ветка Stage 9 prototype — отдельным решением |
 
 ---
 
@@ -402,7 +404,26 @@ audit 7              69.5  █████████████████�
 
 ---
 
-## Слайд 17. HYP-0
+## Слайд 17. Alignment
+
+Этап 8: биологические направления 2022–2026 → модельные артефакты.
+Не новая биология в симуляции, динамика 6C–7 не меняется.
+
+- Манифест: 13 anchors, 9 mismatches, 8 candidate mechanisms
+  (P0–P6) + pure validator. Все внешние направления —
+  `needs_verification`: проверяемых источников в репозитории нет.
+- Главные пробелы: эпигенетическая пластичность, системная
+  коммуникация, ниша стволовых, энергия ремонта, сплит
+  damage/adaptation, нелинейность, классы агрегатов.
+- Классификация: `mechanistic_extension_required` (требуется
+  механистическое расширение), уверенность средняя.
+- Приоритеты Stage 9: P0 — пластичность + сплит; P1 — системный
+  пул; далее ниша, энергия, иерархия, волны, классы агрегатов.
+  HYP-0 остаётся `hypothesis_not_proven`.
+
+---
+
+## Слайд 18. HYP-0
 
 ```text
 HYP-0: hypothesis_not_proven
@@ -441,7 +462,7 @@ HYP-0: hypothesis_not_proven
 
 ---
 
-## Слайд 18. Дальше
+## Слайд 19. Дальше
 
 ```text
 Stage 6D сказал: conversion подавим, но v5 всё равно нет — за стеной вторая стена.
@@ -449,6 +470,7 @@ Stage 6E сказал: вторая стена составная (bio-age + inf
 Stage 6F сказал: точечное подавление top-драйверов v5 не снимает — остаточная стена диффузная.
 Stage 7 сказал: диффузная стена устойчива к вариациям критерия и параметров в проверенных диапазонах.
 Stage 8 сказал: модель не покрывает пластичность, системную коммуникацию, нишу и энергию — нужен Stage 9 prototype.
+Stage 8.5 сказал: pivot — docs-only гейт master switch (6 документов, 10 критериев, kill criteria); решение = review, ничего не найдено.
 ```
 
 - **Stage 6E** — done: knife-edge нет, attribution стабильна
@@ -465,19 +487,25 @@ Stage 8 сказал: модель не покрывает пластичнос�
   классификация `mechanistic_extension_required` (уверенность
   средняя); приоритеты Stage 9: P0 — пластичность + сплит
   damage/adaptation; HYP-0 не доказана.
-- Следующий шаг — Stage 9 prototype (P0 первым) только отдельным
-  решением; либо закрытие ветки.
+- **Stage 8.5** — done (docs-only): уровни цели, программа
+  поиска master switch (10 критериев, kill criteria,
+  Stage 8.5→16), реестр ~19 кандидатов + 5 контуров A–E, карта
+  anchors, проект safety-модели, HYP-2. Прежний Stage 9 prototype
+  **отложен**, не отменён; код и симуляция не менялись.
+- Следующий шаг — решение `review` по гейту (внешний anchor
+  `verified_in_repo` + safety-прокси) либо отложенная ветка
+  Stage 9 prototype; всё только отдельным решением.
 
 ---
 
-## Слайд 19. Воспроизведение
+## Слайд 20. Воспроизведение
 
 ```bash
 python -m pip install -e ".[dev]"
 python -m pytest   # 565 passing
 ```
 
-```bash
+```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_aging_combined_mechanistic.json --out experiments/output/organism_aging_combined_mechanistic.json
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_policy_search --config experiments/configs/organism_aging_robust_search_mini.json --out-prefix experiments/output/organism_aging_robust_search_mini
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_robust --config experiments/configs/organism_aging_stress_mechanistic.json --out-prefix experiments/output/organism_aging_stress_mechanistic
@@ -506,22 +534,3 @@ $env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from lo
 `docs/BIOLOGICAL_ALIGNMENT.md` (Stage 8),
 `docs/MECHANISTIC_EXTENSION_ROADMAP.md` (кандидаты Stage 9),
 `docs/ORGANISM_MODEL.md` (§8–14), `docs/IMMORTALITY.md` (§6–12).
-
----
-
-## Слайд 20. Alignment
-
-Этап 8: биологические направления 2022–2026 → модельные артефакты.
-Не новая биология в симуляции, динамика 6C–7 не меняется.
-
-- Манифест: 13 anchors, 9 mismatches, 8 candidate mechanisms
-  (P0–P6) + pure validator. Все внешние направления —
-  `needs_verification`: проверяемых источников в репозитории нет.
-- Главные пробелы: эпигенетическая пластичность, системная
-  коммуникация, ниша стволовых, энергия ремонта, сплит
-  damage/adaptation, нелинейность, классы агрегатов.
-- Классификация: `mechanistic_extension_required` (требуется
-  механистическое расширение), уверенность средняя.
-- Приоритеты Stage 9: P0 — пластичность + сплит; P1 — системный
-  пул; далее ниша, энергия, иерархия, волны, классы агрегатов.
-  HYP-0 остаётся `hypothesis_not_proven`.
