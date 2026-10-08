@@ -1,0 +1,21 @@
+{
+  "experiment_id": "organism_biological_age_decomposition",
+  "stage": 10,
+  "notes": "Stage 10 diagnostic: A baseline without rollback vs B Stage 9 rollback (0.03/1.0/1.0, apoptosis q10) vs C rollback + dna_damage x0.1. Production model untouched; config layer only. HYP-0 stays hypothesis_not_proven.",
+  "seeds": [42, 7, 99],
+  "base_organism_config": "experiments/configs/organism_backup_rollback_baseline.json",
+  "rollback_policy_overrides": {
+    "policy_index": 6,
+    "biomarker_threshold": 0.03,
+    "intensity": 1.0,
+    "interval": 1.0
+  },
+  "apoptosis_policy_overrides": {
+    "policy_index": 7,
+    "interval": 10.0
+  },
+  "ablation_driver_scale": 0.1,
+  "single_driver_relative_threshold": 0.3,
+  "single_driver_margin": 2.0,
+  "output_artifact": "experiments/output/organism_biological_age_decomposition.json"
+}
