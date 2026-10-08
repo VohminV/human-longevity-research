@@ -75,7 +75,7 @@ flowchart LR
 
 ## Слайд 2. Прогресс
 
-Этапы 1–10.5, подробности — в `docs/ROADMAP.md` и `docs/PUBLICATION_READINESS.md`.
+Этапы 1–11 + HYP-2, подробности — в `docs/ROADMAP.md` и `docs/PUBLICATION_READINESS.md`.
 
 ```text
 Этапы 1–8:  22 из 22 завершены
@@ -533,6 +533,9 @@ HYP-0: hypothesis_not_proven (гипотеза не доказана)
   формулировку; списать неудобный результат на «аномалию» запрещено.
 - Не путать со старыми кандидатами HYP-2.x из этапа 8.5 (про «главный рубильник»
   в генах) — это совсем другое, они так и остались кандидатами.
+- Проект pilot-испытания (`docs/HYP2_PILOT_PROTOCOL.md`): окно доз, окно наблюдения,
+  target engagement обеих осей, GO/NO-GO — без выдуманных чисел
+  (дозы/`n`/сроки только из pilot). Статус — `READY FOR PILOT`.
 
 ---
 
@@ -645,4 +648,5 @@ $env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from lo
 `docs/HYP1_AUDIT.md` (аудит HYP-1 по биологии 2020–2026, решение идти в pilot),
 `docs/HYP1_PILOT_PROTOCOL.md` (проект pilot-опыта, без выдуманных чисел),
 `docs/HYP2_PREREGISTRATION.md` (план проверки фронта «регенерация–рак», статус `READY FOR PREREGISTRATION`),
+`docs/HYP2_PILOT_PROTOCOL.md` (проект pilot-испытания фронта, статус `READY FOR PILOT`),
 `docs/ORGANISM_MODEL.md`, `docs/IMMORTALITY.md`.

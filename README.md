@@ -184,6 +184,7 @@
 | `HYP1_AUDIT.md` | Строгий аудит HYP-1 по биологии 2020–2026: что доказано, что нет, вердикт по паре, решение идти в pilot (этап 11) |
 | `HYP1_PILOT_PROTOCOL.md` | Проект pilot-опыта: окно доз, target engagement, interaction-тест, GO/NO-GO, без выдуманных чисел (этап 11) |
 | `HYP2_PREREGISTRATION.md` | План проверки фронта «регенерация–рак» (HYP-2): эмпирическая граница, двумерный исход, animal-level, правило фальсификации; статус `READY FOR PREREGISTRATION` |
+| `HYP2_PILOT_PROTOCOL.md` | Проект pilot-испытания фронта (HYP-2): окно доз, target engagement, GO/NO-GO; статус `READY FOR PILOT`, без выдуманных чисел |
 
 ## Что лежит в репозитории
 
