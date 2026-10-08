@@ -828,13 +828,98 @@ Decision gate:
 safety-модель с наблюдаемыми прокси
 (`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` §7).
 
-## Этап 9 — Candidate Circuit Formalization (не начат)
+## Этап 9 — Epigenetic Backup Prototype (готов ✅, честный отрицательный результат)
 
-Формализация 1–2 лучших контуров: observable design, критерии
-опровержения, модельные прокси. Отдельное явное решение —
-переход Stage 8.5 → 9 не автоматичен.
+Решением владельца репозитория прототип запущен как Stage 9
+информационно-сохраняющей модели (в дополнение к гейт-треку 8.5 → 16,
+который остаётся без изменений ниже). HYP-1 P0-заявка (пластичность)
+получила первую executable-форму — не как терапия, а как проверяемый
+механизм с ценой и гейтами.
 
-## Этапы 10–16 — по `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` §6
+- [x] новый модуль `src/longevity/model/epigenetic_backup.py`
+  (`EpigeneticDrive`-состояние, `RollbackIntervention`-логика через
+  `apply_rollback`, энтропийная математика — всё pure/детерминировано,
+  без RNG внутри)
+- [x] opt-in `epigenetic_backup_model = none | reference_restore`
+  (`none` бит-в-бит = legacy; требует `mechanistic_drivers`);
+  состояние в `OrganismState.epigenetic_backup`, покрыто checkpoint
+- [x] энтропия Шеннона: `dH/dt = Noise − Repair − Restore`;
+  TE-прокси (LINE-1/Alu через `epigenetic_drift` + воспаление) +
+  метаболические побочные продукты (через `mitochondrial_dysfunction`)
+- [x] мета-драйвер: 8-драйверный леджер не тронут; `bio += w*H_epi`
+  + шумовое эхо в `epigenetic_drift`
+- [x] санитированный геном: `dna_damage` и `mutation_fixation` × 0.1
+- [x] fail-closed гейт: апоптоз ВМЕСТО отката при высоком burden;
+  блок при `cancer_prone >= gate`; откат сохраняет identity
+  (без потери continuity, в отличие от reprogramming)
+- [x] 2 новых типа вмешательств (`epigenetic_rollback_pulse`,
+  `synthetic_apoptosis_sweep`) + биомаркеры `epigenetic_entropy` /
+  `information_wall_proximity` для threshold-политик
+- [x] метрика `Information_Wall_Proximity` (`boundary_metrics` +
+  `epigenetic_backup_metrics.summarize_backup_run`) и критерий
+  `robust_bounded_degradation_v6` (v5 + энтропийная дисциплина);
+  веса `w_backup_entropy_slope / w_wall_proximity / w_bounded_v6_bonus`
+  в fitness и policy search
+- [x] 2 конфига (`organism_backup_rollback_baseline`,
+  `organism_backup_rollback_search`: сетка 54×3 через штатный
+  grid-поиск — без внешнего RL) + 21 тест (`test_epigenetic_backup.py`);
+  всего **586 passing**
+- [x] наблюдение (в рамках модели): механизм работает (наклон энтропии
+  ~0.0003–0.0009, стенка читаема, откаты/апоптозы срабатывают), но
+  **v6=false в 54/54** и в санитированной пробе: bio slope ~1.33–1.38
+  держится остальными драйверами, lifespan плоский 67.5–68.8.
+  Точечный откат — третья стена за второй (`rollback_insufficient_wall`,
+  тот же диффузный паттерн 6F/7)
+
+HYP-0: `hypothesis_not_proven`. Детали — `docs/AGING_MODEL.md` §13.
+Следующее честное направление: многодрайверный откат или признание,
+что сохранение информации требует перестройки самой агрегации bio-age,
+а не ещё одного ремонтного канала.
+
+## Этап 9b — Constraint Attribution / Causal Attribution (готов ✅, unresolved — валидный итог)
+
+Диагностический слой поверх Stage 9: что удерживает bio slope после
+успешного rollback? Три варианта без предвзятости (один драйвер /
+распределённый остаток / агрегация-и-неразрешённое). Это attribution
+чувствительности, а не доказательство причинности; production semantics
+не менялась (аблации — только слой конфига, `base_aging_rate × 0.1`).
+
+- [x] конфиг `experiments/configs/organism_rollback_attribution.json`
+  (baseline — лучшая Stage 9 конфигурация с минимальным воспроизводимым
+  H_epi slope из поиска 54×3: порог 0.03 / интенсивность 1.0 / интервал 1.0;
+  сиды 42/7/99; всё фиксировано кроме явной аблации)
+- [x] модуль `src/longevity/analysis/attribution_analysis.py`:
+  `analyze_constraint_migration` (pure; классы `single_driver_migration` /
+  `distributed_residual` / `aggregation_or_unresolved_residual`;
+  пороги 30% / 2× / 50% — операционные, не законы) + top-2 interaction
+  на аддитивность + диагностическая декомпозиция без смены агрегации
+- [x] артефакт `experiments/output/organism_rollback_attribution.json`
+  (версии, конфиг, сиды, baseline, 8 аблаций, статистики, ранжирование,
+  классификация, уверенность, вопросы)
+- [x] 14 тестов (`tests/test_attribution_analysis.py`, только корректность,
+  без предположения победителя); всего **600 passing**
+- [x] наблюдение (в рамках модели): baseline bio slope 1.1666 (H_epi slope
+  5.4e-05); лучшая аблация — `dna_damage` ×0.1: Δ 0.0326 (2.79%), остальные
+  ≤0.22%, `epigenetic_drift` −0.55% (откат уже покрывает); смен причин нет;
+  interaction не запускался (существенных драйверов нет — по правилу)
+- [x] классификация: `aggregation_or_unresolved_residual`, уверенность
+  низкая — ни одна аблация воспроизводимо не снимает существенную долю;
+  диагностика: крупнейшая доля вклада — `stem_exhaustion` (0.31), но доля
+  состояния ≠ объяснение наклона (критерий — только изменение slope)
+
+HYP-0: `hypothesis_not_proven` (файл HYP-0 не менялся решением этапа).
+Правило этапа: если данные не определяют ограничение — итог unresolved,
+это полноценный результат, эксперимент никого не заставляет выбирать.
+
+## Гейт-трек 9–16 — MASTER_SWITCH_DISCOVERY_PROGRAM (не начат)
+
+Нумерация этого трека задана `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` §6
+и не пересекается с прототип-треком (9 — бэкап, 9b — атрибуция выше).
+
+- Этап 9 (гейт-трек) — Candidate Circuit Formalization: формализация 1–2
+  лучших контуров (observable design, критерии опровержения, модельные
+  прокси). Отдельное явное решение — переход Stage 8.5 → 9 не автоматичен.
+- Этапы 10–16 — по `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` §6:
 
 Prototype (10) → Safety Layer (11) → External Anchor Calibration (12)
 → Portfolio Screening (13) → Adversarial Audit (14) → Wet-lab

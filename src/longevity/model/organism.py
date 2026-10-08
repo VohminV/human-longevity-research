@@ -367,6 +367,7 @@ class OrganismState:
     organ_network: dict[str, Any] | None = None
     reversibility: dict[str, Any] | None = None
     boundary: dict[str, Any] | None = None
+    epigenetic_backup: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = {key: getattr(self, key) for key in (
@@ -376,7 +377,7 @@ class OrganismState:
             "epigenetic_drift", "proteostasis_capacity", "mitochondrial_function",
             "intervention_history", "rejuvenation_events", "failure_cause", "death_time",
             "active_shocks", "shock_history", "aging", "organ_backed", "organ_network",
-            "reversibility", "boundary")}
+            "reversibility", "boundary", "epigenetic_backup")}
         data["systems"] = {name: VitalSystemState.from_dict(info).to_dict()
                            for name, info in self.systems.items()}
         return copy.deepcopy(data)
@@ -392,7 +393,7 @@ class OrganismState:
             "epigenetic_drift", "proteostasis_capacity", "mitochondrial_function",
             "intervention_history", "rejuvenation_events", "failure_cause", "death_time",
             "active_shocks", "shock_history", "aging", "organ_backed", "organ_network",
-            "reversibility", "boundary")}
+            "reversibility", "boundary", "epigenetic_backup")}
         kwargs["systems"] = systems
         # Legacy (Stage 5A) states carry no shock lists.
         kwargs["active_shocks"] = list(kwargs.get("active_shocks") or [])
@@ -456,6 +457,13 @@ def organism_invariant_violation(state: OrganismState) -> str | None:
             validate_boundary_state(state.boundary)
         except ValueError as exc:
             return f"boundary invalid: {exc}"
+    if state.epigenetic_backup is not None:
+        from longevity.model.epigenetic_backup import validate_epigenetic_backup_state  # deferred
+
+        try:
+            validate_epigenetic_backup_state(state.epigenetic_backup)
+        except ValueError as exc:
+            return f"epigenetic_backup invalid: {exc}"
     if state.failure_cause not in DEATH_CAUSES:
         return f"unknown failure cause {state.failure_cause!r}"
     if set(state.systems) != set(VITAL_SYSTEMS):
@@ -518,6 +526,8 @@ class OrganismModel:
         boundary_probe_model: str = "none",
         boundary_params: dict[str, Any] | None = None,
         component_overrides: list[dict[str, Any]] | None = None,
+        epigenetic_backup_model: str = "none",
+        epigenetic_backup_params: dict[str, Any] | None = None,
     ):
         from longevity.model.aging import (  # deferred: avoid import cycle
             default_driver_state,
@@ -552,6 +562,11 @@ class OrganismModel:
             validate_boundary_params,
             validate_boundary_probe_model,
             validate_component_overrides,
+        )
+        from longevity.model.epigenetic_backup import (  # deferred: avoid import cycle
+            default_epigenetic_backup_state,
+            validate_epigenetic_backup_model,
+            validate_epigenetic_backup_params,
         )
 
         self.state = state or self.default_state()
@@ -596,6 +611,11 @@ class OrganismModel:
         self.boundary_probe_model = validate_boundary_probe_model(boundary_probe_model)
         self.boundary_params = validate_boundary_params(boundary_params)
         self.component_overrides = validate_component_overrides(component_overrides)
+        self.epigenetic_backup_model = validate_epigenetic_backup_model(epigenetic_backup_model)
+        self.epigenetic_backup_params = validate_epigenetic_backup_params(epigenetic_backup_params)
+        if self.epigenetic_backup_model != "none" and self.aging_model != "mechanistic_drivers":
+            raise ValueError("epigenetic_backup_model requires aging_model='mechanistic_drivers' "
+                             "(entropy is a meta-driver of the 8-driver ledger)")
         self._apply_static_perturbation()
         if self.aging_model == "mechanistic_drivers" and self.state.aging is None:
             self.state.aging = default_driver_state()
@@ -635,6 +655,10 @@ class OrganismModel:
                 "ablation_flags_hash": _ablation_hash(self.boundary_params,
                                                      self.component_overrides),
             }
+        if self.epigenetic_backup_model == "reference_restore" and self.state.epigenetic_backup is None:
+            self.state.epigenetic_backup = default_epigenetic_backup_state()
+            self.state.epigenetic_backup["genome_sanitized"] = bool(
+                self.epigenetic_backup_params["genome_sanitized"])
         if self.reversibility_model == "split_reversible_irreversible" \
                 and self.state.reversibility is not None \
                 and self.boundary_probe_model == "irreversibility_ablation":
@@ -932,11 +956,32 @@ class OrganismModel:
         assert s.aging is not None
         mult = _STAGE_AGING_MULT[stage]
         reserve_factor = max(0.0, min(1.0, float(s.functional_reserve)))
+        backup_on = self.epigenetic_backup_model == "reference_restore" \
+            and s.epigenetic_backup is not None
+        sanitize = 1.0
+        entropy = 0.0
+        if backup_on:
+            from longevity.model.epigenetic_backup import (  # deferred: avoid import cycle
+                entropy_bio_contribution,
+                sanitization_factor,
+            )
+
+            sanitize = sanitization_factor(self.epigenetic_backup_params)
+            entropy = max(0.0, float(s.epigenetic_backup.get("epigenetic_entropy", 0.0)))
         for name, params in self.aging_drivers.items():
             cell = s.aging["drivers"][name]
             damage = float(cell["damage"])
             accumulation = self._jitter(float(params["base_aging_rate"]) * mult
                                         * (1.0 + s.global_damage)) * dt
+            if name == "dna_damage":
+                # Sanitized genome: retrotransposon-free, endogenous
+                # mutagenesis drops by ~90% (O-9-3).
+                accumulation *= sanitize
+            if name == "epigenetic_drift" and backup_on and mult > 0.0:
+                # Noise echo: unresolved Shannon entropy leaks back into
+                # drift accumulation (information-theoretic coupling).
+                accumulation += entropy * float(
+                    self.epigenetic_backup_params["drift_noise_coupling"]) * mult * dt
             repair = min(damage, float(params["repair_capacity"]) * reserve_factor * dt)
             cell["damage"] = max(float(params["floor"]),
                                  min(1.0, damage + accumulation - repair))
@@ -944,6 +989,11 @@ class OrganismModel:
             {name: float(cell["damage"]) for name, cell in s.aging["drivers"].items()},
             self.aging_drivers, self.adult_age_setpoint, self.allow_sub_adult_biological_age)
         s.biological_age = bio
+        if backup_on:
+            # Meta-driver: Shannon entropy contributes additively to
+            # biological age (the 8-driver ledger itself is untouched).
+            s.biological_age = max(0.0, bio + entropy_bio_contribution(
+                entropy, self.epigenetic_backup_params))
 
     def _organ_backed_step(self, dt: float, stage: str) -> None:
         """Reduced organ proxy dynamics + resource contention (Stage 6A)."""
@@ -1213,6 +1263,8 @@ class OrganismModel:
             self._apply_network_effect_costs(effect)
         if self.reversibility_model == "split_reversible_irreversible" and s.reversibility is not None:
             self._apply_reversibility_effect(effect)
+        if self.epigenetic_backup_model == "reference_restore" and s.epigenetic_backup is not None:
+            self._apply_epigenetic_backup_effect(effect)
         if s.biological_age < bio_before - 1e-9:
             s.rejuvenation_events += 1
         s.functional_reserve = max(0.0, s.functional_reserve + float(effect.get("delta_reserve_global", 0.0)))
@@ -1614,6 +1666,12 @@ class OrganismModel:
             cancer_irr = float(rev["drivers"]["cancer_prone"]["irreversible"])
         mut_step = (0.5 * float(params["independent_irreversible_rate"])
                     * (0.5 + cancer_irr) * mult * dt)
+        if self.epigenetic_backup_model == "reference_restore" \
+                and s.epigenetic_backup is not None:
+            # Sanitized genome: fixation of new mutations drops ~90%.
+            from longevity.model.epigenetic_backup import sanitization_factor  # deferred
+
+            mut_step *= sanitization_factor(self.epigenetic_backup_params)
         rev["mutation_fixation"] = max(0.0, min(1.0, float(rev["mutation_fixation"]) + mut_step))
         niche_in = max(0.0, min(1.0, float(s.inflammation) * 0.5 + energy_shortfall * 0.5))
         rev["niche_disorder"] = max(0.0, min(1.0, float(rev["niche_disorder"])
@@ -1643,6 +1701,37 @@ class OrganismModel:
         rev["biological_age_floor_dynamic"] = float(floor)
         rev["reversible_age_contribution"] = float(rev_c)
         rev["irreversible_age_contribution"] = float(irr_c)
+
+    def _epigenetic_backup_step(self, dt: float, stage: str) -> None:
+        """Shannon entropy dynamics + reference capture (Stage 9).
+
+        dH_epi/dt = Noise_Generation - Repair_Capacity (- Restore on pulse
+        events, handled in ``apply_effect``). TE proxy follows epigenetic
+        drift + inflammation; metabolic byproducts follow mitochondrial
+        dysfunction. The reference epigenome freezes once, the first time
+        chronological age reaches ``adult_age_setpoint``.
+        """
+        from longevity.model.epigenetic_backup import (  # deferred: avoid import cycle
+            capture_reference,
+            entropy_step,
+        )
+
+        s = self.state
+        backup = s.epigenetic_backup
+        assert backup is not None
+        assert s.aging is not None
+        drivers = s.aging["drivers"]
+        drift_damage = float(drivers["epigenetic_drift"].get("damage", 0.0))
+        mito_damage = float(drivers["mitochondrial_dysfunction"].get("damage", 0.0))
+        if s.chronological_age >= self.adult_age_setpoint:
+            capture_reference(backup, s.chronological_age, drift_damage)
+        mult = {"embryo": 0.0, "fetal": 0.0, "infancy": 0.05, "childhood": 0.1,
+                "adolescence": 0.25, "adult_homeostasis": 1.0, "early_aging": 1.6,
+                "late_aging": 2.2, "terminal_decline": 2.6}[stage]
+        if mult <= 0.0:
+            return
+        entropy_step(backup, dt, mult, drift_damage, mito_damage,
+                     float(s.inflammation), self.epigenetic_backup_params)
 
     def _apply_reversibility_effect(self, effect: dict[str, Any]) -> None:
         """Apply rev_* keys to the reversibility ledger (Stage 6C)."""
@@ -1754,6 +1843,59 @@ class OrganismModel:
             rev["mutation_fixation"] = max(0.0, min(1.0, float(rev.get("mutation_fixation", 0.0))
                                                    + 0.004 * intensity))
         self._update_reversibility_age()
+
+    def _apply_epigenetic_backup_effect(self, effect: dict[str, Any]) -> None:
+        """Apply epi_* keys: rollback pulses + synthetic apoptosis (Stage 9)."""
+        from longevity.model.epigenetic_backup import apply_rollback  # deferred: avoid import cycle
+
+        s = self.state
+        backup = s.epigenetic_backup
+        assert backup is not None
+        assert s.aging is not None
+        intensity = max(0.0, float(effect.get("intensity", 1.0)))
+        params = self.epigenetic_backup_params
+        rollback_request = max(0.0, float(effect.get("epi_rollback", 0.0)))
+        if rollback_request > 0.0:
+            cancer_damage = float(s.aging["drivers"]["cancer_prone"].get("damage", 0.0))
+            event = apply_rollback(backup, s.reversibility, s.aging["drivers"],
+                                   self.aging_drivers, cancer_damage,
+                                   rollback_request * intensity, params)
+            event["source"] = str(effect.get("source", ""))
+            event["age"] = float(s.chronological_age)
+            s.intervention_history.append({"age": s.chronological_age, "source": event["source"],
+                                           "effect": "epigenetic_rollback_pulse",
+                                           "bio_delta": 0.0, "target_drivers": ["epigenetic_drift"],
+                                           "rollback": event})
+            if event.get("fired"):
+                s.cancer_burden = self._clamp01(
+                    s.cancer_burden + float(params["rollback_cancer_cost"]) * intensity)
+                for name in VITAL_SYSTEMS:
+                    info = s.systems[name]
+                    info["reserve"] = max(0.0, float(info.get("reserve", 0.0))
+                                          - float(params["rollback_reserve_cost"]) * intensity / 8.0)
+                # Driver repair is visible to bio age immediately.
+                from longevity.model.aging import aggregate_biological_age  # deferred
+
+                bio, _ = aggregate_biological_age(
+                    {n: float(c["damage"]) for n, c in s.aging["drivers"].items()},
+                    self.aging_drivers, self.adult_age_setpoint,
+                    self.allow_sub_adult_biological_age)
+                from longevity.model.epigenetic_backup import entropy_bio_contribution  # deferred
+
+                s.biological_age = max(0.0, bio + entropy_bio_contribution(
+                    float(backup.get("epigenetic_entropy", 0.0)), params))
+        apoptosis_request = max(0.0, float(effect.get("epi_apoptosis", 0.0)))
+        if apoptosis_request > 0.0 and not (rollback_request > 0.0):
+            # Standalone purge (rollback path already purges when needed).
+            clearance = max(0.0, min(1.0, float(params["apoptosis_clearance"]))) \
+                * apoptosis_request * intensity
+            cell = s.aging["drivers"]["dna_damage"]
+            floor = float(self.aging_drivers["dna_damage"]["floor"])
+            cell["damage"] = max(floor, float(cell.get("damage", 0.0)) - clearance)
+            if s.reversibility is not None:
+                s.reversibility["mutation_fixation"] = max(
+                    0.0, min(1.0, float(s.reversibility.get("mutation_fixation", 0.0)) - clearance))
+            backup["apoptosis_events"] = int(backup.get("apoptosis_events", 0)) + 1
 
     def _maybe_reversibility_shock(self, dt: float) -> None:
         """Separate reversibility shock draw (Stage 6C only)."""
@@ -2034,6 +2176,10 @@ class OrganismModel:
             if key.startswith("rev_") and isinstance(value, (int, float)) \
                     and not isinstance(value, bool):
                 scaled[key] = float(value) * factor
+        for key, value in scaled.items():
+            if key.startswith("epi_") and isinstance(value, (int, float)) \
+                    and not isinstance(value, bool):
+                scaled[key] = float(value) * factor
         return scaled
 
     def step(self, dt: float, bounds: dict[str, float], thresholds: dict[str, Any],
@@ -2059,6 +2205,10 @@ class OrganismModel:
         if self.reversibility_model == "split_reversible_irreversible":
             assert s.reversibility is not None
             self._reversibility_step(dt, s.developmental_stage)
+        if self.epigenetic_backup_model == "reference_restore":
+            assert s.epigenetic_backup is not None
+            assert s.aging is not None
+            self._epigenetic_backup_step(dt, s.developmental_stage)
         new_shocks = self._maybe_shock(dt)
         self._apply_active_shocks(dt)
         applied = []
@@ -2144,6 +2294,8 @@ class OrganismModel:
             "boundary_probe_model": self.boundary_probe_model,
             "boundary_params": copy.deepcopy(self.boundary_params),
             "component_overrides": copy.deepcopy(self.component_overrides),
+            "epigenetic_backup_model": self.epigenetic_backup_model,
+            "epigenetic_backup_params": copy.deepcopy(self.epigenetic_backup_params),
             "policy_cooldown": copy.deepcopy(policy_state) if policy_state is not None else {},
             "state": self.state.to_dict(),
         }
@@ -2179,6 +2331,11 @@ class OrganismModel:
             validate_boundary_params,
             validate_boundary_probe_model,
             validate_component_overrides,
+        )
+        from longevity.model.epigenetic_backup import (  # deferred
+            default_epigenetic_backup_state,
+            validate_epigenetic_backup_model,
+            validate_epigenetic_backup_params,
         )
 
         model = cls.__new__(cls)
@@ -2225,6 +2382,13 @@ class OrganismModel:
         model.boundary_probe_model = validate_boundary_probe_model(data.get("boundary_probe_model", "none"))
         model.boundary_params = validate_boundary_params(data.get("boundary_params", None))
         model.component_overrides = validate_component_overrides(data.get("component_overrides", None))
+        model.epigenetic_backup_model = validate_epigenetic_backup_model(
+            data.get("epigenetic_backup_model", "none"))
+        model.epigenetic_backup_params = validate_epigenetic_backup_params(
+            data.get("epigenetic_backup_params", None))
+        if model.epigenetic_backup_model != "none" and model.aging_model != "mechanistic_drivers":
+            raise ValueError("epigenetic_backup_model requires aging_model='mechanistic_drivers' "
+                             "(entropy is a meta-driver of the 8-driver ledger)")
         if model.aging_model == "mechanistic_drivers" and model.state.aging is None:
             from longevity.model.aging import default_driver_state  # deferred
 
@@ -2259,6 +2423,11 @@ class OrganismModel:
                 "exploratory": exploratory,
                 "ablation_flags_hash": _bh(model.boundary_params, model.component_overrides),
             }
+        if model.epigenetic_backup_model == "reference_restore" \
+                and model.state.epigenetic_backup is None:
+            model.state.epigenetic_backup = default_epigenetic_backup_state()
+            model.state.epigenetic_backup["genome_sanitized"] = bool(
+                model.epigenetic_backup_params["genome_sanitized"])
         return model
 
 

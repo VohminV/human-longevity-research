@@ -475,3 +475,7 @@ docs-only гейт `Immortality Master Switch Discovery Gate`: код модел
 
 HYP-0 остаётся `hypothesis_not_proven`: ни один master switch
 не найден, не доказан и не заявлен возможным или близким.
+
+Stage 9 (прототип поверх этого слоя): `reference_restore` +
+rollback/apoptosis (`docs/AGING_MODEL.md` §13) — механизм работает,
+но v6=false везде (третья стена за второй, диффузный паттерн 6F/7).

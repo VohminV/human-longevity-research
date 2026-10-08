@@ -249,3 +249,58 @@ returns и никогда ниже floor. `biological_age_reversibility` пол�
 граница текущей модели, а не опровержение гипотезы в реальности. Даже
 наличие candidate policy не доказывало бы бессмертие — только
 операциональный флаг внутри абстрактной модели.
+
+## 13. Information Preservation Model: epigenetic backup (Stage 9 prototype)
+
+Сдвиг рамки от «Repair Model» (чинить урон после того, как он лёг) к
+«Information Preservation Model»: организм несёт замороженный
+`reference_epigenome` (слепок при `adult_age_setpoint`) и канал
+чтения/восстановления, который откатывает шенноновскую энтропию
+эпигенома к референсу, не трогая идентичность клеток.
+
+Уравнения (операциональные, `src/longevity/model/epigenetic_backup.py`):
+
+```text
+dH_epi/dt = Noise_Generation - Repair_Capacity - Backup_Restore_Rate
+Noise_Generation = base * (1 + te_coupling * (0.5*D_epi + 0.5*Infl)
+                              + metabolic_coupling * D_mito)
+```
+
+- `D_epi` — повреждение драйвера `epigenetic_drift` (прокси дерепрессии
+  LINE-1/Alu), `Infl` — воспаление, `D_mito` — повреждение драйвера
+  `mitochondrial_dysfunction` (метаболические побочные продукты).
+- `Repair_Capacity` — эндогенное поддержание (потолок: чинить нечего
+  нельзя ниже нуля). `Backup_Restore_Rate` — событийный (только пульсы
+  отката, в шаге равен нулю).
+- Мета-драйвер: 8-драйверный леджер не тронут; энтропия входит в
+  биовозраст аддитивно: `bio = aggregate_8(drivers) + w_entropy * H_epi`,
+  плюс шумовое эхо `dD_epi += H_epi * drift_noise_coupling`.
+- Стекло чтения: `proximity = H_epi / wall_read_threshold`;
+  `readable = H_epi < wall_read_threshold`; fidelity падает к
+  `min_read_fidelity` по мере приближения к стенке
+  (`Information_Wall_Proximity` — `longevity.analysis.boundary_metrics`).
+- Санитированный геном (`genome_sanitized=true`, прокси удаления
+  ретротранспозонов): накопление `dna_damage` и фиксация мутаций × 0.1
+  (−90% эндогенного мутагенеза).
+
+Гейт безопасности (fail-closed, порядок детерминирован):
+
+```text
+burden = 0.6*mutation_fixation + 0.4*D_dna
+if burden > apoptosis_threshold:  synthetic_apoptosis ВМЕСТО отката
+elif D_cancer_prone >= rollback_cancer_gate:  пульс ЗАБЛОКИРОВАН
+else:  H_epi -> к референсному минимуму (точно, без RNG),
+       ремонт D_epi (diminishing), частичный клиренс information_debt,
+       БЕЗ потери identity (delta_neural_continuity = 0)
+```
+
+Критерий `robust_bounded_degradation_v6` (строже v5):
+v5-условия ПЛЮС наклон энтропии ≤ eps, драйв читаем в конце,
+худший наклон в допуске; отсутствие backup-блока = провал, не пас.
+
+Честный итог прототипа (2026-10-08): механизм работает (наклон энтропии
+~0.0003–0.0009 ≤ eps, стенка читаема везде, 5+ откатов и апоптозов за
+прогон), но поиск 54×3 и санитированная проба v6 не дали: bio slope
+~1.33–1.38 держится остальными 7 драйверами, lifespan плоский
+67.5–68.8. Точечный откат одного драйвера третью стену не снимает —
+тот же диффузный паттерн Stage 6F/7. HYP-0: `hypothesis_not_proven`.

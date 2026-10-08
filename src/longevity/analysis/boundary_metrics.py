@@ -1137,3 +1137,33 @@ def classify_stage7_audit(*,
                 "parameter flip, binding stays biological_age_slope; diffuse "
                 "residual wall stable inside the audited ranges",
             "confidence": "high" if identifiability == "identifiable" else "medium"}
+
+
+def information_wall_proximity(trajectory: list[dict[str, Any]]) -> dict[str, Any]:
+    """Backup-Drive readability at the end of a trajectory (pure, Stage 9).
+
+    Delegates to :func:`longevity.model.epigenetic_backup.information_wall_proximity`
+    on the final row's ``epigenetic_backup`` block (nominal params: the
+    trajectory carries state, not config). ``proximity`` in [0, 1] is how
+    close the organism is to losing the ability to read the Backup Drive;
+    ``readable`` False means the wall is reached. Never mutates input.
+    """
+    from longevity.model.epigenetic_backup import (  # deferred: avoid import cycle
+        information_wall_proximity as _model_proximity,
+    )
+
+    if not trajectory:
+        raise ValueError("information_wall_proximity of empty trajectory")
+    final = trajectory[-1].get("epigenetic_backup")
+    result = _model_proximity(dict(final) if final is not None else None, None)
+    result["final_age"] = float(trajectory[-1].get("chronological_age", 0.0))
+    return result
+
+
+def information_wall_proximity_ru(proximity: float, readable: bool) -> str:
+    """Russian human-readable wall proximity label (pure, Stage 9)."""
+    from longevity.model.epigenetic_backup import (  # deferred: avoid import cycle
+        information_wall_proximity_ru as _ru,
+    )
+
+    return _ru(proximity, readable)

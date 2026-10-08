@@ -1,0 +1,31 @@
+{
+  "experiment_id": "organism_rollback_attribution",
+  "stage": "9b",
+  "notes": "Stage 9b constraint attribution: rollback + per-driver base_aging_rate x 0.1 ablations. Baseline = best Stage 9 rollback config with minimal reproducible H_epi slope (from 54x3 search: threshold 0.03 / intensity 1.0 / interval 1.0 / apoptosis q10). Everything fixed except the explicit ablation. HYP-0 stays hypothesis_not_proven.",
+  "seeds": [42, 7, 99],
+  "base_organism_config": "experiments/configs/organism_backup_rollback_baseline.json",
+  "rollback_policy_overrides": {
+    "policy_index": 6,
+    "biomarker_threshold": 0.03,
+    "intensity": 1.0,
+    "interval": 1.0
+  },
+  "apoptosis_policy_overrides": {
+    "policy_index": 7,
+    "interval": 10.0
+  },
+  "ablation_driver_scale": 0.1,
+  "drivers": [
+    "dna_damage",
+    "epigenetic_drift",
+    "proteostasis_loss",
+    "mitochondrial_dysfunction",
+    "cellular_senescence",
+    "stem_exhaustion",
+    "chronic_inflammation",
+    "cancer_prone"
+  ],
+  "single_driver_relative_threshold": 0.3,
+  "single_driver_margin": 2.0,
+  "output_artifact": "experiments/output/organism_rollback_attribution.json"
+}

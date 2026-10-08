@@ -1,7 +1,7 @@
 # HYP-0: candidate immortality policy — статус проверки
 
 > Статус: **hypothesis_not_proven**.
-> Формулировка критерия: `docs/IMMORTALITY.md` §§6–15 (robust v1 → mechanistic v2 →
+> Формулировка критерия: `docs/IMMORTALITY.md` §§6–16 (robust v1 → mechanistic v2 →
 > organ-backed v3 → network v4 → reversibility v5 + правила интерпретации 6D–8.5).
 > Модель: абстрактный организм Stage 5A → 8 (organism → organ-backed →
 > organ-network → reversibility + boundary/audit/alignment зонды).
@@ -334,6 +334,30 @@ Stage 9 из `docs/MECHANISTIC_EXTENSION_ROADMAP.md` — **отложен**,
 мастер-свитч не найден, не доказан, не заявлен возможным или
 близким. Решение на гейте — `review` (не `proceed`).
 
+## Stage 9 result
+
+Epigenetic Backup Prototype (information-preservation model,
+`epigenetic_backup_model=reference_restore`) добавлен поверх полного
+стека 6C; candidate robust bounded degradation v6 **не найден**:
+
+- механизм работает как задумано: наклон энтропии 0.0003–0.0009
+  (в допуске eps 0.004), Backup Drive читаем во всех прогонах,
+  reference заморожен на 25.0, откаты и синтетические апоптозы
+  срабатывают (5+ событий за прогон), санитированный геном снижает
+  bio slope 1.38 → 1.35;
+- поиск 54×3 (откат: cooldown × интенсивность × порог энтропии;
+  апоптоз: каденс): v6=false в 54/54, lifespan плоский 67.5–68.8,
+  binding везде `biological_age_slope` остальных драйверов;
+- `candidate_robust_bounded_degradation_v6_found = false`;
+- стена: точечный откат одного драйвера третью стену не снимает
+  (диффузный паттерн Stage 6F/7 повторяется на новом слое).
+
+Статус остаётся `hypothesis_not_proven`. Это граница текущей
+абстракции с новым каналом, а не опровержение гипотезы в реальности.
+Ограничения: порядковые параметры, n = 3, некалиброванная биология;
+вывод действует только внутри abstract organ-network reversibility
+backup модели.
+
 ## История статусов
 
 - Stage 5A (2026-10-04): hypothesis_not_proven, single-seed search, bounded 0/27.
@@ -368,3 +392,7 @@ Stage 9 из `docs/MECHANISTIC_EXTENSION_ROADMAP.md` — **отложен**,
 - Stage 8.5 (2026-10-07): hypothesis_not_proven, docs-only Discovery
   Gate (6 документов, без кода/симуляции); pivot заменяет нумерацию
   после Stage 8; решение = review, не proceed.
+- Stage 9 (2026-10-08): hypothesis_not_proven, epigenetic backup
+  prototype (reference_restore + rollback/apoptosis, 54×3 поиск +
+  санитированная проба); механизм работает, v6=false везде;
+  стена точечного отката повторяет диффузный паттерн 6F/7.

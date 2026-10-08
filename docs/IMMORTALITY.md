@@ -270,3 +270,21 @@ Stage 8.5 — docs-only `Master Switch Discovery Gate` (код и симуляц
 `docs/SAFETY_AND_CANCER_RISK_MODEL.md`; гипотезы HYP-2 —
 `research/hypotheses/HYP-2_master_switch_candidates.md`.
 Ничего не найдено и не доказано; статус — `hypothesis_not_proven`.
+
+## 16. Backup-discipline interpretation rule (Stage 9)
+
+В конечной симуляции candidate immortality policy может рассматриваться
+только как политика, при которой v5 достигается robustly в
+не-exploratory режимах И шенноновская энтропия эпигенома удерживается
+в допуске при читаемом Backup Drive. Появление v6 только с
+unlimited ceiling, только в узком окне частот отката или только при
+смене вердикта по eps/dt/seed — это sensitivity, а не успех
+(те же классы, что §12).
+
+Конкретно (Stage 9): поиск 54×3 + санитированная проба — v6=false
+везде при работающем механизме (наклон энтропии ~0.0003–0.0009,
+стенка читаема, откаты/апоптозы срабатывают); binding везде
+`biological_age_slope` остальных драйверов; lifespan плоский
+67.5–68.8. Точечный откат одного драйвера — третья стена за второй
+(диффузный паттерн Stage 6F/7 на новом слое). Статус —
+`hypothesis_not_proven`.

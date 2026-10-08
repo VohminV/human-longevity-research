@@ -1,72 +1,89 @@
-# HUMAN LONGEVITY RESEARCH
+# Исследование долголетия человека
 
-![stages](https://img.shields.io/badge/stages-1%E2%80%938.5_done-brightgreen)
-![tests](https://img.shields.io/badge/tests-565_passing-brightgreen)
+![stages](https://img.shields.io/badge/stages-1%E2%80%939_done-brightgreen)
+![tests](https://img.shields.io/badge/tests-600_passing-brightgreen)
 ![HYP-0](https://img.shields.io/badge/HYP--0-hypothesis_not_proven-orange)
 [![CI](https://github.com/VohminV/human-longevity-research/actions/workflows/ci.yml/badge.svg)](https://github.com/VohminV/human-longevity-research/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
 
-**Вычислительная исследовательская платформа для изучения человеческого развития,
-старения, регенерации, продолжительности жизни и потенциальных механизмов радикального
-продления здоровой жизни.**
+**Вычислительная платформа для изучения развития человека, старения и долголетия.**
 
-> Презентация прогресса: **[PRESENTATION.md](PRESENTATION.md)** — визуальный обзор
-> всех этапов, ключевых результатов и статуса гипотезы HYP-0.
+Мы строим компьютерную модель организма — от клетки до всего тела — и проверяем
+на ней, какие вмешательства продлевают жизнь, а какие нет. Модель не подгоняется
+под красивый ответ: если что-то не работает, мы так и пишем.
 
-> **Ключевая долгосрочная гипотеза проекта:**
-> Можно ли построить достаточно подробную вычислительную модель человека, чтобы
-> экспериментально исследовать механизмы старения и определить, какие изменения способны
-> замедлять, останавливать или обращать отдельные процессы деградации организма?
+> Подробный разбор всех этапов с картинками и цифрами: **[PRESENTATION.md](PRESENTATION.md)**.
 >
-> «Бессмертие» НЕ является заранее доказанным результатом. Это предельная
-> исследовательская гипотеза, а не утверждение.
+> Правило оформления: названия файлов, параметров и статусов из кода даны
+> `моноширинным шрифтом`. Весь остальной текст — на русском.
 
----
+## Простыми словами: что это такое
 
-## Прогресс
+1. Берём научные данные о том, как человек растёт и стареет.
+2. Строим упрощённую биологическую модель: клетка → ткань → орган → организм.
+3. Запускаем в симуляторе сотни сценариев: «а что если чинить повреждения?», «а что если менять клетки?» и т.д.
+4. Смотрим, где упираемся в предел, и честно фиксируем результат.
+
+Главный вопрос проекта:
+
+> Можно ли на достаточно подробной модели человека найти вмешательства,
+> которые замедляют, останавливают или обращают старение?
+
+«Бессмертие» здесь — это не обещание, а предельная гипотеза для проверки.
+На сегодня ответ честный: **гипотеза не доказана** (`hypothesis_not_proven`).
+
+## Что уже сделано
+
+Коротко, без жаргона:
 
 ```text
-Этапы 1–8:  ████████████████████████████████████████ 22/22 завершены
-Stage 8.5:  ████████████████████████████████ docs-only (6 документов) · решение = review
-HYP-0:      hypothesis_not_proven (честный статус во всех артефактах)
-Тесты:      565 passing (детерминизм, инварианты, checkpoint/restore)
-CI:         GitHub Actions — pytest на каждый push / pull request
+Этапы 1–8:   22 из 22 завершены
+Этап 8.5:    только документы (6 штук), решение = review, то есть «нужна проверка»
+Этап 9:      рабочий прототип (сохранение и откат повреждений, но чуда нет)
+Гипотеза HYP-0: не доказана — этот статус стоит во всех файлах и отчётах
+Тесты:       600 проходят (проверяют повторяемость и базовую логику)
+Проверки:    GitHub Actions запускает тесты при каждом изменении
 ```
 
-| Блок | Этапы | Статус | Главный вывод |
-|---|---|---|---|
-| Клетка и развитие | 1, 2, 3, 3.5 | ✅ | Калибровка против данных → **MODEL MISMATCH**, частичное закрытие (модель C) |
-| Ткань | 3A–3C | ✅ | Устойчивые политики замены существуют; агрессивная замена истощает stem pool |
-| Орган | 4A–4D | ✅ | `non-interference is optimal` — координация не бьёт independent execution |
-| Организм | 5A | ✅ | Adaptive control: lifespan 117.8; bounded degradation — нигде |
-| Robust | 5B | ✅ | Binding constraint везде одно: `biological_age_slope` (70/70) |
-| Mechanistic | 5C | ✅ | Драйверы разложены; доминируют `cellular_senescence` / `epigenetic_drift`; v2 — нигде |
-| Organ-backed | 6A | ✅ | Прокси + ресурсы + координация; лучший 104.8; v3 — нигде, binding везде `biological_age` |
-| Organ-network | 6B | ✅ | Рёбра + feedback + hard limits + network age; лучший 76.8; v4 — нигде, binding везде `biological_age` |
-| Reversibility | 6C | ✅ | Reversible/irreversible split + conversion + ceiling; лучший 69.8; v5 — нигде, wall `irreversible_accumulation` |
-| Boundary probe | 6D | ✅ | Аблации conversion/accrual/ceiling + атрибуция; conversion=0 даёт slope в допуске, но v5 — нигде (открывается `biological_age`) |
-| Compound wall | 6E | ✅ | Knife-edge sweep 8×3 (v5 false везде, knife-edge нет) + bio-age attribution + sensitivity (eps/dt/seed stable); wall `compound_residual_wall` |
-| Residual drivers | 6F | ✅ | Heterogeneous probe 15×3 + sweep 14×3 (v5 false везде, flip нет, joint ablation −17%); residual wall `diffuse_residual_wall` |
-| Robustness audit | 7 | ✅ | Parameter probe 23×3 + criterion variants (v5 false везде, flip нет, оба драйвера identifiable); audit `robust_diffuse_wall` |
-| Biological alignment | 8 | ✅ | Манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` |
-| Master-switch gate | 8.5 | ✅ docs-only | 6 документов: уровни цели, 10 критериев, реестр ~19 кандидатов + 5 контуров, внешние anchors (5 verified / 7 needs_verification / 1 unavailable), safety-проект; **ничего не найдено и не доказано** |
-| Дальше | 9–16 | ⏳ | Следующий шаг: решение `review` по гейту Stage 8.5 (внешний anchor + safety-прокси) или отложенная ветка Stage 9 prototype; всё — отдельным решением |
+| Блок | Этапы | Итог простыми словами |
+|---|---|---|
+| Клетка и развитие | 1, 2, 3, 3.5 | Собрали модель клетки. При сверке с реальными данными модель разошлась с ними — зафиксировали это как `MODEL MISMATCH`, частично сгладили (модель C) |
+| Ткань | 3A–3C | Нашли режимы замены клеток, при которых ткань живёт стабильно. Слишком агрессивная замена истощает запас стволовых клеток |
+| Орган | 4A–4D | Координация работы не лучше, чем если не вмешиваться. Вывод: «невмешательство оптимально» для этой модели |
+| Организм | 5A | Лучшее гибкое управление дало жизнь 117.8 лет в модели, но остановить старение не удалось нигде |
+| Проверка на прочность | 5B | Во всех 70 проверках упираемся в одно и то же: растёт биологический возраст |
+| Причины старения | 5C | Разложили старение на 8 причин. Главные — старые (сенесцентные) клетки и сбои в регуляции генов |
+| Органы в организме | 6A | Добавили упрощённые органы и общие ресурсы. Лучший результат — 104.8 лет, дальше снова стена биовозраста |
+| Связи между органами | 6B | Добавили связи, обратные связи и жёсткие limits. Лучший результат — 76.8 лет, стена та же |
+| Можно ли обратить? | 6C | Разделили повреждения на обратимые и необратимые. Лучший результат — 69.8 лет, стена — накопление необратимого |
+| Граница обратимости | 6D | Пробовали убрать переход повреждений в необратимые. Наклон выровнялся, но общий критерий всё равно не пройден |
+| Составная стена | 6E | Резкой границы «вкл/выкл» нет. Стена составная: `compound_residual_wall` |
+| Остаточные причины | 6F | Гасили главные причины по одной и вместе (−17% наклона). Не помогло. Стена распределённая: `diffuse_residual_wall` |
+| Аудит | 7 | Проверили 23 набора параметров и разные варианты критерия. Вердикт не меняется: `robust_diffuse_wall` |
+| Сверка с биологией | 8 | Составили список: 13 точек согласия с наукой, 9 расхождений, 8 идей для улучшения (P0–P6). Вывод: `mechanistic_extension_required`, то есть модели нужны новые механизмы |
+| Поиск «главного рубильника» | 8.5 | Только документы: 6 штук, ~19 кандидатов в генах и 5 контуров. Ничего не найдено и не доказано, решение — `review` |
+| Резервная копия повреждений | 9 | Прототип: сохраняем «молодое» состояние и откатываем к нему + чистка опасных клеток. Перебор 54×3 — критерий `v6` не пройден нигде, жизнь 67.5–68.8 |
+| Кто виноват? | 9b | Убирали по одной 8 причин старения. Лучшее дало −2.8%, остальные почти ноль. Остаток объяснить не смогли |
+| Дальше | 9–16 | План поиска «главного рубильника»: по шагам 9 → 16, каждый шаг — только отдельным решением |
 
-Детали — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
+Подробности — в [PRESENTATION.md](PRESENTATION.md) и `docs/ROADMAP.md`.
 
-## Содержание
+## Словарик, чтобы было понятно
 
-- [Прогресс](#прогресс)
-- [Принцип](#принцип)
-- [Уровни модели](#уровни-модели)
-- [Понятия](#понятия)
-- [Документация (`docs/`)](#документация-docs)
-- [Структура репозитория](#структура-репозитория)
-- [Статус проекта](#статус-проекта)
-- [Как начать](#как-начать)
-- [Лицензия и статус](#лицензия-и-статус)
+Без этих слов дальше будет трудно:
 
-## Принцип
+- **Сид (`seed`)** — число, с которого начинается случайность в симуляции. Один и тот же сид = один и тот же результат. Так добиваемся повторяемости.
+- **Биовозраст** — внутренний «износ» организма в модели. Отличается от паспортного возраста. Если он растёт быстро — организм быстрее умирает.
+- **Драйвер старения** — одна из причин старения в модели. У нас их 8: повреждения ДНК, сбои регуляции генов, поломки белков, митохондрии, старые клетки, истощение стволовых, воспаление, склонность к раку.
+- **Перебор по сетке (свип)** — запускаем много вариантов подряд. Например, запись «8×3» значит: 8 значений параметра, каждое по 3 раза с разными сидами.
+- **Аблация** — проверка «а что если это убрать?». Убираем один механизм и смотрим, что изменилось.
+- **Политика** — правило вмешательств. Например: «чинить, когда износ выше порога» или «давать лекарство по расписанию».
+- **Критерии `v1`–`v6`** — строгие проверки «удалось ли остановить деградацию». `v1` — самый простой, `v5` — с учётом необратимых повреждений, `v6` — с учётом резервной копии. Пока **ни один не пройден нигде**.
+- **Стена (`wall`)** — устойчивое ограничение, в которое упираемся. Например, `diffuse_residual_wall` значит: ограничение размазано по многим причинам, а не сидит в одном месте.
+- **HYP-0** — главная гипотеза: «существует правило вмешательств, которое останавливает деградацию в модели». Статус везде: `hypothesis_not_proven` — не доказана.
+- **Бит-в-бит (`none` = предыдущий этап)** — режим для проверки, что новый код ничего не сломал: при выключенных новинках результат совпадает с прошлым этапом один в один.
+
+## Принцип работы
 
 **СНАЧАЛА ПРАВИЛЬНАЯ НАУЧНАЯ МОДЕЛЬ.**
 
@@ -76,219 +93,124 @@ CI:         GitHub Actions — pytest на каждый push / pull request
 
 **ПОТОМ ПРОВЕРКА ГИПОТЕЗ.**
 
-Модель не подгоняется под идею бессмертия. Пусть результаты симуляции сами показывают,
-какие механизмы ограничивают жизнеспособность системы.
-
-## Уровни модели
+## Как устроена модель: лестница вверх
 
 ```
-SCIENTIFIC DATA
+НАУЧНЫЕ ДАННЫЕ
         ↓
-BIOLOGICAL MODEL
+БИОЛОГИЧЕСКАЯ МОДЕЛЬ
         ↓
-CELL MODEL
+МОДЕЛЬ КЛЕТКИ
         ↓
-TISSUE MODEL
+МОДЕЛЬ ТКАНИ
         ↓
-ORGAN MODEL
+МОДЕЛЬ ОРГАНА
         ↓
-ORGANISM MODEL
+МОДЕЛЬ ОРГАНИЗМА
         ↓
-AGING MODEL
+МОДЕЛЬ СТАРЕНИЯ
         ↓
-INTERVENTION MODEL
+МОДЕЛЬ ВМЕШАТЕЛЬСТВ
         ↓
-COMPUTATIONAL EXPERIMENTS
+ВЫЧИСЛИТЕЛЬНЫЕ ЭКСПЕРИМЕНТЫ
         ↓
-LONGEVITY ANALYSIS
+АНАЛИЗ ДОЛГОЛЕТИЯ
 ```
 
-Симулятор — инструмент исследования, а не игровая симуляция человека.
+Симулятор — это инструмент для исследования, а не игра про человека.
 
-## Понятия
+## Четыре понятия, которые нельзя путать
 
-- **LIFESPAN** — сколько времени организм существует.
-- **HEALTHSPAN** — сколько времени организм сохраняет нормальную функцию.
-- **REJUVENATION** — возвращение отдельных систем в более молодое функциональное состояние.
-- **IMMORTALITY** — способность организма сохранять необходимую функциональность неопределённо долго.
+- **Время жизни (`LIFESPAN`)** — сколько организм прожил всего.
+- **Время здоровой жизни (`HEALTHSPAN`)** — сколько из этого он был в нормальной форме.
+- **Омоложение (`REJUVENATION`)** — возврат отдельных систем к более молодому состоянию.
+- **Бессмертие (`IMMORTALITY`)** — способность держать нужную функциональность неограниченно долго.
 
-Эти понятия не смешиваются. Разделение и определения — в `docs/LONGEVITY.md`.
+Разбор — в `docs/LONGEVITY.md`.
 
-## Документация (`docs/`)
+## Документы (`docs/`)
 
-| Документ | Содержание |
+| Документ | О чём он, простыми словами |
 |---|---|
-| `RESEARCH.md` | Научный контекст, граница между наблюдением и гипотезой |
-| `BIOLOGY.md` | Биологическая основа: клеточный цикл, деление, смерть, дифференцировка |
-| `CELL_COUNT.md` | **Критический документ**: сколько клеток на разных стадиях развития человека |
-| `CELLULAR_AGING.md` | Потенциальные механизмы старения и их абстракции для модели |
-| `LONGEVITY.md` | Lifespan / healthspan / rejuvenation / immortality |
-| `IMMORTALITY.md` | Предельная гипотеза: что она означает и как её формулировать строго |
-| `TISSUE_MODEL.md` | Модель абстрактной ткани, replacement policy, свипы устойчивости (Stage 3A–3C) |
-| `ORGAN_MODEL.md` | Модель абстрактного органа, координация, temporal relief, recovery (Stage 4A–4D) |
-| `ORGANISM_MODEL.md` | Модель организменного жизненного цикла и поиска политик (Stage 5A) |
-| `AGING_MODEL.md` | Механистический слой старения и reversibility search (Stage 5C) |
-| `ORGAN_BACKED_ORGANISM_MODEL.md` | Organ-backed организм: прокси, ресурсы, координация (Stage 6A) |
-| `ORGAN_NETWORK_MODEL.md` | Organ-network: рёбра, feedback, hard limits, v4 (Stage 6B) |
-| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 + alignment gate 8 + указатель 8.5 |
-| `CALIBRATION.md` | Калибровка ранней динамики против данных (MODEL MISMATCH) |
-| `DEVELOPMENTAL_DYNAMICS.md` | Стадия-зависимый клеточный цикл (Этап 3.5) |
-| `ASSUMPTIONS.md` | Все принятые допущения |
+| `RESEARCH.md` | Научный фон: где факты, а где гипотезы |
+| `BIOLOGY.md` | База: как клетка делится, умирает, превращается в другую |
+| `CELL_COUNT.md` | **Важный документ**: сколько клеток в человеке на разных стадиях |
+| `CELLULAR_AGING.md` | Какие механизмы старения заложили в модель |
+| `LONGEVITY.md` | Разница между жизнью, здоровой жизнью, омоложением и бессмертием |
+| `IMMORTALITY.md` | Что значит предельная гипотеза, если формулировать её строго |
+| `TISSUE_MODEL.md` | Модель ткани и перебор режимов замены (этапы 3A–3C) |
+| `ORGAN_MODEL.md` | Модель органа и координация (этапы 4A–4D) |
+| `ORGANISM_MODEL.md` | Модель жизни организма и поиск правил (этап 5A) |
+| `AGING_MODEL.md` | 8 причин старения и поиск обратимости (этап 5C) + резервная копия (этап 9) |
+| `ORGAN_BACKED_ORGANISM_MODEL.md` | Организм с упрощёнными органами (этап 6A) |
+| `ORGAN_NETWORK_MODEL.md` | Связи между органами и обратные связи (этап 6B) |
+| `REVERSIBILITY_MODEL.md` | Обратимое и необратимое, потолок ремонта, стены 6C–6F, аудит 7, сверка 8 |
+| `CALIBRATION.md` | Сверка ранней модели роста с данными (модель не сошлась) |
+| `DEVELOPMENTAL_DYNAMICS.md` | Как клеточный цикл зависит от стадии развития (этап 3.5) |
+| `ASSUMPTIONS.md` | Все допущения, которые мы приняли |
 | `LIMITATIONS.md` | Ограничения модели и данных |
-| `ARCHITECTURE.md` | Разделение слоёв: DATA / MODEL / ENGINE / EXPERIMENT / ANALYSIS |
-| `EXPERIMENTS.md` | Формат контролируемых вычислительных экспериментов |
-| `ROADMAP.md` | Этапы развития проекта |
-| `DATA_SOURCES.md` | Каталог научных источников (source / DOI / PMID / метод) |
-| `BIOLOGICAL_ALIGNMENT.md` | Биологическое выравнивание и гейт расширения (Stage 8) |
-| `MECHANISTIC_EXTENSION_ROADMAP.md` | Отложенная прототипная ветка механистических расширений (P0–P6) |
-| `IMMORTALITY_TARGET_DEFINITION.md` | 7 уровней цели «бессмертие» и что из них проверялось (Stage 8.5) |
-| `MASTER_SWITCH_DISCOVERY_PROGRAM.md` | Программа поиска master switch: 10 критериев, kill criteria, Stage 8.5–16 |
-| `CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md` | Реестр ~19 кандидатов × 13 полей + 5 контуров A–E (все `candidate_only`) |
-| `EXTERNAL_EVIDENCE_ANCHORS.md` | Карта внешних anchors: `verified_in_repo` / `needs_verification` / `unavailable` |
-| `SAFETY_AND_CANCER_RISK_MODEL.md` | Модель безопасности и онкориска (проект, fail-closed; реализация — Stage 11) |
+| `ARCHITECTURE.md` | Разделение: данные / модель / движок / эксперимент / анализ |
+| `EXPERIMENTS.md` | Как оформлен вычислительный эксперимент |
+| `ROADMAP.md` | План развития по этапам |
+| `DATA_SOURCES.md` | Список научных источников |
+| `BIOLOGICAL_ALIGNMENT.md` | Сверка модели с биологией (этап 8) |
+| `MECHANISTIC_EXTENSION_ROADMAP.md` | План новых механизмов, ветка прототипов (P0–P6) |
+| `IMMORTALITY_TARGET_DEFINITION.md` | 7 уровней цели «бессмертие», что проверяли (этап 8.5) |
+| `MASTER_SWITCH_DISCOVERY_PROGRAM.md` | Программа поиска «главного рубильника»: 10 критериев, шаги 8.5–16 |
+| `CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md` | Список ~19 кандидатов и 5 контуров (все — только кандидаты) |
+| `EXTERNAL_EVIDENCE_ANCHORS.md` | Какие внешние данные подтверждены, какие надо проверять |
+| `SAFETY_AND_CANCER_RISK_MODEL.md` | Черновик модели безопасности и риска рака |
 
-## Структура репозитория
+## Что лежит в репозитории
 
 ```
-docs/          — документация (наука, архитектура, допущения, ограничения)
+docs/          — тексты: наука, устройство, допущения, ограничения
 research/
-  literature/  — научные статьи, ключевые цитаты, заметки
-  datasets/    — описания и ссылки на данные (без гигантских файлов в git)
-  hypotheses/  — сформулированные гипотезы для проверки
-  evidence/    — собранные наблюдения с указанием источников
-experiments/   — конфигурации и результаты вычислительных экспериментов
-src/           — код (reference implementation)
-tests/         — тесты ключевых инвариантов
+  literature/  — статьи, цитаты, заметки
+  datasets/    — описания данных и ссылки (тяжёлые файлы в git не кладём)
+  hypotheses/  — гипотезы, которые проверяем
+  evidence/    — наблюдения со ссылками на источники
+experiments/   — настройки и результаты запусков
+src/           — код модели и симулятора
+tests/         — тесты (повторяемость, логика, контрольные точки)
 ```
 
-## Статус проекта
+## Статус проекта: что уже проверено
 
-**Этап 1 — научная и архитектурная основа** — завершён `07651e6`.
+- **Этапы 1–2.** База и модель клетки готовы: статусы клеток, деление, смерть, происхождение, повторяемость по сиду, контрольные точки, запись в `experiments/output/`.
+- **Этапы 3–3.5.** Ранний рост и зависимость цикла от стадии. Сверка с данными не сошлась — зафиксировали честно в `docs/CALIBRATION.md`, частично сгладили моделью C.
+- **Этапы 3A–3C.** Модель ткани готова. Есть стабильные режимы замены. Сильный контроль рвётся по стволовым клеткам, слабый — по матриксу.
+- **Этапы 4A–4D.** Модель органа готова. Координация не бьёт простое «не вмешиваться». Восстановление само по себе помогает, его урезание вредит.
+- **Этап 5A.** Жизнь организма от эмбриона до старости. База — 68.0 лет, лучшее гибкое управление — 117.8 / здоровая 100.2. Остановки старения нет нигде. Везде `immortality_status = hypothesis_not_proven`.
+- **Этап 5B.** Проверка на разных сидах, шуме, шоках, горизонте 250 лет. Ограничение везде одно — рост биовозраста.
+- **Этап 5C.** 8 причин старения, 12 точечных вмешательств. Лучшее — 70.8 лет, наклон 0.417 (всё ещё много выше допуска). Главные — старые клетки и сбои регуляции.
+- **Этап 6A.** Упрощённые органы + ресурсы. Лучшее в переборе — 104.8. Критерий `v3` не пройден нигде.
+- **Этап 6B.** Связи + обратные связи + жёсткие limits. Лучшее — 76.8 / 70.2. Критерий `v4` не пройден нигде.
+- **Этап 6C.** Обратимое / необратимое + потолок ремонта. Лучшее — 69.8 / 61.0. Критерий `v5` не пройден нигде.
+- **Этап 6D.** Убирали переход в необратимое, накопление и потолок по отдельности. При нулевой конверсии наклон в допуске, но общий критерий всё равно не пройден — открывается рост биовозраста.
+- **Этап 6E.** Перебор 8 значений × 3 сида: резкой границы нет. Разбор биовозраста: главная доля — поломки белков и обмена. Стена `compound_residual_wall`, проверка на 60 запусках стабильна.
+- **Этап 6F.** Гасили главные причины (15×3 + 14×3). Критерий не пройден в 29 из 29. Вместе дали −17%. Стена `diffuse_residual_wall`.
+- **Этап 7.** Перебор параметров 23×3 + разные варианты критерия. Вердикт не меняется. Аудит `robust_diffuse_wall`, уверенность высокая.
+- **Этап 8.** Сверка с биологией 2022–2026: 13 точек согласия, 9 расхождений, 8 идей P0–P6. Вывод `mechanistic_extension_required`. Все внешние идеи — «требует проверки».
+- **Этап 8.5.** Только документы от 2026-10-07: 7 уровней цели, программа с 10 критериями, ~19 кандидатов + 5 контуров, карта якорей (5 подтверждено / 7 проверять / 1 недоступен), черновик безопасности. Код не менялся. Решение — `review`.
+- **Этапы 9 и 9b.** Прототип резервной копии: сохраняем состояние в 25 лет, откатываем, чистим опасные клетки. Перебор 54×3 — `v6` нигде, жизнь 67.5–68.8. Убирание 8 причин по одной дало максимум −2.8%. Вывод — `aggregation_or_unresolved_residual`, уверенность низкая.
 
-**Этап 2 — минимальная модель клетки (reference)** — реализован:
+Полные детали — в `docs/ROADMAP.md`, `docs/ORGANISM_MODEL.md`, `docs/AGING_MODEL.md`,
+`docs/REVERSIBILITY_MODEL.md`, `docs/BIOLOGICAL_ALIGNMENT.md` и документах этапа 8.5.
 
-- [x] `Cell`, статусы (normal / senescent / apoptotic / dead), lineage, деление, смерть
-- [x] детерминизм по seed; уникальные id; parent/generation/lineage (инварианты + тесты)
-- [x] теломерная динамика и DNA damage — отдельные опции (выключены по умолчанию),
-      mortality — отдельная опция
-- [x] checkpoint/restore (RNG сериализуется, restore идентичен непрерывному запуску)
-- [x] `ExperimentConfig` и запись результатов в JSON (`experiments/output/`)
+## Как запустить
 
-**Этап 3 — раннее развитие: калибровка и стадия-зависимый цикл** — реализован:
+Нужен Python 3.10+. Команды для PowerShell (Windows). В Linux/macOS замените
+`$env:PYTHONPATH='src';` на `PYTHONPATH=src`.
 
-- [x] асинхронные циклы, milestones, калибровка против S-6/S-7 → **MODEL MISMATCH** (`docs/CALIBRATION.md`)
-- [x] опциональная группа `cell_cycle.phases`, частичное закрытие mismatch (модель C)
-
-**Этапы 3A–3C — абстрактная ткань и карта устойчивости замены** — реализованы:
-
-- [x] компартментная `TissueState` + `ReplacementPolicy` (чистое планирование) + детерминизм + checkpoint
-- [x] свип `max_replacement_fraction × frequency`: устойчивое множество политик существует;
-      агрессивная замена истощает stem pool при «молодой» сенесцентной нагрузке
-- [x] boundary closure + `strong/weak controls` + failure causality
-      (strong рвётся по stem, weak — по ECM)
-
-**Этапы 4A–4D — абстрактный орган и координация** — реализованы:
-
-- [x] `OrganModel` из тканевых модулей + shared vascular/immune capacity;
-      орган падает по shared-ресурсу при целых тканях
-- [x] координация как урезание/приоритизация/отсрочка **не превосходит**
-      independent execution (`non-interference is optimal` — честный отрицательный результат)
-- [x] temporal relief (immediate cost + delayed relief) и decoupled niche
-      recovery с динамическими ёмкостями; recovery сам по себе стабилизирует,
-      pruning recovery создаёт дефицит
-
-**Этап 5A — организменный жизненный цикл и поиск политик** — реализован:
-
-- [x] `OrganismModel`: embryo → старость, 8 витальных систем, biological_age,
-      смерть отказом (не таймером); baseline: lifespan 68.0, причина — systemic cascade
-- [x] 8 классов вмешательств (repair/replacement/maintenance/modulation/boost/
-      neural/surveillance/recovery — у каждого польза И цена) + 10 политик
-- [x] лучший результат: adaptive threshold control — lifespan 117.8 / healthspan 100.2;
-      deterministic policy search (best: repair q3 + senolytic q3 — 96.2/84.8);
-      `bounded_degradation_indicator` нигде — candidate immortality policy **не найдена**
-- [x] во всех артефактах: `immortality_status = hypothesis_not_proven`
-
-**Этап 5B — robust long-horizon search и стресс-тестирование** — реализован:
-
-- [x] multi-seed оценка, параметрический шум, детерминированные шоки, long horizon (250 лет)
-- [x] `robust_bounded_degradation_indicator` — false во всех ячейках; binding всегда `biological_age_slope`
-- [x] adaptive constrained: cancer −24% без потери lifespan; toxicity — самый опасный стресс
-
-**Этап 5C — механистические драйверы старения и reversibility search** — реализован:
-
-- [x] 8 драйверов старения, `biological_age` как взвешенная агрегация с полом `adult_age_setpoint`
-- [x] 12 driver-targeted вмешательств с ценами, рисками и diminishing returns
-- [x] лучший результат: combined maintenance — lifespan 70.8, bio slope 0.417 (всё ещё >> eps);
-      robust search mini — лучший 72.2/65.2, `robust_bounded_degradation_v2` — нигде
-- [x] доминирующие связывающие драйверы: `cellular_senescence` / `epigenetic_drift`
-
-**Этап 6A — organ-backed emergent aging и cross-scale поиск** — реализован:
-
-- [x] 8 reduced organ proxies + 4 системных ресурса + 5 coordination modes (opt-in, `none` = Stage 5C бит-в-бит)
-- [x] лучший результат: combined organ-backed — lifespan 101.5 / healthspan 87.2; search best — 104.8
-- [x] coordination не бьёт independent (scaling −0.25); repair — критичнейший ресурс; `robust_bounded_degradation_v3` — нигде
-
-**Этап 6B — organ-network emergent aging и hard limits** — реализован:
-
-- [x] 12 рёбер + 7 feedback loops + hard limits + network age (opt-in, `none` = Stage 6A бит-в-бит)
-- [x] лучший результат: adaptive network — lifespan 76.8 / healthspan 70.2; search best — 75.2
-- [x] coordination 6×3 не бьёт independent_network (все 76.5); repair снова критичен; `robust_bounded_degradation_v4` — нигде
-
-**Этап 6C — reversibility ceiling и irreversible accumulation** — реализован:
-
-- [x] per-driver/per-organ reversible/irreversible ledger + conversion + repair ceiling + information/mutation/niche/entropy (opt-in, `none` = Stage 6B бит-в-бит)
-- [x] лучший результат: neural preserving — lifespan 69.8 / healthspan 61.0; search best — 68.8
-- [x] conversion 0.05 роняет lifespan 69.5 → 60.5; coordination 4×3 не бьёт independent; `robust_bounded_degradation_v5` — нигде
-
-**Этап 6D — irreversibility boundary probe и атрибуция стены** — реализован:
-
-- [x] opt-in `boundary_probe_model` (аблации conversion/accrual/ceiling + overrides + flags; `none` и нейтральные scales = Stage 6C бит-в-бит)
-- [x] conversion_scale=0 снижает irreversible slope в допуск, но v5 false везде — открывается `biological_age_slope` (исход 2)
-- [x] attribution: source `conversion` / `driver:stem_exhaustion`; wall `parametric_irreversibility_wall`
-
-**Этап 6E — compound wall attribution и knife-edge probe** — реализован:
-
-- [x] knife-edge sweep 8×3 (0.0 … 1.0 при independent=0): v5=false везде, knife-edge нет, порога нет
-- [x] bio-age attribution: dominant `proteostasis_metabolic` (total slope ≈ 1.33, residual −0.014, 3 значимых источника), стабильна по аблациям
-- [x] sensitivity eps×dt×seed (60 прогонов): стабильно false везде; compound wall `compound_residual_wall`
-
-**Этап 6F — heterogeneous residual driver probe** — реализован:
-
-- [x] точечное подавление top drivers (`proteostasis_metabolic`, `stem_exhaustion`) существующими механизмами, без новой биологии
-- [x] probe 15×3 + sweep всех групп 14×3: v5=false в 29/29 режимах, flip нет; residual wall `diffuse_residual_wall` (уверенность средняя)
-
-**Этап 7 — criterion and parameter robustness audit** — реализован:
-
-- [x] parameter probe 23×3 (веса драйверов, ledger scales, combos) + pre-declared criterion variants (horizon/threshold/aggregation/estimator)
-- [x] v5=false везде, flip нет, оба драйвера identifiable; audit `robust_diffuse_wall` (уверенность высокая)
-- [x] во всех артефактах: `immortality_status = hypothesis_not_proven`
-
-**Этап 8 — biological alignment and mechanistic extension feasibility gate** — реализован:
-
-- [x] манифест выравнивания (13 anchors, 9 mismatches, 8 кандидатов P0–P6, stage9_priorities, limitations) + pure validator `longevity.research.biological_alignment` (без симуляции, без смены модели)
-- [x] все внешние направления 2022–2026 помечены `needs_verification`; классификация `mechanistic_extension_required` (уверенность средняя)
-- [x] во всех артефактах: `hypothesis_status = hypothesis_not_proven`
-
-Полный план и детали — в `docs/ROADMAP.md`, `docs/TISSUE_MODEL.md`,
-`docs/ORGAN_MODEL.md`, `docs/ORGANISM_MODEL.md` (§§8–17), `docs/AGING_MODEL.md`,
-`docs/ORGAN_BACKED_ORGANISM_MODEL.md`, `docs/ORGAN_NETWORK_MODEL.md`,
-`docs/REVERSIBILITY_MODEL.md` (§§12–17), `docs/BIOLOGICAL_ALIGNMENT.md`,
-`docs/IMMORTALITY.md` (§§6–15), `docs/IMMORTALITY_TARGET_DEFINITION.md`,
-`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`,
-`docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`,
-`docs/EXTERNAL_EVIDENCE_ANCHORS.md`, `docs/SAFETY_AND_CANCER_RISK_MODEL.md`.
-
-## Как начать
-
-Команды ниже — PowerShell (Windows). В bash/zsh замените `$env:PYTHONPATH='src';`
-на `PYTHONPATH=src`.
+1. Установка и проверка, что всё работает:
 
 ```bash
 python -m pip install -e ".[dev]"
 python -m pytest
 ```
 
-Быстрый запуск минимального эксперимента:
+2. Быстрый пример (минимальный эксперимент):
 
 ```bash
 python -c "import sys; sys.path.insert(0, 'src');
@@ -299,126 +221,17 @@ duration=168.0, model_version='0.2.0', data_version='0.1.0'),
 out_path='experiments/output/demo.json')"
 ```
 
-Жизненный цикл организма (Stage 5A):
+3. Жизнь организма (этап 5A) и механистическое старение (этап 5C):
 
 ```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_life_course_baseline.json --out experiments/output/organism_baseline.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_policy_search --config experiments/configs/organism_policy_search_mini.json --out-prefix experiments/output/organism_policy_search_mini
-```
-
-Механистическое старение (Stage 5C):
-
-```powershell
 $env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_aging_combined_mechanistic.json --out experiments/output/organism_aging_combined_mechanistic.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_policy_search --config experiments/configs/organism_aging_robust_search_mini.json --out-prefix experiments/output/organism_aging_robust_search_mini
 ```
 
-Organ-backed организм (Stage 6A):
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_backed_combined.json --out experiments/output/organism_organ_backed_combined.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_backed --config experiments/configs/organism_organ_backed_coordination_compare.json --out-prefix experiments/output/organism_organ_backed_coordination_compare
-```
-
-Organ-network организм (Stage 6B):
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_organ_network_combined.json --out experiments/output/organism_organ_network_combined.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_organ_network --config experiments/configs/organism_organ_network_coordination_compare.json --out-prefix experiments/output/organism_organ_network_coordination_compare
-```
-
-Reversibility организм (Stage 6C):
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_combined_preventive_clearance.json --out experiments/output/organism_reversibility_combined_preventive_clearance.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_reversibility --config experiments/configs/organism_reversibility_coordination_compare.json --out-prefix experiments/output/organism_reversibility_coordination_compare
-```
-
-Boundary probe (Stage 6D):
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_both_suppressed.json --out experiments/output/organism_reversibility_boundary_both_suppressed.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_conversion_ultra_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_conversion_ultra_sweep
-```
-
-Compound wall (Stage 6E):
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_runner --config experiments/configs/organism_reversibility_boundary_knife_edge_conversion_1e-4.json --out experiments/output/organism_reversibility_boundary_knife_edge_conversion_1e-4.json
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_knife_edge_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_knife_edge_sweep
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_compound_attribution.json --out-prefix experiments/output/organism_reversibility_boundary_compound_attribution
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_sensitivity.json --out-prefix experiments/output/organism_reversibility_boundary_sensitivity
-```
-
-Stage 6F — Heterogeneous Residual Driver Probe.
-
-Stage 6F добавляет диагностический зонд поверх Stage 6E для проверки структуры составной остаточной стены. Цель — определить, является ли остаточный барьер диффузным, локализованным, смешанным или неоднозначным в текущей абстрактной модели.
-
-Stage 6F использует существующие attribution/override механизмы для целевого подавления top drivers biological_age_slope, таких как proteostasis/metabolic и stem-компонент. Это не новая биология и не механистическая extension.
-
-Ожидаемый статус после этапа:
-- операционный критерий v5 не выполнен, если не найден robust кандидат;
-- HYP-0 остаётся "гипотеза не доказана";
-- вывод ограничен текущей абстракцией и проверенной сеткой чувствительности;
-- attribution shares — операционные диагностические прокси, не законы сохранения;
-- unlimited ceiling остаётся exploratory.
-
-Фактический итог: v5=false в 29/29 режимах, residual wall `diffuse_residual_wall` (диффузная остаточная стена), уверенность средняя.
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_probe.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_probe
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_heterogeneous_sweep.json --out-prefix experiments/output/organism_reversibility_boundary_heterogeneous_sweep
-```
-
-Stage 7 — Criterion and Parameter Robustness Audit.
-
-Stage 7 добавляет диагностический audit слой поверх Stage 6F. Цель — проверить, является ли диффузная остаточная стена устойчивой в пределах разумных вариаций операционного критерия v5 и параметров модели, или она зависит от текущей операционализации и некалиброванной параметризации.
-
-Stage 7 не добавляет новую биологию и не является mechanistic extension. Это проверка качества самой диагностики.
-
-Ожидаемые классификации:
-- устойчивая диффузная стена (robust_diffuse_wall);
-- стена, чувствительная к критерию (criterion_sensitive_wall);
-- стена, чувствительная к параметрам (parameter_sensitive_wall);
-- неидентифицируемая абстракция (non_identifiable_abstraction);
-- неоднозначно: недостаточно калибровки (inconclusive_insufficient_calibration).
-
-HYP-0 остаётся "гипотеза не доказана".
-
-Фактический итог: v5=false в 23/23 режимах и во всех criterion variants, audit `robust_diffuse_wall` (устойчивая диффузная стена), уверенность высокая.
-
-```powershell
-$env:PYTHONPATH='src'; python -m longevity.experiment.organism_boundary --config experiments/configs/organism_reversibility_boundary_stage7_audit.json --out-prefix experiments/output/organism_reversibility_boundary_stage7_audit
-```
-
-Stage 8 — Biological Alignment and Mechanistic Extension Feasibility Gate.
-
-Stage 8 сопоставляет текущую абстрактную модель с биологическими данными и гипотезами 2022–2026 годов. Цель — понять, где модель согласована с биологией, где есть критические пробелы и какие механистические расширения правдоподобны для следующего этапа.
-
-Stage 8 не добавляет новую биологию в симуляцию и не пытается достичь v5. Это выравнивающий и приоритизирующий гейт перед Stage 9.
-
-HYP-0 остаётся "гипотеза не доказана".
-
-Фактический итог: манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6) + pure validator; классификация `mechanistic_extension_required` (требуется механистическое расширение), уверенность средняя. Все внешние направления помечены `needs_verification`.
-
-```powershell
-$env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from longevity.research.biological_alignment import load_and_validate_manifest; print(load_and_validate_manifest('experiments/configs/stage8_biological_alignment_manifest.json')['classification'])"
-```
-
-Stage 8.5 — Immortality Master Switch Discovery Gate (docs-only, 2026-10-07).
-
-Стратегический pivot: вместо немедленного прототипа — docs-only гейт поиска master switch / minimal circuit. Рождаются 6 документов: уровни цели (`docs/IMMORTALITY_TARGET_DEFINITION.md`, 7 уровней), программа с 10 критериями и kill criteria (`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`, Stage 8.5→16), реестр кандидатов и контуров (`docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`), карта внешних anchors (`docs/EXTERNAL_EVIDENCE_ANCHORS.md`), проект модели безопасности (`docs/SAFETY_AND_CANCER_RISK_MODEL.md`), гипотезы HYP-2 (`research/hypotheses/HYP-2_master_switch_candidates.md`). Прежний план Stage 9 prototype отложен, не отменён. Код модели и симуляция не менялись. Решение на гейте: `review`.
-
-HYP-0 остаётся "гипотеза не доказана": ни один мастер-свитч не найден, не доказан и не заявлен возможным или близким.
-
-<!--
-Секции ниже появятся на следующих этапах.
-- Installation & environment
-- Usage example
-- Contributor guide
--->
+Остальные команды для этапов 6A–9 — в [PRESENTATION.md](PRESENTATION.md), раздел «Воспроизведение».
+Каждая команда повторяет один из уже сохранённых результатов в `experiments/output/`.
 
 ## Лицензия и статус
 
-Проект находится на ранней исследовательской стадии. Перед использованием какого-либо
-материала проконсультируйтесь с владельцем репозитория.
+Проект на ранней исследовательской стадии. Перед использованием материалов
+посоветуйтесь с владельцем репозитория.

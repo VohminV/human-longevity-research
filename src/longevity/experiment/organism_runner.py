@@ -80,6 +80,8 @@ class OrganismExperimentConfig:
     boundary_probe_model: str = "none"
     boundary_params: dict[str, Any] = field(default_factory=dict)
     component_overrides: list = field(default_factory=list)
+    epigenetic_backup_model: str = "none"
+    epigenetic_backup_params: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
 
     def __post_init__(self) -> None:
@@ -146,6 +148,14 @@ class OrganismExperimentConfig:
         validate_boundary_probe_model(self.boundary_probe_model)
         validate_boundary_params(dict(self.boundary_params or {}))
         validate_component_overrides(list(self.component_overrides or []))
+        from longevity.model.epigenetic_backup import (
+            validate_epigenetic_backup_model,
+            validate_epigenetic_backup_params,
+        )
+        validate_epigenetic_backup_model(self.epigenetic_backup_model)
+        validate_epigenetic_backup_params(dict(self.epigenetic_backup_params or {}))
+        if self.epigenetic_backup_model != "none" and self.aging_mechanism_model != "mechanistic_drivers":
+            raise ValueError("epigenetic_backup_model requires aging_mechanism_model='mechanistic_drivers'")
         if not isinstance(self.adult_age_setpoint, (int, float)) or float(self.adult_age_setpoint) < 0:
             raise ValueError("adult_age_setpoint must be >= 0")
         if not isinstance(self.allow_sub_adult_biological_age, bool):
@@ -263,11 +273,29 @@ class OrganismExperimentConfig:
             "model_scope": scope,
         }
 
+    def effective_backup(self) -> dict[str, Any]:
+        from longevity.model.epigenetic_backup import (
+            scope_for_epigenetic_backup_model,
+            validate_epigenetic_backup_model,
+            validate_epigenetic_backup_params,
+        )
+        mode = validate_epigenetic_backup_model(self.epigenetic_backup_model)
+        scope = scope_for_epigenetic_backup_model(mode)
+        if mode == "none":
+            scope = self.effective_boundary()["model_scope"]
+        return {
+            "epigenetic_backup_model": mode,
+            "epigenetic_backup_params": validate_epigenetic_backup_params(
+                dict(self.epigenetic_backup_params or {})),
+            "model_scope": scope,
+        }
+
     def to_config_dict(self) -> dict[str, Any]:
         network = self.effective_organ_network()
         reversibility = self.effective_reversibility()
         boundary = self.effective_boundary()
-        scope = boundary["model_scope"]
+        backup = self.effective_backup()
+        scope = backup["model_scope"]
         return {
             "organism_id": self.organism_id,
             "model_scope": scope,
@@ -304,6 +332,8 @@ class OrganismExperimentConfig:
             "boundary_probe_model": boundary["boundary_probe_model"],
             "boundary_params": boundary["boundary_params"],
             "component_overrides": boundary["component_overrides"],
+            "epigenetic_backup_model": backup["epigenetic_backup_model"],
+            "epigenetic_backup_params": backup["epigenetic_backup_params"],
             "notes": self.notes,
         }
 
@@ -344,6 +374,8 @@ class OrganismExperimentConfig:
             boundary_probe_model=data.get("boundary_probe_model", "none"),
             boundary_params=data.get("boundary_params", {}),
             component_overrides=data.get("component_overrides", []),
+            epigenetic_backup_model=data.get("epigenetic_backup_model", "none"),
+            epigenetic_backup_params=data.get("epigenetic_backup_params", {}),
             notes=data.get("notes", ""),
         )
 
@@ -397,6 +429,8 @@ def run_organism_experiment(config: OrganismExperimentConfig, out_path: str | No
         boundary_probe_model=config.effective_boundary()["boundary_probe_model"],
         boundary_params=config.effective_boundary()["boundary_params"],
         component_overrides=config.effective_boundary()["component_overrides"],
+        epigenetic_backup_model=config.effective_backup()["epigenetic_backup_model"],
+        epigenetic_backup_params=config.effective_backup()["epigenetic_backup_params"],
     )
     policies = PolicySet(list(config.policies or []))
     trajectory = model.run(config.duration_years, config.dt, bounds, thresholds, policies)
@@ -429,15 +463,23 @@ def run_organism_experiment(config: OrganismExperimentConfig, out_path: str | No
         summary["boundary"] = boundary_summary["boundary"]
         summary["contributions"] = boundary_summary["contributions"]
         summary["attribution"] = boundary_summary["attribution"]
+    if config.effective_backup()["epigenetic_backup_model"] != "none":
+        from longevity.analysis.epigenetic_backup_metrics import summarize_backup_run
+
+        backup_summary = summarize_backup_run(trajectory, config.dt,
+                                              config.effective_backup()["epigenetic_backup_params"])
+        summary["epigenetic_backup"] = backup_summary["epigenetic_backup"]
+        summary["backup_binding"] = backup_summary["backup_binding"]
     wall_seconds = round(time.perf_counter() - wall_start, 4)
     result: dict[str, Any] = {
         "organism_id": config.organism_id,
-        "model_scope": config.effective_boundary()["model_scope"],
+        "model_scope": config.effective_backup()["model_scope"],
         "immortality_status": "hypothesis_not_proven",
         "organ_backed_model": config.effective_organ_backed()["organ_backed_model"],
         "organ_network_model": config.effective_organ_network()["organ_network_model"],
         "reversibility_model": config.effective_reversibility()["reversibility_model"],
         "boundary_probe_model": config.effective_boundary()["boundary_probe_model"],
+        "epigenetic_backup_model": config.effective_backup()["epigenetic_backup_model"],
         "boundary_exploratory": bool((trajectory[-1].get("boundary") or {}).get("exploratory", False)),
         "coordination_mode": config.effective_organ_backed()["coordination_mode"],
         "config": config.to_config_dict(),

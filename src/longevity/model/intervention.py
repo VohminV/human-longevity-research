@@ -46,6 +46,9 @@ INTERVENTION_TYPES = (
     "niche_integrity_support",
     "entropy_management",
     "combined_reversibility_maintenance",
+    # Stage 9 epigenetic-backup interventions.
+    "epigenetic_rollback_pulse",
+    "synthetic_apoptosis_sweep",
 )
 
 TRIGGER_TYPES = ("periodic", "threshold_based")
@@ -261,6 +264,28 @@ INTERVENTION_EFFECTS: dict[str, dict[str, float]] = {
         "rev_information_repair": 0.006,
         "rev_mutation_repair": 0.006,
     },
+    # --- Stage 9 epigenetic-backup interventions (epi_* keys are inert
+    # unless epigenetic_backup_model is enabled; standard deltas keep
+    # them comparable; rollback preserves identity: no neural-continuity
+    # loss, unlike epigenetic_reprogramming_pulse) ---
+    "epigenetic_rollback_pulse": {
+        "delta_reserve": -0.008, "delta_cancer": 0.001,
+        "delta_biological_age": -0.10,
+        "target_drivers": ["epigenetic_drift"],
+        "driver_repairs": {},
+        "driver_reversals": {},
+        "organ_resource_cost": {"repair": 0.02, "metabolic": 0.02},
+        "epi_rollback": 1.0,
+    },
+    "synthetic_apoptosis_sweep": {
+        "delta_cancer": -0.004, "delta_reserve": -0.010,
+        "delta_senescence": -0.006, "delta_biological_age": -0.03,
+        "target_drivers": ["dna_damage", "cancer_prone"],
+        "driver_repairs": {},
+        "driver_reversals": {},
+        "organ_resource_cost": {"immune": 0.03},
+        "epi_apoptosis": 1.0,
+    },
 }
 
 _EFFECT_KEYS = (
@@ -274,10 +299,15 @@ _EFFECT_KEYS = (
 # organ-backed model is enabled; inert otherwise).
 # Stage 6C reversibility delta keys (operational, applied only when the
 # reversibility model is enabled; inert otherwise).
+# Stage 9 epigenetic-backup delta keys (operational, applied only when the
+# backup model is enabled; inert otherwise).
 _REVERSIBILITY_EFFECT_KEYS = (
     "rev_clearance", "rev_prevention", "rev_conversion_suppression",
     "rev_irreversible_repair", "rev_information_repair", "rev_mutation_repair",
     "rev_niche_repair", "rev_entropy_reduction",
+)
+_EPIGENETIC_BACKUP_EFFECT_KEYS = (
+    "epi_rollback", "epi_apoptosis",
 )
 _ORGAN_EFFECT_KEYS = (
     "organ_delta_function", "organ_delta_damage", "organ_delta_senescence",
@@ -298,7 +328,7 @@ def validate_effect(effect: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(target_systems, list) or not all(isinstance(t, str) for t in target_systems):
         raise ValueError("effect.target_systems must be a list of strings")
     unknown = set(effect) - set(_EFFECT_KEYS) - set(_ORGAN_EFFECT_KEYS) \
-        - set(_REVERSIBILITY_EFFECT_KEYS) - {
+        - set(_REVERSIBILITY_EFFECT_KEYS) - set(_EPIGENETIC_BACKUP_EFFECT_KEYS) - {
         "intervention_type", "target_systems", "source", "intensity",
         "target_drivers", "driver_repairs", "driver_reversals",
         "pre_adult_firing", "target_organ_ids", "organ_resource_cost"}
@@ -325,6 +355,15 @@ def validate_effect(effect: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"effect.{key} must be finite, got {value!r}")
         cleaned[key] = float(value)
     for key in _REVERSIBILITY_EFFECT_KEYS:
+        value = effect.get(key, 0.0)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"effect.{key} must be a number, got {value!r}")
+        if not math.isfinite(float(value)):
+            raise ValueError(f"effect.{key} must be finite, got {value!r}")
+        if float(value) < 0.0:
+            raise ValueError(f"effect.{key} out of range, got {value!r}")
+        cleaned[key] = float(value)
+    for key in _EPIGENETIC_BACKUP_EFFECT_KEYS:
         value = effect.get(key, 0.0)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ValueError(f"effect.{key} must be a number, got {value!r}")
@@ -543,6 +582,13 @@ def _biomarker_value(name: str, state: dict[str, Any]) -> float:
     if name in ("senescence_burden", "inflammation", "fibrosis", "cancer_burden",
                 "global_damage", "epigenetic_drift", "biological_age", "vitality_index"):
         return float(state.get(name, 0.0))
+    if name == "epigenetic_entropy":
+        backup = state.get("epigenetic_backup") or {}
+        return max(0.0, float(backup.get("epigenetic_entropy", 0.0)))
+    if name == "information_wall_proximity":
+        from longevity.model.epigenetic_backup import information_wall_proximity  # deferred
+
+        return float(information_wall_proximity(state.get("epigenetic_backup"))["proximity"])
     if name == "min_system_function":
         functions = [float(info.get("function", 1.0)) for info in state.get("systems", {}).values()]
         return min(functions) if functions else 1.0

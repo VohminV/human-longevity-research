@@ -184,6 +184,10 @@ DEFAULT_FITNESS_WEIGHTS: dict[str, float] = {
     "w_niche_disorder": 0.0,
     "w_entropy_production": 0.0,
     "w_bounded_v5_bonus": 0.0,
+    # Stage 9 epigenetic-backup weights (all 0.0 by default: legacy fitness unchanged).
+    "w_backup_entropy_slope": 0.0,
+    "w_wall_proximity": 0.0,
+    "w_bounded_v6_bonus": 0.0,
 }
 
 
@@ -236,8 +240,15 @@ def fitness(summary: dict[str, Any], weights: dict[str, float]) -> float:
     )
     if not reversibility.get("has_reversibility", False):
         return extra
+    backup = summary.get("epigenetic_backup", {})
+    backup_extra = (
+        - w["w_backup_entropy_slope"] * float(backup.get("epigenetic_entropy_slope", 0.0))
+        - w["w_wall_proximity"] * float(backup.get("wall_proximity_final", 0.0))
+        + w["w_bounded_v6_bonus"] * 0.0  # v6 bonus applied at search level (needs multi-seed)
+    )
     return (
         extra
+        + backup_extra
         - w["w_irreversible_slope"] * float(reversibility.get("worst_irreversible_slope", 0.0))
         - w["w_conversion_runaway"] * float(reversibility.get("conversion_rate", 0.0))
         - w["w_repair_ceiling_exhaustion"] * max(

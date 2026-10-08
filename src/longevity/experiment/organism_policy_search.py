@@ -283,13 +283,29 @@ def _evaluate_combo(combo: dict[str, Any], config: OrganismPolicySearchConfig) -
                          for s in seed_summaries.values()] + [0.0])
     entropy_penalty = w.get("w_entropy_production", 0.0) * entropy_worst
     v5_bonus = w.get("w_bounded_v5_bonus", 0.0) * (1.0 if v5["robust_bounded_degradation_v5"] else 0.0)
+    try:
+        from longevity.analysis.epigenetic_backup_metrics import (  # local: analysis reuse
+            robust_bounded_degradation_v6,
+        )
+
+        v6 = robust_bounded_degradation_v6(list(seed_summaries.values()))
+    except Exception:
+        v6 = {"robust_bounded_degradation_v6": False}
+    worst_backup_entropy = max([float(s.get("epigenetic_backup", {}).get(
+        "epigenetic_entropy_slope", 0.0)) for s in seed_summaries.values()] + [0.0])
+    worst_wall = max([float(s.get("epigenetic_backup", {}).get(
+        "wall_proximity_final", 0.0)) for s in seed_summaries.values()] + [0.0])
+    backup_entropy_penalty = w.get("w_backup_entropy_slope", 0.0) * worst_backup_entropy
+    wall_penalty = w.get("w_wall_proximity", 0.0) * worst_wall
+    v6_bonus = w.get("w_bounded_v6_bonus", 0.0) * (1.0 if v6["robust_bounded_degradation_v6"] else 0.0)
     return {
         "combo": combo,
         "fitness": robust["robust_fitness"] - driver_penalty + v2_bonus
         - organ_penalty - resource_penalty + v3_bonus
         - feedback_penalty - cascade_penalty - mutation_penalty - energy_penalty + v4_bonus
         - irr_penalty - conv_penalty - info_penalty - niche_penalty
-        - ceiling_penalty - entropy_penalty + v5_bonus,
+        - ceiling_penalty - entropy_penalty + v5_bonus
+        - backup_entropy_penalty - wall_penalty + v6_bonus,
         "fitness_mean": robust["fitness_mean"],
         "fitness_std": robust["fitness_std"],
         "fitness_min": robust["fitness_min"],
@@ -304,6 +320,9 @@ def _evaluate_combo(combo: dict[str, Any], config: OrganismPolicySearchConfig) -
         "robust_v3": v3,
         "robust_v4": v4,
         "robust_v5": v5,
+        "robust_v6": v6,
+        "worst_backup_entropy_slope": worst_backup_entropy,
+        "worst_wall_proximity": worst_wall,
         "worst_irreversible_slope": worst_irr,
         "worst_conversion_rate": worst_conv,
         "aggregate": aggregate,
