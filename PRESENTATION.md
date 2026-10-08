@@ -391,8 +391,8 @@ combined network 6B    76.5  █████████████████
 combined revers 6C     69.5  ██████████████████
 boundary 6D            69.5  ██████████████████
 compound 6E            69.5  ██████████████████
-hetero 6F             69.5  ██████████████████
-audit 7              69.5  ██████████████████
+hetero 6F              69.5  ██████████████████
+audit 7               69.5  ██████████████████
 ```
 
 - Healthspan ≤ lifespan — всегда (инвариант, покрыт тестами).
@@ -530,7 +530,10 @@ $env:PYTHONPATH='src'; python -c "import sys; sys.path.insert(0, 'src'); from lo
 Документы: `docs/ROADMAP.md` (план), `docs/AGING_MODEL.md` (Stage 5C),
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md` (Stage 6A),
 `docs/ORGAN_NETWORK_MODEL.md` (Stage 6B),
-`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 + alignment gate 8),
+`docs/REVERSIBILITY_MODEL.md` (Stage 6C + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 + alignment gate 8 + указатель 8.5),
 `docs/BIOLOGICAL_ALIGNMENT.md` (Stage 8),
-`docs/MECHANISTIC_EXTENSION_ROADMAP.md` (кандидаты Stage 9),
-`docs/ORGANISM_MODEL.md` (§8–14), `docs/IMMORTALITY.md` (§6–12).
+`docs/MECHANISTIC_EXTENSION_ROADMAP.md` (отложенная ветка Stage 9),
+`docs/IMMORTALITY_TARGET_DEFINITION.md`, `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`,
+`docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`, `docs/EXTERNAL_EVIDENCE_ANCHORS.md`,
+`docs/SAFETY_AND_CANCER_RISK_MODEL.md` (Stage 8.5),
+`docs/ORGANISM_MODEL.md` (§§8–17), `docs/IMMORTALITY.md` (§§6–15).

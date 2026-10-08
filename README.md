@@ -130,7 +130,7 @@ LONGEVITY ANALYSIS
 | `AGING_MODEL.md` | Механистический слой старения и reversibility search (Stage 5C) |
 | `ORGAN_BACKED_ORGANISM_MODEL.md` | Organ-backed организм: прокси, ресурсы, координация (Stage 6A) |
 | `ORGAN_NETWORK_MODEL.md` | Organ-network: рёбра, feedback, hard limits, v4 (Stage 6B) |
-| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 |
+| `REVERSIBILITY_MODEL.md` | Reversibility ceiling и irreversible accumulation, v5 (Stage 6C) + boundary probe 6D + compound wall 6E + heterogeneous probe 6F + robustness audit 7 + alignment gate 8 + указатель 8.5 |
 | `CALIBRATION.md` | Калибровка ранней динамики против данных (MODEL MISMATCH) |
 | `DEVELOPMENTAL_DYNAMICS.md` | Стадия-зависимый клеточный цикл (Этап 3.5) |
 | `ASSUMPTIONS.md` | Все принятые допущения |
@@ -270,9 +270,13 @@ tests/         — тесты ключевых инвариантов
 - [x] во всех артефактах: `hypothesis_status = hypothesis_not_proven`
 
 Полный план и детали — в `docs/ROADMAP.md`, `docs/TISSUE_MODEL.md`,
-`docs/ORGAN_MODEL.md`, `docs/ORGANISM_MODEL.md`, `docs/AGING_MODEL.md`,
+`docs/ORGAN_MODEL.md`, `docs/ORGANISM_MODEL.md` (§§8–17), `docs/AGING_MODEL.md`,
 `docs/ORGAN_BACKED_ORGANISM_MODEL.md`, `docs/ORGAN_NETWORK_MODEL.md`,
-`docs/REVERSIBILITY_MODEL.md`.
+`docs/REVERSIBILITY_MODEL.md` (§§12–17), `docs/BIOLOGICAL_ALIGNMENT.md`,
+`docs/IMMORTALITY.md` (§§6–15), `docs/IMMORTALITY_TARGET_DEFINITION.md`,
+`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`,
+`docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`,
+`docs/EXTERNAL_EVIDENCE_ANCHORS.md`, `docs/SAFETY_AND_CANCER_RISK_MODEL.md`.
 
 ## Как начать
 
@@ -291,7 +295,7 @@ python -c "import sys; sys.path.insert(0, 'src');
 from longevity.experiment.config import ExperimentConfig;
 from longevity.experiment.runner import run_experiment;
 run_experiment(ExperimentConfig(experiment_id='demo', seed=42, population=1,
-duration=168.0, model_version='0.1.0', data_version='0.0.1'),
+duration=168.0, model_version='0.2.0', data_version='0.1.0'),
 out_path='experiments/output/demo.json')"
 ```
 

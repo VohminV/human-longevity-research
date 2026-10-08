@@ -73,7 +73,7 @@ daughter B
 ```
 zona pellucida
   ↓ hatches
-lаte blastocyst (day 5-7)
+late blastocyst (day 5-7)
   ├── inner cell mass (ICM)
   │     ├── epiblast (EPI)     → embryo proper
   │     └── primitive endoderm (PrE) → yolk sac

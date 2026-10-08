@@ -49,22 +49,32 @@
 - EXPERIMENT ENGINE связывает модель с конфигурацией и записывает результат.
 - GUI/визуализация опциональна и не влияет на науку.
 
-## 2. Пакетная структура (предварительная)
+## 2. Пакетная структура (фактическая, Stage 8.5)
 
 ```
 src/longevity/
   __init__.py
   version.py
-  data/           # отдельный слой данных (позже)
   biology/        # cell.py (Cell, статусы, lineage), params.py (параметры, интервенции)
   sim/            # rng.py (инъекцируемый RNG), engine.py (PopulationEngine, checkpoint)
-  experiment/     # config.py (ExperimentConfig), runner.py (run_experiment -> JSON)
-  analysis/       # metrics.py (population_metrics, experiment_summary)
-tests/
-  ...
+  model/          # tissue.py, policy.py, organ.py, organism.py, intervention.py,
+                  # aging.py, organ_backed.py, organ_network.py, reversibility.py,
+                  # boundary.py (Stage 3A → 6D)
+  calibration/    # reference, stages, compare, multirun, sensitivity (Stage 3)
+  experiment/     # config.py, runner.py, tissue_runner/sweep, organ_runner/sweep,
+                  # organism_runner/policy_search/robust/aging/organ_backed/
+                  # organ_network/reversibility/boundary (Stage 3A → 7)
+  analysis/       # metrics.py, tissue_metrics/sweep, organ_metrics, organism_metrics,
+                  # aging_metrics, organ_backed/network/reversibility/boundary_metrics
+  research/       # biological_alignment.py — pure validator манифеста Stage 8 (без симуляции)
+tests/            # 565 тестов: детерминизм, инварианты, checkpoint/restore, свипы, поиски,
+                  # boundary probe 6D, compound wall 6E, heterogeneous probe 6F,
+                  # robustness audit 7, alignment validator 8
 ```
 
-Состав на этапе 2 зафиксирован (см. `docs/ROADMAP.md`).
+Состав на этапе 2 зафиксирован (см. `docs/ROADMAP.md`); расширения
+Stage 3 → 8 добавляли только новые модули (`model/`, `calibration/`,
+`research/`) и новые раннеры/метрики, не меняя контрактов слоёв §1.
 
 ## 3. Модель клетки (концептуальная спецификация)
 

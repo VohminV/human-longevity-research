@@ -1,8 +1,10 @@
 # HYP-0: candidate immortality policy — статус проверки
 
 > Статус: **hypothesis_not_proven**.
-> Формулировка критерия: `docs/IMMORTALITY.md` §6.
-> Модель: абстрактный организм Stage 5A/5B (`docs/ORGANISM_MODEL.md`).
+> Формулировка критерия: `docs/IMMORTALITY.md` §§6–15 (robust v1 → mechanistic v2 →
+> organ-backed v3 → network v4 → reversibility v5 + правила интерпретации 6D–8.5).
+> Модель: абстрактный организм Stage 5A → 8 (organism → organ-backed →
+> organ-network → reversibility + boundary/audit/alignment зонды).
 
 ## Гипотеза
 

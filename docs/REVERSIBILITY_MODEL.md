@@ -1,5 +1,5 @@
 # REVERSIBILITY_MODEL.md — Reversibility ceiling, irreversible accumulation,
-# boundary probe и compound wall attribution (Stage 6C–6E)
+# boundary probe, compound wall, residual drivers и robustness audit (Stage 6C–8)
 
 > Это НЕ модель человека. Порядковые скорости, абстрактные годы, reduced
 > proxies/рёбра, нет анатомии и калибровки.
@@ -450,3 +450,28 @@ Alignment-слой поверх Stage 7: биологические направ
 Ограничения: все 2022–2026 направления без источника в репозитории
 помечены `needs_verification`; количественной калибровки скоростей
 нет; выводы действуют только внутри текущей абстракции.
+
+## 17. Stage 8.5 — Master-switch gate (указатель, без смены модели)
+
+Решением 2026-10-07 вместо немедленного прототипа Stage 9 открыт
+docs-only гейт `Immortality Master Switch Discovery Gate`: код модели
+и симуляция не менялись, прежний план Stage 9 prototype отложен
+(не отменён) как P0-заявка внутри HYP-1/HYP-2.
+
+- Уровни цели: `docs/IMMORTALITY_TARGET_DEFINITION.md` (7 уровней;
+  проект проверял только уровни 1–3 и отрицательно — 5).
+- Программа, 10 критериев, kill criteria, Stage 8.5 → 16:
+  `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` (решение на гейте: `review`).
+- Реестр ~19 кандидатов + 5 контуров A–E:
+  `docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md` (все `candidate_only`).
+- Карта anchors: `docs/EXTERNAL_EVIDENCE_ANCHORS.md`
+  (5 `verified_in_repo` — только модельные; 7 `needs_verification`;
+  1 `unavailable`).
+- Проект safety-модели (fail-closed): `docs/SAFETY_AND_CANCER_RISK_MODEL.md`.
+- Гипотезы HYP-2.1…HYP-2.5:
+  `research/hypotheses/HYP-2_master_switch_candidates.md`.
+- Статус HYP-0: `research/hypotheses/HYP-0_immortality_policy.md`
+  (раздел Strategic Pivot).
+
+HYP-0 остаётся `hypothesis_not_proven`: ни один master switch
+не найден, не доказан и не заявлен возможным или близким.

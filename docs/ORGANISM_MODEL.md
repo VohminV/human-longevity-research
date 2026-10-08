@@ -328,3 +328,46 @@ telomere/altered-communication/fibrosis — расширения; n ≤ 3
 - Sensitivity eps×dt×seed (60 прогонов): стабильно false везде;
   compound wall — `compound_residual_wall`.
 - HYP-0: `hypothesis_not_proven`.
+
+## 15. Stage 6F — Heterogeneous residual driver probe (кратко)
+
+> Диагностический зонд структуры составной стены: точечное подавление
+> top-драйверов существующими механизмами, без новой биологии.
+> Полная версия — `docs/REVERSIBILITY_MODEL.md` §14.
+
+- Probe 15×3 + sweep всех групп 14×3: v5=false в 29/29 режимах;
+  binding везде `biological_age_slope`; dominant везде
+  `proteostasis_metabolic`; flip нет; joint ablation всех групп −17%
+  (ниже substantial-порога 20%); поодиночке ≤8.5%.
+- Residual wall — `diffuse_residual_wall` (уверенность средняя).
+- HYP-0: `hypothesis_not_proven`.
+
+## 16. Stage 7 — Criterion and Parameter Robustness Audit (кратко)
+
+> Проверка качества самой диагностики, не поиск v5.
+> Полная версия — `docs/REVERSIBILITY_MODEL.md` §15.
+
+- Parameter probe 23×3 + pre-declared criterion variants
+  (horizons 100/150/200, thresholds ±20%, aggregations, estimators):
+  v5=false везде, flip нет, оба драйвера identifiable.
+- Audit — `robust_diffuse_wall` (уверенность высокая).
+- HYP-0: `hypothesis_not_proven`.
+
+## 17. Stage 8 → 8.5 — Alignment gate и master-switch gate (кратко)
+
+> Stage 8: выравнивание с биологией без смены модели.
+> Stage 8.5: docs-only гейт, код и симуляция не менялись.
+> Полные версии — `docs/REVERSIBILITY_MODEL.md` §§16–17,
+> `docs/BIOLOGICAL_ALIGNMENT.md`,
+> `docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md`.
+
+- Stage 8: манифест (13 anchors, 9 mismatches, 8 кандидатов P0–P6)
+  + pure validator; классификация `mechanistic_extension_required`
+  (уверенность средняя); все внешние направления — `needs_verification`.
+- Stage 8.5: 7 уровней цели, программа с 10 критериями и kill criteria,
+  реестр ~19 кандидатов + 5 контуров A–E, карта anchors
+  (5 verified_in_repo — только модельные / 7 needs_verification /
+  1 unavailable), проект safety-модели, гипотезы HYP-2.
+  Прежний Stage 9 prototype отложен, не отменён.
+  Решение на гейте: `review`.
+- HYP-0: `hypothesis_not_proven`.

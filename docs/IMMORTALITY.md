@@ -215,3 +215,58 @@ eps/dt/seed — `inconclusive_sensitivity_failure`.
 нет; bio-age attribution — dominant `proteostasis_metabolic` при total
 slope ≈ 1.33; sensitivity eps×dt×seed — стабильно false; compound wall —
 `compound_residual_wall`. Статус — `hypothesis_not_proven`.
+
+## 13. Heterogeneous-probe interpretation rule (Stage 6F)
+
+Точечное подавление top-драйверов `biological_age_slope` существующими
+механизмами (`aging_drivers` + `component_overrides`, без новой
+биологии) проверяет структуру составной остаточной стены: диффузная,
+локализованная, смешанная или неоднозначная.
+
+Конкретно (Stage 6F): probe 15×3 + sweep всех групп 14×3 — v5=false
+в 29/29 режимах, flip binding/source нет, dominant везде
+`proteostasis_metabolic`, joint ablation всех групп −17% (ниже
+substantial-порога 20%). Residual wall — `diffuse_residual_wall`
+(уверенность средняя): стена распределена по нескольким каналам
+текущей абстракции, а не держится на одном removable драйвере.
+Attribution shares — операционные диагностические прокси, не законы
+сохранения. Статус — `hypothesis_not_proven`.
+
+## 14. Robustness-audit interpretation rule (Stage 7)
+
+Audit проверяет качество самой диагностики: устойчива ли диффузная
+стена к вариациям операционного критерия v5 и параметров модели.
+Появившийся в аудите v5=true классифицируется как sensitivity
+(criterion/parameter), а не как кандидат; это не поиск успеха.
+
+Конкретно (Stage 7): parameter probe 23×3 (веса 0.5–2.0, ledger
+0.75–1.5) + pre-declared criterion variants (horizons 100/150/200,
+thresholds ±20%, aggregations global/network/reversibility, estimators
+least_squares/endpoint/trailing_window) — v5=false везде, flip нет,
+оба драйвера identifiable (proteostasis +51%, stem +17%). Audit —
+`robust_diffuse_wall` (уверенность высокая). Статус —
+`hypothesis_not_proven`.
+
+## 15. Alignment gate and target levels (Stage 8 → 8.5)
+
+Stage 8 не добавляет биологию в симуляцию и не пытается достичь v5:
+это выравнивающий гейт (манифест 13 anchors / 9 mismatches /
+8 кандидатов P0–P6 + pure validator; классификация
+`mechanistic_extension_required`, уверенность средняя; все внешние
+направления 2022–2026 — `needs_verification`). Детали —
+`docs/BIOLOGICAL_ALIGNMENT.md`,
+`docs/MECHANISTIC_EXTENSION_ROADMAP.md`,
+`research/hypotheses/HYP-0_immortality_policy.md` (раздел Stage 8 result).
+
+Stage 8.5 — docs-only `Master Switch Discovery Gate` (код и симуляция
+не менялись; прежний Stage 9 prototype отложен, не отменён):
+7 уровней цели — `docs/IMMORTALITY_TARGET_DEFINITION.md` (проект
+проверял только уровни 1–3 и отрицательно — 5; HYP-0 соответствует
+уровню 6); программа с 10 критериями и kill criteria —
+`docs/MASTER_SWITCH_DISCOVERY_PROGRAM.md` (решение: `review`);
+реестр кандидатов и контуров —
+`docs/CANDIDATE_GENE_AND_CIRCUIT_REGISTRY.md`; карта anchors —
+`docs/EXTERNAL_EVIDENCE_ANCHORS.md`; проект safety-модели —
+`docs/SAFETY_AND_CANCER_RISK_MODEL.md`; гипотезы HYP-2 —
+`research/hypotheses/HYP-2_master_switch_candidates.md`.
+Ничего не найдено и не доказано; статус — `hypothesis_not_proven`.

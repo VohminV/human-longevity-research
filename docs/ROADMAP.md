@@ -168,7 +168,7 @@ rejuvenation организма; HYP-0 не затрагивается.
       weak stroma ≈ all-strong (ttf 101), weak parenchyma тянет вниз
       (ttf 91, ECM 0.57, рак 0.148); мини-свип — иммунно-лимитированная
       система с parenchyma-bottleneck, vascular почти не влияет
-- [x] тесты (`test_organ_model` 20 шт., `test_organ_runner` 7 шт.,
+- [x] тесты (`test_organ_model` 19 шт., `test_organ_runner` 7 шт.,
       `test_organ_metrics` 7 шт.): совместимость 3A/3B/3C, детерминизм,
       checkpoint/restore, валидация, allocation, агрегация, viability,
       causality, independent-vs-aware, hetero, mini-sweep, model_scope
@@ -356,7 +356,7 @@ doc `docs/ORGANISM_MODEL.md`. HYP-0 формализована как candidate 
       `biological_age_slope` (70/70); adaptive constrained: cancer −24% без
       потери benefit; toxicity — самый опасный стресс; neural_stress не
       влияет; long horizon (250y) без новых поздних причин
-- [x] тесты (3 файла, 23 шт.): 15 групп по брифу (совместимость,
+- [x] тесты (3 файла, 24 шт.): 15 групп по брифу (совместимость,
       детерминизм, агрегация, пертурбации, шоки, горизонт/окна, robust
       индикатор, binding, stress, robust-поиск, adaptive constraints,
       hybrid, neural-extended, checkpoint+cooldown, scope)
@@ -542,7 +542,7 @@ seeds, HYP-0 формализована, но не доказана.
 - [x] wall classification: `parametric_irreversibility_wall` —
       irreversible-компонент подавим параметрически, но v5 как целое
       недостижима (исход 2: подавление открывает другую стену)
-- [x] тесты (5 файлов, 30 шт.): совместимость, нейтральность scales,
+- [x] тесты (5 файлов, 37 шт.): совместимость, нейтральность scales,
       детерминизм, валидация, аблации, overrides, decomposition,
       attribution, classification, свипы, поиск, стресс, checkpoint, scope
 

@@ -38,7 +38,7 @@
 | # | Ссылка | DOI | Key данные |
 |---|---|---|---|
 | S-7 | Alpha Scientists…; ESHRE SIG Embryology. «The Istanbul consensus workshop on embryo assessment...». Hum Reprod 26(6):1270–1283, 2011 | 10.1093/humrep/der037 | 2-кл ~26–28 ч; 4-кл 44±1 ч; 8-кл 68±1 ч; морула 92±2 ч; бластоциста 116±2 ч |
-| S-8 | 相关 time-lapse обзоры (например, *Hum Reprod* 2012–2015; см. PMC4831697 ниже) | — | циклы ~10–12 ч; д.3 7–8 клеток = хороший прогноз |
+| S-8 | Обзорные time-lapse исследования (например, *Hum Reprod* 2012–2015; см. PMC4831697 ниже) | — | циклы ~10–12 ч; д.3 7–8 клеток = хороший прогноз |
 
 Доп. ссылка: «The Relationship between Cell Number, Division Behavior and
 Developmental Potential of Cleavage Stage Human Embryos: A Time-Lapse Study».
