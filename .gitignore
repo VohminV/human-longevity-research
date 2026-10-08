@@ -35,6 +35,7 @@ Thumbs.db
 *.onnx
 *.h5
 *.npz
+[Pp][Rr][Oo][Mm][Tt].md
 
 # Simulation artifacts
 experiments/output/

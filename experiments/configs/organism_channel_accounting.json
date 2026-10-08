@@ -1,0 +1,9 @@
+{
+  "experiment_id": "organism_channel_accounting",
+  "stage": "10.5",
+  "notes": "Stage 10.5 diagnostic: channel accounting of the rollback residual slope (~1.1666) over the actual production execution path. No production semantics touched; pure analysis over Stage 10 + Stage 9b artifacts. Seeds must stay [42, 7, 99]. HYP-0 stays hypothesis_not_proven.",
+  "seeds": [42, 7, 99],
+  "stage10_artifact": "experiments/output/organism_biological_age_decomposition.json",
+  "rollback_attribution_artifact": "experiments/output/organism_rollback_attribution.json",
+  "output_artifact": "experiments/output/organism_channel_accounting.json"
+}
